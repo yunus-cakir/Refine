@@ -1,0 +1,81 @@
+﻿@page "/exercises/edit/{id:int}"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+
+<div class="mb-4">
+    <button class="btn btn-link text-muted p-0 text-decoration-none mb-2" @onclick="GoBack">
+        <i class="bi bi-arrow-left"></i> Geri Dön
+    </button>
+    <h3 class="fw-bold">@(Id == 0 ? "Yeni Egzersiz" : "Egzersizi Düzenle")</h3>
+</div>
+
+<EditForm Model="@_exercise" OnValidSubmit="Save">
+    <DataAnnotationsValidator />
+
+    <div class="refine-card p-4">
+
+        <div class="mb-3">
+            <label class="form-label text-muted small">Egzersiz Adı</label>
+            <InputText @bind-Value="_exercise.Name" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Bench Press" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-muted small">Kas Grubu</label>
+            <InputSelect @bind-Value="_exercise.MuscleGroup" class="form-select bg-dark text-white border-secondary">
+                <option value="">Seçiniz...</option>
+                <option value="Chest">Chest (Göğüs)</option>
+                <option value="Back">Back (Sırt)</option>
+                <option value="Legs">Legs (Bacak)</option>
+                <option value="Shoulders">Shoulders (Omuz)</option>
+                <option value="Arms">Arms (Kol)</option>
+                <option value="Core">Core (Karın)</option>
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-muted small">Zorluk Seviyesi</label>
+            <InputSelect @bind-Value="_exercise.Difficulty" class="form-select bg-dark text-white border-secondary">
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-muted small">Ekipman</label>
+            <InputText @bind-Value="_exercise.Equipment" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Barbell, Dumbbell" />
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold mt-3">
+            KAYDET
+        </button>
+
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Exercise _exercise = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id != 0)
+        {
+            var existing = await DbService.GetExerciseByIdAsync(Id);
+            if (existing != null)
+                _exercise = existing;
+        }
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(_exercise.Name)) return; // Basit validasyon
+
+        await DbService.SaveExerciseAsync(_exercise);
+        NavManager.NavigateTo("/exercises");
+    }
+
+    private void GoBack() => NavManager.NavigateTo("/exercises");
+}

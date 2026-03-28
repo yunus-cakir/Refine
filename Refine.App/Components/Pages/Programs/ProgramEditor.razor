@@ -1,0 +1,233 @@
+﻿@page "/programs/edit/{Id:int}"
+@using Refine.App.Models
+@using Refine.App.Services
+
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime
+
+<div class="mb-4">
+    <a href="/programs" class="btn btn-link text-muted p-0 text-decoration-none mb-2">
+        <i class="bi bi-arrow-left"></i> Listeye Dön
+    </a>
+    <h3 class="fw-bold">@(Id == 0 ? "Yeni Program" : "Programı Düzenle")</h3>
+</div>
+
+<div class="row">
+    <div class="col-12 col-md-12 mb-4">
+        <EditForm Model="@_program" OnValidSubmit="SaveProgram">
+            <DataAnnotationsValidator />
+
+            <div class="refine-card p-4">
+                <h5 class="fw-bold mb-3 text-primary">1. Program Detayları</h5>
+
+                <div class="mb-3">
+                    <label class="small text-muted">Program Adı</label>
+                    <InputText @bind-Value="_program.Name" class="form-control bg-dark text-white border-secondary" placeholder="Örn: 5x5 Power" />
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="small text-muted">Seviye</label>
+                        <InputSelect @bind-Value="_program.Level" class="form-select bg-dark text-white border-secondary">
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                        </InputSelect>
+                    </div>
+                    <div class="col-6">
+                        <label class="small text-muted">Hedef</label>
+                        <InputSelect @bind-Value="_program.Goal" class="form-select bg-dark text-white border-secondary">
+                            <option value="Muscle Gain">Muscle Gain</option>
+                            <option value="Strength">Strength</option>
+                            <option value="Fat Loss">Fat Loss</option>
+                            <option value="Endurance">Endurance</option>
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="small text-muted">Ortam</label>
+                    <InputText @bind-Value="_program.Environment" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Gym, Home" />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 fw-bold">
+                    @(Id == 0 ? "PROGRAMI OLUŞTUR & DEVAM ET" : "BİLGİLERİ GÜNCELLE")
+                </button>
+            </div>
+        </EditForm>
+    </div>
+
+    @if (Id != 0)
+    {
+        <div class="col-12 col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0">2. Antrenman Günleri</h5>
+                <a href="@($"/workouts/edit/{Id}/0")" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                    <i class="bi bi-plus-lg"></i> Sıfırdan Ekle
+                </a>
+            </div>
+
+            <div class="refine-card p-3 mb-4 border border-secondary border-dashed" style="border-style: dashed !important; background: transparent;">
+                <label class="small text-muted mb-2 d-block">Mevcut Antrenmanlardan Kopyala:</label>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm bg-dark text-white border-secondary" @bind="_selectedStandaloneId">
+                        <option value="0">Bir antrenman seç...</option>
+                        @if (_standaloneWorkouts != null)
+                        {
+                            @foreach (var w in _standaloneWorkouts)
+                            {
+                                <option value="@w.Id">@w.Name (@(w.Items?.Count ?? 0) Hareket)</option>
+                            }
+                        }
+                    </select>
+                    <button class="btn btn-sm btn-light text-nowrap fw-bold" @onclick="ImportWorkout">
+                        <i class="bi bi-copy me-1"></i> Kopyala
+                    </button>
+                </div>
+            </div>
+
+            <div id="workout-list" class="d-flex flex-column gap-2 pb-5">
+
+                @if (_program.Workouts != null && _program.Workouts.Any())
+                {
+                    @foreach (var workout in _program.Workouts.OrderBy(w => w.Order))
+                    {
+                        <div class="refine-card p-3 d-flex justify-content-between align-items-center" @key="workout.Id">
+
+                            <div class="d-flex align-items-center">
+                                <div class="drag-handle me-3 text-muted" style="cursor: move; padding: 10px;">
+                                    <i class="bi bi-grip-vertical fs-4"></i>
+                                </div>
+
+                                <div>
+                                    <h6 class="fw-bold mb-0">@workout.Name</h6>
+                                    <small class="text-muted">@(workout.Items?.Count ?? 0) Hareket</small>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <a href="@($"/workouts/edit/{Id}/{workout.Id}")" class="btn btn-sm btn-dark text-muted"><i class="bi bi-pencil-fill"></i></a>
+                                <button class="btn btn-sm btn-dark text-danger" @onclick="() => DeleteWorkout(workout)"><i class="bi bi-trash-fill"></i></button>
+                            </div>
+
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private WorkoutProgram _program = new();
+    private List<Workout>? _standaloneWorkouts;
+    private int _selectedStandaloneId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Import için serbest antrenmanları hazırla
+        _standaloneWorkouts = await DbService.GetStandaloneWorkoutsAsync();
+
+        if (Id != 0)
+        {
+            await LoadProgramData();
+        }
+    }
+
+    private async Task LoadProgramData()
+    {
+        var existing = await DbService.GetProgramByIdAsync(Id);
+        if (existing != null)
+            _program = existing;
+    }
+
+    private async Task SaveProgram()
+    {
+        // Programı kaydet ve ID'yi al
+        int newId = await DbService.SaveWorkoutProgramAsync(_program);
+
+        // Eğer yeni oluşturulduysa URL'yi güncelle (Refresh yapmadan ID'li hale geç)
+        if (Id == 0)
+        {
+            Id = newId;
+            NavManager.NavigateTo($"/programs/edit/{newId}", replace: true); // Replace önemli
+            // Veriyi tekrar çek ki Workouts listesi null gelmesin
+            await LoadProgramData();
+        }
+        else
+        {
+            await UiHelper.ShowAlert("Başarılı", "Program bilgileri güncellendi.", "OK");
+        }
+    }
+
+    private async Task ImportWorkout()
+    {
+        if (_selectedStandaloneId == 0) return;
+
+        // Servisteki kopyalama metodunu çağır
+        await DbService.DuplicateWorkoutToProgramAsync(_selectedStandaloneId, Id);
+
+        // Listeyi yenile
+        await LoadProgramData();
+        _selectedStandaloneId = 0; // Seçimi sıfırla
+    }
+
+    private async Task DeleteWorkout(Workout w)
+    {
+        bool confirm = await UiHelper.ShowConfirm("Sil",
+            "Bu gün programdan silinsin mi?",
+            "Evet", "Hayır");
+
+        if (confirm)
+        {
+            await DbService.DeleteWorkoutAsync(w.Id);
+            await LoadProgramData();
+        }
+    }
+
+    // JS'den çağrılabilmesi için referans tutucu
+    private DotNetObjectReference<ProgramEditor>? _objRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Sayfa ilk kez çizildiğinde SortableJS'i başlat
+        if (firstRender && Id != 0) // Sadece program varsa
+        {
+            _objRef = DotNetObjectReference.Create(this);
+            // JS fonksiyonunu çağır: ID="workout-list" olan yere uygula
+            await JSRuntime.InvokeVoidAsync("initSortable", "workout-list", _objRef);
+        }
+    }
+
+    // JS TARAFINDAN ÇAĞRILACAK METOT
+    [JSInvokable]
+    public async Task OnUpdateOrder(int oldIndex, int newIndex) // void yerine async Task
+    {
+        // 1. Listeyi kopyala ve yer değiştir
+        var sortedList = _program.Workouts.OrderBy(w => w.Order).ToList();
+        var itemToMove = sortedList[oldIndex];
+
+        sortedList.RemoveAt(oldIndex);
+        sortedList.Insert(newIndex, itemToMove);
+
+        // 2. Order numaralarını 1'den başlayarak yeniden ver
+        for (int i = 0; i < sortedList.Count; i++)
+        {
+            sortedList[i].Order = i + 1;
+        }
+
+        // 3. UI'ı güncelle
+        _program.Workouts = sortedList;
+        StateHasChanged(); // UI hemen tepki versin
+
+        // 4. VERİTABANINA KAYDET (Arka planda)
+        await DbService.UpdateWorkoutOrdersAsync(sortedList);
+    }
+
+    public void Dispose()
+    {
+        _objRef?.Dispose();
+    }
+}

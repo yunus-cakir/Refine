@@ -1,0 +1,46 @@
+﻿@inherits LayoutComponentBase
+@using Refine.App.Services
+@inject NavigationManager NavManager
+@inject NavigationBridge NavBridge
+
+<div class="page">
+    <main class="content p-3 mt-2">
+        @Body
+    </main>
+</div>
+
+<style>
+    .page {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background-color: var(--refine-bg);
+        /* Native menü altta yer kaplayacağı için padding-bottom app.css'te var */
+    }
+
+    /* İçerik kapsayıcısı için maksimum genişlik (Tablet/Desktop için iyi olur) */
+    .content {
+        width: 100%;
+        max-width: 600px; /* Çok geniş ekranlarda yayılmasın */
+        margin: 0 auto; /* Ortala */
+    }
+</style>
+
+@code {
+    protected override void OnInitialized()
+    {
+        NavBridge.OnNavigate += HandleNavigation;
+    }
+
+    private void HandleNavigation(string uri)
+    {
+        NavManager.NavigateTo(uri);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavBridge.OnNavigate -= HandleNavigation;
+    }
+}

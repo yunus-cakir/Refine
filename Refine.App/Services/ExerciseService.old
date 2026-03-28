@@ -1,0 +1,20 @@
+﻿using Refine.App.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Refine.App.Services;
+
+public class ExerciseService
+{
+    private readonly List<Exercise> _exercises = new()
+    {
+        new Exercise { Id = 1, Name = "Bench Press", Difficulty = "Intermediate", Equipment = "Barbell", MuscleGroup = "Chest" },
+        new Exercise { Id = 2, Name = "Squat", Difficulty = "Intermediate", Equipment = "Barbell", MuscleGroup = "Legs" },
+        new Exercise { Id = 3, Name = "Pull Up", Difficulty = "Advanced", Equipment = "Bodyweight", MuscleGroup = "Back" }
+    };
+
+    public Task<List<Exercise>> GetAllAsync() => Task.FromResult(_exercises);
+}

@@ -1,0 +1,83 @@
+﻿@page "/programs/{id:int}"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject LocalDbService ProgramService
+
+@if (_program == null)
+{
+    <div class="text-center mt-5"><div class="spinner-border text-primary"></div></div>
+}
+else
+{
+    <div class="mb-4 d-flex justify-content-between align-items-end">
+        <div>
+            <h2 class="fw-bold">@_program.Name</h2>
+            <p class="text-muted mb-0">@_program.Goal • @_program.Level</p>
+        </div>
+        <a href="@($"/workouts/edit/{Id}/0")" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
+            <i class="bi bi-plus-lg"></i> Ekle
+        </a>
+    </div>
+
+    <h5 class="mb-3 fw-bold">Antrenman Günleri</h5>
+
+    <div class="d-flex flex-column gap-3">
+        @if(_program.Workouts != null)
+        {
+            @foreach (var workout in _program.Workouts.OrderBy(w => w.Order))
+            {
+                <div class="refine-card p-3 mb-3">
+                    <div class="d-flex align-items-center justify-content-between">
+
+                        <a href="@($"/workouts/detail/{workout.Id}")" class="d-flex align-items-center text-decoration-none text-white flex-grow-1">
+                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3 text-dark"
+                                 style="width: 40px; height: 40px; font-weight:bold; background-color:var(--refine-primary) !important;">
+                                @workout.Order
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0">@workout.Name</h6>
+                                <small class="text-muted" style="font-size: 0.8rem;">
+                                    @(workout.Items?.Count ?? 0) Hareket
+                                </small>
+                            </div>
+                        </a>
+
+                        <div class="d-flex gap-2 ms-2">
+                            <a href="@($"/workouts/edit/{Id}/{workout.Id}")" class="btn btn-dark btn-sm border-secondary text-muted">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <button class="btn btn-dark btn-sm border-secondary text-danger" @onclick="() => DeleteWorkout(workout)">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private WorkoutProgram? _program;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // DÜZELTME: GetByIdAsync -> GetProgramByIdAsync oldu
+        _program = await ProgramService.GetProgramByIdAsync(Id);
+    }
+
+    private async Task DeleteWorkout(Workout workout)
+    {
+        bool confirm = await UiHelper.ShowConfirm("Sil",
+            $"{workout.Name} silinsin mi?",
+            "Evet", "Hayır");
+
+        if (confirm)
+        {
+            await ProgramService.DeleteWorkoutAsync(workout.Id);
+            await OnParametersSetAsync();
+        }
+    }
+}

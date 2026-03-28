@@ -1,0 +1,33 @@
+﻿using Refine.App.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Refine.App.Services;
+
+public class UserService
+{
+    private User? _current;
+
+    public Task<User> GetUserAsync()
+    {
+        if (_current == null)
+        {
+            _current = new User
+            {
+                Id = 1,
+                FirstName = "Demo",
+                LastName = "User",
+                Email = "demo@refine.com",
+                Language = "tr",
+                Gender = "Male",
+                Height = 175,
+                Weight = 70
+            };
+        }
+
+        return Task.FromResult(_current);
+    }
+}

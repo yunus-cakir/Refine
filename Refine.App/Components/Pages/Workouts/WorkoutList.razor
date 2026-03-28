@@ -1,0 +1,90 @@
+﻿@page "/workouts"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold m-0">Antrenmanlar</h3>
+    <a href="/workouts/edit/0/0" class="btn btn-primary rounded-pill px-3 fw-bold">
+        <i class="bi bi-plus-lg me-1"></i> Yeni
+    </a>
+</div>
+
+@if (_workouts == null)
+{
+    <div class="text-center"><div class="spinner-border text-primary"></div></div>
+}
+else if (_workouts.Count == 0)
+{
+    <div class="text-center text-muted mt-5">
+        <i class="bi bi-journal-plus fs-1 d-block mb-3"></i>
+        <p>Henüz serbest antrenman oluşturmadın.</p>
+    </div>
+}
+else
+{
+    <div class="d-flex flex-column gap-3 pb-5">
+        @foreach (var workout in _workouts)
+        {
+            <div class="refine-card p-3">
+                <div class="d-flex align-items-center justify-content-between">
+
+                    <a href="@($"/workouts/detail/{workout.Id}")" class="text-decoration-none text-white flex-grow-1">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-secondary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-3"
+                                 style="width: 45px; height: 45px;">
+                                <i class="bi bi-lightning-charge-fill text-warning"></i>
+                            </div>
+
+                            <div>
+                                <h6 class="fw-bold mb-0">@workout.Name</h6>
+                                <small class="text-muted" style="font-size: 0.8rem;">
+                                    @(workout.Items?.Count ?? 0) Hareket • @(string.IsNullOrEmpty(workout.Description) ? "Serbest Çalışma" : workout.Description)
+                                </small>
+                            </div>
+                        </div>
+                    </a>
+
+                    <div class="d-flex gap-2 ms-2">
+                        <a href="@($"/workouts/edit/0/{workout.Id}")" class="btn btn-dark btn-sm border-secondary text-muted">
+                            <i class="bi bi-pencil-fill"></i>
+                        </a>
+                        <button class="btn btn-dark btn-sm border-secondary text-danger" @onclick="() => DeleteWorkout(workout)">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<Workout>? _workouts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        // Serviste yazdığımız "GetStandaloneWorkoutsAsync" metodunu çağırıyoruz
+        _workouts = await DbService.GetStandaloneWorkoutsAsync();
+    }
+
+    private async Task DeleteWorkout(Workout workout)
+    {
+        bool confirm = await UiHelper.ShowConfirm("Sil",
+            $"{workout.Name} silinsin mi?",
+            "Evet", "Hayır");
+
+        if (confirm)
+        {
+            await DbService.DeleteWorkoutAsync(workout.Id);
+            await LoadData();
+        }
+    }
+}

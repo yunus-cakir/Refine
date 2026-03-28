@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Refine.App</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="Refine.App.styles.css" />
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body>
+
+    <div class="status-bar-safe-area"></div>
+
+    <div id="app">Loading...</div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+    <script>
+        window.initSortable = (elementId, instance) => {
+            var el = document.getElementById(elementId);
+            if (!el) return;
+
+            new Sortable(el, {
+                animation: 200,
+                handle: '.drag-handle',
+                delay: 100,
+                delayOnTouchOnly: true,
+
+                // --- KRİTİK AYARLAR ---
+                forceFallback: true,        // HTML5 Drag'i devre dışı bırak, JS kullan (Hayalet kutuyu engeller)
+                fallbackClass: "sortable-fallback",  // Sürüklenen öğeye stil vermek için
+                fallbackOnBody: true,       // Mobilde daha akıcı olması için
+                touchStartThreshold: 5,     // Hafif titremelerde sürüklemeyi başlatma
+                // ---------------------
+
+                onEnd: (evt) => {
+                    instance.invokeMethodAsync('OnUpdateOrder', evt.oldIndex, evt.newIndex);
+                }
+            });
+        };
+    </script>
+</body>
+
+</body>
+</html>

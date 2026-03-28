@@ -1,0 +1,101 @@
+﻿:root {
+    /* Renk Paleti */
+    --refine-bg: #0d0d0d;
+    --refine-surface: #1c1c1e;
+    --refine-primary: #ccff00; /* Neon Lime */
+    --refine-text: #ffffff;
+    --refine-text-muted: #a1a1a1;
+    --refine-border: rgba(255, 255, 255, 0.08);
+    --nav-height: 60px;
+}
+
+body {
+    background-color: var(--refine-bg);
+    color: var(--refine-text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding-bottom: 90px !important;
+    padding-top: env(safe-area-inset-top);
+}
+
+/* --- ANA BUTON RENGİ (MAVİYİ EZME) --- */
+.btn-primary {
+    background-color: var(--refine-primary) !important;
+    border-color: var(--refine-primary) !important;
+    color: #000000 !important; /* Neon üstüne siyah yazı okunur */
+    font-weight: 700 !important;
+}
+
+    .btn-primary:hover, .btn-primary:active, .btn-primary:focus {
+        background-color: #b3e600 !important; /* Biraz daha koyu neon */
+        border-color: #b3e600 !important;
+        color: #000000 !important;
+        box-shadow: 0 0 0 0.25rem rgba(204, 255, 0, 0.4) !important;
+    }
+
+/* --- KART TASARIMI --- */
+.refine-card {
+    background-color: var(--refine-surface);
+    border-radius: 16px;
+    border: 1px solid var(--refine-border);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: pan-y;
+}
+
+    .refine-card h5, .refine-card h6 {
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+
+/* Yardımcı Sınıflar */
+.text-muted {
+    color: var(--refine-text-muted) !important;
+}
+
+.text-primary {
+    color: var(--refine-primary) !important;
+}
+
+/* --- BADGE (ETİKET) DÜZELTMESİ --- */
+.badge-pill {
+    /* !important ekleyerek Bootstrap'in bg-secondary rengini eziyoruz */
+    background-color: rgba(204, 255, 0, 0.15) !important;
+    color: var(--refine-primary) !important;
+    font-weight: 700;
+    border: 1px solid rgba(204, 255, 0, 0.3) !important;
+    border-radius: 50rem;
+    padding: 0.35em 0.8em;
+    font-size: 0.75rem;
+}
+
+/* Form Elemanları */
+.form-control, .form-select {
+    background-color: #000 !important;
+    border: 1px solid var(--refine-border) !important;
+    color: #fff !important;
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--refine-primary) !important;
+        box-shadow: 0 0 0 2px rgba(204, 255, 0, 0.2);
+    }
+
+/* Sürükleme Efektleri */
+.sortable-fallback {
+    opacity: 0.9 !important;
+    background: var(--refine-surface) !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5) !important;
+    transform: scale(1.02);
+    cursor: grabbing !important;
+}
+
+.drag-handle {
+    cursor: grab;
+    touch-action: none;
+}

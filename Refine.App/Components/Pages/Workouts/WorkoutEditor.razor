@@ -1,0 +1,220 @@
+﻿@page "/workouts/edit/{ProgramId:int}/{WorkoutId:int}"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+
+<div class="mb-4">
+    <button class="btn btn-link text-muted p-0 text-decoration-none mb-2" @onclick="GoBack">
+        <i class="bi bi-arrow-left"></i> @(ProgramId == 0 ? "Listeye Dön" : "Programa Dön")
+    </button>
+    <h3 class="fw-bold">@(WorkoutId == 0 ? "Yeni Antrenman Günü" : "Antrenmanı Düzenle")</h3>
+</div>
+
+<EditForm Model="@_workout" OnValidSubmit="SaveWorkout">
+    <DataAnnotationsValidator />
+
+    <div class="refine-card p-3 mb-4">
+        <div class="mb-3">
+            <label class="form-label text-muted small">Gün Adı</label>
+            <InputText @bind-Value="_workout.Name" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Push Day" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label text-muted small">Açıklama</label>
+            <InputText @bind-Value="_workout.Description" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Göğüs ve Omuz odaklı..." />
+        </div>
+
+        @if (ProgramId != 0)
+        {
+            <div class="mb-3">
+                <label class="form-label text-muted small">Program içi Sıralama (Order)</label>
+                <InputNumber @bind-Value="_workout.Order" class="form-control bg-dark text-white border-secondary" />
+            </div>
+        }
+    </div>
+
+    <div class="d-flex gap-2 mb-3">
+        <select class="form-select bg-dark text-white border-secondary" @bind="_selectedExerciseId">
+            <option value="0">Hareket Seç...</option>
+            @if (_allExercises != null)
+            {
+                @foreach (var ex in _allExercises)
+                {
+                    <option value="@ex.Id">@ex.Name (@ex.MuscleGroup)</option>
+                }
+            }
+        </select>
+        <button type="button" class="btn btn-primary px-4 fw-bold" @onclick="AddExerciseToList">
+            EKLE
+        </button>
+    </div>
+
+    @if (_workout.Items.Any())
+    {
+        <div class="d-flex flex-column gap-2 mb-5">
+            @foreach (var item in _workout.Items.OrderBy(i => i.Order))
+            {
+                <div class="refine-card p-3 d-flex flex-column gap-2">
+
+                    <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-2">
+
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                  style="width:24px; height:24px; font-size:0.75rem;">
+                                @item.Order
+                            </span>
+                            <span class="fw-bold text-primary">@item.Exercise.Name</span>
+                        </div>
+
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-sm btn-dark border-secondary text-white"
+                                    @onclick="() => MoveItemUp(item)" disabled="@(item.Order == 1)">
+                                <i class="bi bi-arrow-up"></i>
+                            </button>
+
+                            <button type="button" class="btn btn-sm btn-dark border-secondary text-white"
+                                    @onclick="() => MoveItemDown(item)" disabled="@(item.Order == _workout.Items.Count)">
+                                <i class="bi bi-arrow-down"></i>
+                            </button>
+
+                            <button type="button" class="btn btn-sm btn-outline-danger border-0 ms-2"
+                                    @onclick="() => RemoveItem(item)">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="small text-muted">Set</label>
+                            <InputNumber @bind-Value="item.Sets" class="form-control form-control-sm bg-dark text-white border-secondary" />
+                        </div>
+                        <div class="col-6">
+                            <label class="small text-muted">Tekrar (Reps)</label>
+                            <InputText @bind-Value="item.RepsRange" class="form-control form-control-sm bg-dark text-white border-secondary" />
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center text-muted py-4 border border-secondary rounded mb-4 border-dashed" style="border-style: dashed !important;">
+            Henüz hareket eklenmedi.
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold mb-5">
+        ANTRENMANI KAYDET
+    </button>
+
+</EditForm>
+
+@code {
+    [Parameter] public int ProgramId { get; set; }
+    [Parameter] public int WorkoutId { get; set; }
+
+    private Workout _workout = new() { Items = new List<WorkoutItem>() };
+    private List<Exercise>? _allExercises;
+    private int _selectedExerciseId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _allExercises = await DbService.GetExercisesAsync();
+
+        if (WorkoutId != 0)
+        {
+            var existing = await DbService.GetWorkoutByIdAsync(WorkoutId);
+            if (existing != null)
+            {
+                _workout = existing;
+            }
+        }
+        else
+        {
+            _workout.WorkoutProgramId = ProgramId;
+        }
+    }
+
+    // YENİ EKLEME (Listenin sonuna)
+    private void AddExerciseToList()
+    {
+        if (_selectedExerciseId == 0) return;
+
+        var exercise = _allExercises?.FirstOrDefault(e => e.Id == _selectedExerciseId);
+        if (exercise != null)
+        {
+            _workout.Items.Add(new WorkoutItem
+            {
+                ExerciseId = exercise.Id,
+                Exercise = exercise,
+                Sets = 3,
+                RepsRange = "10",
+                Order = _workout.Items.Count + 1 // Otomatik en son sıra
+            });
+
+            _selectedExerciseId = 0;
+        }
+    }
+
+    // SİLME (Yeniden sıralayarak)
+    private void RemoveItem(WorkoutItem item)
+    {
+        _workout.Items.Remove(item);
+
+        // Listeyi 1'den başlayarak tekrar numaralandır (Boşlukları kapat)
+        int newOrder = 1;
+        foreach (var i in _workout.Items.OrderBy(x => x.Order))
+        {
+            i.Order = newOrder++;
+        }
+    }
+
+    // YUKARI TAŞIMA
+    private void MoveItemUp(WorkoutItem item)
+    {
+        // Kendinden bir önceki öğeyi bul
+        var previousItem = _workout.Items.FirstOrDefault(i => i.Order == item.Order - 1);
+
+        if (previousItem != null)
+        {
+            // Swap (Takas)
+            previousItem.Order++;
+            item.Order--;
+        }
+    }
+
+    // AŞAĞI TAŞIMA
+    private void MoveItemDown(WorkoutItem item)
+    {
+        // Kendinden bir sonraki öğeyi bul
+        var nextItem = _workout.Items.FirstOrDefault(i => i.Order == item.Order + 1);
+
+        if (nextItem != null)
+        {
+            // Swap (Takas)
+            nextItem.Order--;
+            item.Order++;
+        }
+    }
+
+    private async Task SaveWorkout()
+    {
+        if (string.IsNullOrWhiteSpace(_workout.Name)) return;
+        await DbService.SaveWorkoutWithItemsAsync(_workout);
+        GoBack();
+    }
+
+    private void GoBack()
+    {
+        if (ProgramId == 0)
+        {
+            NavManager.NavigateTo("/workouts");
+        }
+        else
+        {
+            NavManager.NavigateTo($"/programs/{ProgramId}");
+        }
+    }
+}

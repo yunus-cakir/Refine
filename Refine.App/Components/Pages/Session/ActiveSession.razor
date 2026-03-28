@@ -1,0 +1,294 @@
+﻿@page "/session/active/{WorkoutId:int}"
+@page "/session/edit/{WorkoutId:int}/{DateTicks:long}"
+
+@using Refine.App.Models
+@using Refine.App.Services
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+
+<div class="d-flex justify-content-between align-items-center mb-4 sticky-top py-3"
+     style="background-color: var(--refine-bg); z-index: 100;">
+    <div>
+        <small class="text-muted">@(DateTicks.HasValue ? "EDIT SESSION" : "CURRENT SESSION")</small>
+        <h4 class="fw-bold m-0">@(_workout?.Name ?? "Loading...")</h4>
+    </div>
+
+    <button class="btn btn-primary rounded-pill px-4 fw-bold" @onclick="FinishWorkout">
+        @(DateTicks.HasValue ? "UPDATE" : "FINISH")
+    </button>
+</div>
+
+@if (_workout == null)
+{
+    <div class="text-center"><div class="spinner-border text-primary"></div></div>
+}
+else
+{
+    <div class="d-flex flex-column gap-4 pb-5">
+        @foreach (var item in (_workout.Items ?? new List<WorkoutItem>()).OrderBy(i => i.Order))
+        {
+            <div class="refine-card p-0 overflow-hidden">
+                <div class="p-3 border-bottom border-secondary bg-secondary bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold m-0 text-primary">@item.Exercise.Name</h5>
+
+                    <button class="btn btn-sm btn-link text-muted text-decoration-none p-0"
+                            @onclick="() => CopyPreviousData(item.ExerciseId)">
+                        <i class="bi bi-files me-1"></i> Geçmişi Kopyala
+                    </button>
+                </div>
+
+                <div class="p-3">
+                    <div class="row g-2 mb-2 text-center text-muted small fw-bold">
+                        <div class="col-1">SET</div>
+                        <div class="col-3">KG</div>
+                        <div class="col-3">REPS</div>
+                        <div class="col-2">RIR</div>
+                        <div class="col-3">FORM</div>
+                    </div>
+
+                    @{
+                        // O anki logları filtrele
+                        var currentLogs = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).OrderBy(l => l.SetNumber).ToList();
+                    }
+
+                    @foreach (var log in currentLogs)
+                    {
+                        var history = GetHistoryLog(item.ExerciseId, log.SetNumber);
+
+                        <div class="row g-2 mb-2 align-items-center">
+                            <div class="col-1 text-center">
+                                <span class="badge bg-secondary rounded-circle" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center;">
+                                    @log.SetNumber
+                                </span>
+                            </div>
+
+                            <div class="col-3">
+                                <input type="number" inputmode="decimal"
+                                       class="form-control form-control-sm bg-dark text-white border-secondary text-center fw-bold"
+                                       placeholder="@(history?.Weight.ToString() ?? "-")"
+                                       @bind="log.Weight" />
+                            </div>
+
+                            <div class="col-3">
+                                <input type="number" inputmode="numeric"
+                                       class="form-control form-control-sm bg-dark text-white border-secondary text-center fw-bold"
+                                       placeholder="@(history?.Reps.ToString() ?? "-")"
+                                       @bind="log.Reps" />
+                            </div>
+
+                            <div class="col-2">
+                                <input type="number" inputmode="numeric"
+                                       class="form-control form-control-sm bg-dark text-white border-secondary text-center text-warning"
+                                       placeholder="@(history?.RIR.ToString() ?? "-")"
+                                       @bind="log.RIR" />
+                            </div>
+
+                            <div class="col-3 d-flex justify-content-center gap-2">
+
+                                <button class="btn btn-sm p-0 @(log.FormRating == 1 ? "text-warning" : "text-muted opacity-25")"
+                                        @onclick="() => log.FormRating = 1">
+                                    <i class="bi bi-emoji-neutral-fill fs-5"></i>
+                                </button>
+
+                                <button class="btn btn-sm p-0 @(log.FormRating == 2 ? "text-success" : "text-muted opacity-25")"
+                                        @onclick="() => log.FormRating = 2">
+                                    <i class="bi bi-emoji-smile-fill fs-5"></i>
+                                </button>
+
+                                <button class="btn btn-sm p-0 @(log.FormRating == 3 ? "text-fire" : "text-muted opacity-25")"
+                                        @onclick="() => log.FormRating = 3">
+                                    <i class="bi bi-fire fs-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="text-center mt-3">
+                        <button class="btn btn-sm btn-dark w-100 border-secondary border-dashed text-muted"
+                                @onclick="() => AddSet(item.ExerciseId)">
+                            <i class="bi bi-plus-lg"></i> Set Ekle
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (_showToast)
+{
+    <div class="toast-container">
+        <div class="refine-toast">
+            <i class="bi bi-info-circle-fill text-primary me-2"></i>
+            <span>Mevcut antrenmanına yönlendirildin.</span>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int WorkoutId { get; set; }
+
+    // Düzenleme modu için tarih parametresi
+    [Parameter] public long? DateTicks { get; set; }
+
+    // Resume modu için query parametresi
+    [SupplyParameterFromQuery(Name = "resuming")]
+    public bool IsResuming { get; set; }
+
+    private Workout? _workout;
+    private List<WorkoutLog> _activeLogs = new();
+    private Dictionary<int, List<WorkoutLog>> _historyData = new();
+    private bool _showToast = false;
+
+    // İşlem yapılacak hedef tarih (Edit ise geçmiş tarih, Yeni ise şimdiki zaman)
+    private DateTime _targetDate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _workout = await DbService.GetWorkoutByIdAsync(WorkoutId);
+
+        if (_workout != null && _workout.Items != null)
+        {
+            // 1. Hedef Tarihi Belirle
+            if (DateTicks.HasValue)
+            {
+                // Edit Mode: Parametreden gelen tarih
+                _targetDate = new DateTime(DateTicks.Value);
+            }
+            else
+            {
+                // Active Mode: Şu an
+                _targetDate = DateTime.Now;
+            }
+
+            // 2. Logları Yükle veya Oluştur
+            if (DateTicks.HasValue)
+            {
+                // --- EDIT MODE ---
+                // O tarihteki logları çek
+                var logs = await DbService.GetSessionLogsAsync(WorkoutId, _targetDate);
+                _activeLogs = logs.OrderBy(l => l.SetNumber).ToList();
+            }
+            else
+            {
+                // --- ACTIVE MODE ---
+                // Bugün için kayıt var mı kontrol et (Resume)
+                var existingLogs = await DbService.GetSessionLogsAsync(WorkoutId, DateTime.Now);
+
+                if (existingLogs.Any())
+                {
+                    _activeLogs = existingLogs.OrderBy(l => l.SetNumber).ToList();
+                    if (IsResuming) _showToast = true;
+                }
+                else
+                {
+                    // Yoksa sıfırdan oluştur
+                    foreach (var item in _workout.Items)
+                    {
+                        for (int i = 1; i <= item.Sets; i++)
+                        {
+                            _activeLogs.Add(new WorkoutLog
+                            {
+                                ExerciseId = item.ExerciseId,
+                                WorkoutId = WorkoutId,
+                                SetNumber = i,
+                                Date = _targetDate, // Sabitlenen tarihi kullan
+                                FormRating = 3,
+                                // Nullable değerler otomatik null gelir
+                            });
+                        }
+                    }
+                }
+            }
+
+            // 3. Geçmiş Verileri (Ghost Text) Hazırla
+            foreach (var item in _workout.Items)
+            {
+                var history = await DbService.GetLastLogForExerciseAsync(item.ExerciseId);
+                if (history.Any())
+                {
+                    _historyData[item.ExerciseId] = history;
+                }
+            }
+        }
+    }
+
+    private WorkoutLog? GetHistoryLog(int exerciseId, int setNumber)
+    {
+        if (_historyData.ContainsKey(exerciseId))
+        {
+            return _historyData[exerciseId].FirstOrDefault(l => l.SetNumber == setNumber);
+        }
+        return null;
+    }
+
+    private void CopyPreviousData(int exerciseId)
+    {
+        if (!_historyData.ContainsKey(exerciseId)) return;
+
+        var historyLogs = _historyData[exerciseId];
+        var currentExerciseLogs = _activeLogs.Where(l => l.ExerciseId == exerciseId).ToList();
+
+        foreach (var current in currentExerciseLogs)
+        {
+            var match = historyLogs.FirstOrDefault(h => h.SetNumber == current.SetNumber);
+            if (match != null)
+            {
+                current.Weight = match.Weight;
+                current.Reps = match.Reps;
+                current.RIR = match.RIR;
+                current.FormRating = match.FormRating;
+            }
+        }
+    }
+
+    private void AddSet(int exerciseId)
+    {
+        var existingCount = _activeLogs.Count(l => l.ExerciseId == exerciseId);
+        _activeLogs.Add(new WorkoutLog
+        {
+            ExerciseId = exerciseId,
+            WorkoutId = WorkoutId,
+            SetNumber = existingCount + 1,
+            Date = _targetDate, // ÖNEMLİ: Seansın tarihini kullan
+            FormRating = 3
+        });
+    }
+
+    private async Task FinishWorkout()
+    {
+        string title = DateTicks.HasValue ? "Güncelle" : "Bitir";
+        string msg = DateTicks.HasValue ? "Değişiklikler kaydedilsin mi?" : "Antrenman kaydedilsin mi?";
+
+        // Varsayılan değer (Eğer pencere bulunamazsa işlem iptal sayılır)
+        bool confirm = false;
+
+        // 1. GÜVENLİ ERİŞİM BLOĞU
+        // Bu blok, "Dereference of a possibly null reference" uyarısını siler.
+        if (Application.Current is not null && Application.Current.Windows.Count > 0)
+        {
+            var page = Application.Current.Windows[0].Page;
+            if (page is not null)
+            {
+                confirm = await page.DisplayAlert(title, msg, "Evet", "Hayır");
+            }
+        }
+
+        // 2. İşlem Onaylandıysa Kaydet
+        if (confirm)
+        {
+            if (DateTicks.HasValue)
+            {
+                // Edit Mode: Update (Upsert) işlemi
+                await DbService.UpdateSessionLogsAsync(_activeLogs);
+                NavManager.NavigateTo($"/history/detail/{WorkoutId}/{DateTicks}");
+            }
+            else
+            {
+                // Active Mode: Insert işlemi
+                await DbService.SaveWorkoutLogsAsync(_activeLogs);
+                NavManager.NavigateTo("/");
+            }
+        }
+    }
+}

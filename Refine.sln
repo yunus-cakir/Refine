@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36717.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Refine.App", "Refine.App\Refine.App.csproj", "{DF39FCD6-726E-4678-B234-A99A0CDCF6FE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DF39FCD6-726E-4678-B234-A99A0CDCF6FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF39FCD6-726E-4678-B234-A99A0CDCF6FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF39FCD6-726E-4678-B234-A99A0CDCF6FE}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{DF39FCD6-726E-4678-B234-A99A0CDCF6FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF39FCD6-726E-4678-B234-A99A0CDCF6FE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4AE05C23-58FD-44CD-9341-FBC314BB8C11}
+	EndGlobalSection
+EndGlobal

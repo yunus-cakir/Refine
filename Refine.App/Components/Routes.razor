@@ -1,0 +1,25 @@
+﻿@using Refine.App.Components.Layout
+
+<ErrorBoundary>
+    <ChildContent>
+        <Router AppAssembly="@typeof(Routes).Assembly">
+            <Found Context="routeData">
+                <RouteView RouteData="@routeData"
+                           DefaultLayout="@typeof(MainLayout)" />
+            </Found>
+
+            <NotFound>
+                <LayoutView Layout="@typeof(MainLayout)">
+                    <h3>Page not found.</h3>
+                </LayoutView>
+            </NotFound>
+        </Router>
+    </ChildContent>
+
+    <ErrorContent Context="ex">
+        <div style="color:red; padding:10px;">
+            <b>ERROR:</b> @ex.Message
+            <pre>@ex.StackTrace</pre>
+        </div>
+    </ErrorContent>
+</ErrorBoundary>

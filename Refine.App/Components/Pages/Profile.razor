@@ -1,0 +1,179 @@
+﻿@page "/profile"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+
+<div class="mb-4 sticky-top py-3" style="background-color: var(--refine-bg); z-index: 100;">
+    <h3 class="fw-bold m-0">Profil & Ayarlar</h3>
+</div>
+
+<ul class="nav nav-pills mb-4 nav-justified bg-secondary bg-opacity-10 rounded-pill p-1">
+    <li class="nav-item">
+        <button class="nav-link rounded-pill fw-bold @(_activeTab == "Profile" ? "active bg-primary text-black" : "text-muted")"
+                @onclick='() => _activeTab = "Profile"'>
+            Profil
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link rounded-pill fw-bold @(_activeTab == "Settings" ? "active bg-primary text-black" : "text-muted")"
+                @onclick='() => _activeTab = "Settings"'>
+            Ayarlar
+        </button>
+    </li>
+</ul>
+
+@if (_user == null)
+{
+    <div class="text-center"><div class="spinner-border text-primary"></div></div>
+}
+else
+{
+    @if (_activeTab == "Profile")
+    {
+        <div class="refine-card p-4 animate-fade-in">
+            <h5 class="fw-bold text-primary mb-3">Kişisel Bilgiler</h5>
+
+            <div class="mb-3">
+                <label class="small text-muted">Ad</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" @bind="_user.FirstName" />
+            </div>
+
+            <div class="mb-3">
+                <label class="small text-muted">Soyad</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" @bind="_user.LastName" />
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="small text-muted">Boy (cm)</label>
+                    <input type="number" class="form-control bg-dark text-white border-secondary" @bind="_user.Height" />
+                </div>
+                <div class="col-6">
+                    <label class="small text-muted">Kilo (kg)</label>
+                    <input type="number" class="form-control bg-dark text-white border-secondary" @bind="_user.Weight" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="small text-muted">E-Mail</label>
+                <input type="email" class="form-control bg-dark text-white border-secondary" @bind="_user.Email" />
+            </div>
+
+            <button class="btn btn-primary w-100 fw-bold rounded-pill" @onclick="SaveProfile">
+                BİLGİLERİ GÜNCELLE
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3 animate-fade-in pb-5">
+            @foreach (var group in _settings.GroupBy(s => s.Category))
+            {
+                <div class="refine-card p-0 overflow-hidden">
+                    <div class="p-2 bg-secondary bg-opacity-25 border-bottom border-secondary">
+                        <small class="fw-bold text-uppercase text-muted ps-2">@group.Key</small>
+                    </div>
+
+                    <div class="p-3">
+                        @foreach (var setting in group)
+                        {
+                            <div class="mb-3 border-bottom border-secondary border-opacity-10 pb-3 last-no-border">
+                                <label class="d-block fw-bold mb-1">@setting.Description</label>
+
+                                @if (setting.DataType == "bool")
+                                {
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox"
+                                               checked="@(setting.Value == "true")"
+                                               @onchange="@(e => UpdateBoolSetting(setting, e.Value))">
+                                        <label class="form-check-label small text-muted">@(setting.Value == "true" ? "Açık" : "Kapalı")</label>
+                                    </div>
+                                }
+                                else if (setting.DataType == "int")
+                                {
+                                    <input type="number" class="form-control bg-dark text-white border-secondary"
+                                           value="@setting.Value"
+                                           @onchange="@(e => UpdateStringSetting(setting, e.Value))" />
+                                }
+                                else
+                                {
+                                    <input type="text" class="form-control bg-dark text-white border-secondary"
+                                           value="@setting.Value"
+                                           @onchange="@(e => UpdateStringSetting(setting, e.Value))" />
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+<style>
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .last-no-border:last-child {
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+    }
+</style>
+
+@code {
+    private string _activeTab = "Profile";
+    private User? _user;
+    private List<AppSetting> _settings = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await DbService.GetUserAsync();
+        _settings = await DbService.GetAllSettingsAsync();
+    }
+
+    private async Task SaveProfile()
+    {
+        if (_user != null)
+        {
+            await DbService.UpdateUserAsync(_user);
+            //await Application.Current.Windows[0].Page.DisplayAlert("Başarılı", "Profil güncellendi.", "OK");
+            if (Application.Current?.Windows is not null && Application.Current.Windows.Count > 0)
+            {
+                var page = Application.Current.Windows[0].Page;
+                if (page is not null)
+                {
+                    await page.DisplayAlert("Başarılı", "Profil güncellendi.", "OK");
+                }
+            }
+        }
+    }
+
+    // Bool (Switch) ayarları için
+    private async Task UpdateBoolSetting(AppSetting setting, object? checkedValue)
+    {
+        setting.Value = ((bool)(checkedValue ?? false)).ToString().ToLower(); // "true" veya "false"
+        await DbService.UpdateSettingAsync(setting);
+    }
+
+    // Text/Int ayarları için
+    private async Task UpdateStringSetting(AppSetting setting, object? newValue)
+    {
+        setting.Value = newValue?.ToString() ?? "";
+        await DbService.UpdateSettingAsync(setting);
+    }
+}

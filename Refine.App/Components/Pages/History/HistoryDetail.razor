@@ -1,0 +1,119 @@
+﻿@page "/history/detail/{WorkoutId:int}/{DateTicks:long}"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+
+<div class="mb-4 sticky-top py-3 d-flex justify-content-between align-items-start"
+     style="background-color: var(--refine-bg); z-index: 100;">
+
+    <div>
+        <a href="/history" class="btn btn-link text-muted p-0 text-decoration-none mb-2">
+            <i class="bi bi-arrow-left"></i> Geçmişe Dön
+        </a>
+        <h4 class="fw-bold m-0">@_workoutName</h4>
+        <small class="text-muted">@_sessionDate.ToString("dd MMMM yyyy, dddd")</small>
+    </div>
+
+    <a href="@($"/session/edit/{WorkoutId}/{DateTicks}")" class="btn btn-dark btn-sm border-secondary text-white mt-3">
+        <i class="bi bi-pencil-fill me-1"></i> Düzenle
+    </a>
+</div>
+
+@if (_logsGrouped == null)
+{
+    <div class="text-center"><div class="spinner-border text-primary"></div></div>
+}
+else
+{
+    <div class="d-flex flex-column gap-3 pb-5">
+        @foreach (var exerciseGroup in _logsGrouped)
+        {
+            <div class="refine-card p-0 overflow-hidden">
+                <div class="p-3 border-bottom border-secondary bg-secondary bg-opacity-10">
+                    <h6 class="fw-bold m-0 text-primary">@exerciseGroup.ExerciseName</h6>
+                </div>
+
+                <div class="p-3">
+                    <div class="row g-2 mb-2 text-muted small fw-bold text-center border-bottom border-secondary pb-1">
+                        <div class="col-2">SET</div>
+                        <div class="col-3">KG</div>
+                        <div class="col-3">TEKRAR</div>
+                        <div class="col-2">RIR</div>
+                        <div class="col-2">FORM</div>
+                    </div>
+
+                    @foreach (var log in exerciseGroup.Logs)
+                    {
+                        <div class="row g-2 mb-2 align-items-center text-center">
+                            <div class="col-2">
+                                <span class="badge bg-secondary rounded-circle" style="width:24px; height:24px;">@log.SetNumber</span>
+                            </div>
+
+                            <div class="col-3 fw-bold text-white">@(log.Weight.HasValue? log.Weight: "-")</div>
+                            <div class="col-3 fw-bold text-white">@(log.Reps.HasValue? log.Reps: "-")</div>
+
+                            <div class="col-2 text-warning">@(log.RIR.HasValue? log.RIR: "-")</div>
+
+                            <div class="col-2 text-center">
+                                @if (log.FormRating == 3)
+                                {
+                                    <i class="bi bi-fire" style="color: #ff0055;"></i>
+                                }
+                                else if (log.FormRating == 2)
+                                {
+                                    <i class="bi bi-emoji-smile-fill text-success"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-emoji-neutral-fill text-warning"></i>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public int WorkoutId { get; set; }
+    [Parameter] public long DateTicks { get; set; }
+
+    private DateTime _sessionDate;
+    private string _workoutName = "";
+
+    // Egzersiz bazlı gruplama için yardımcı sınıf
+    private class ExerciseHistoryGroup
+    {
+        public string ExerciseName { get; set; } = "";
+        public List<WorkoutLog> Logs { get; set; } = new();
+    }
+
+    private List<ExerciseHistoryGroup>? _logsGrouped;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Ticks'i tekrar DateTime'a çevir
+        _sessionDate = new DateTime(DateTicks);
+
+        // 1. Antrenman ismini bul
+        var workout = await DbService.GetWorkoutByIdAsync(WorkoutId);
+        _workoutName = workout?.Name ?? "Silinmiş Antrenman";
+
+        // 2. O güne ait logları çek
+        var logs = await DbService.GetSessionLogsAsync(WorkoutId, _sessionDate);
+
+        // 3. Egzersizlere göre grupla (Join işlemi ile isimleri alarak)
+        var allExercises = await DbService.GetExercisesAsync();
+
+        _logsGrouped = logs.GroupBy(l => l.ExerciseId)
+                           .Select(g => new ExerciseHistoryGroup
+                           {
+                               ExerciseName = allExercises.FirstOrDefault(e => e.Id == g.Key)?.Name ?? "Bilinmeyen Hareket",
+                               Logs = g.OrderBy(l => l.SetNumber).ToList()
+                           })
+                           .ToList();
+    }
+}

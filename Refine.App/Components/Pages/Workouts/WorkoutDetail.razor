@@ -1,0 +1,81 @@
+﻿@page "/workouts/detail/{id:int}"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject LocalDbService ProgramService
+@inject NavigationManager NavManager
+
+@if (_workout == null)
+{
+    <div class="text-center mt-5"><div class="spinner-border text-primary"></div></div>
+}
+else
+{
+    <div class="mb-4">
+        <h3 class="fw-bold">@_workout.Name</h3>
+        <p class="text-muted">@_workout.Description</p>
+    </div>
+
+    @if (_workout.Items != null)
+    {
+        @foreach (var item in _workout.Items.OrderBy(i => i.Order))
+        {
+            <div class="refine-card p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary mb-1" style="font-size:0.7rem">
+                            @(item.Exercise?.MuscleGroup?.ToUpper() ?? "GENEL")
+                        </span>
+                        <h5 class="fw-bold mb-0">@(item.Exercise?.Name ?? "Bilinmeyen Hareket")</h5>
+                    </div>
+                    <small class="text-muted">@(item.Exercise?.Equipment ?? "-")</small>
+                </div>
+
+                <hr class="my-2 opacity-25" />
+
+                <div class="d-flex gap-2 mt-2">
+                    <div class="stat-box flex-fill">
+                        <div class="stat-label">SETS</div>
+                        <div class="stat-value">@item.Sets</div>
+                    </div>
+                    <div class="stat-box flex-fill">
+                        <div class="stat-label">REPS</div>
+                        <div class="stat-value">@item.RepsRange</div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+
+    <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold mt-3 shadow text-dark border-0 d-block text-center"
+            @onclick="StartWorkout">
+        ANTRENMANA BAŞLA
+    </button>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Workout? _workout;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _workout = await ProgramService.GetWorkoutByIdAsync(Id);
+    }
+
+    // YENİ METOT: Başlatma Mantığı
+    private async Task StartWorkout()
+    {
+        // Bugün için kayıt var mı kontrol et (LocalDbService'e eklediğin metod)
+        bool exists = await ProgramService.HasLogForTodayAsync(Id);
+
+        if (exists)
+        {
+            // Varsa: "resuming=true" parametresiyle git
+            NavManager.NavigateTo($"/session/active/{Id}?resuming=true");
+        }
+        else
+        {
+            // Yoksa: Normal git
+            NavManager.NavigateTo($"/session/active/{Id}");
+        }
+    }
+}

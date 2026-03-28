@@ -1,0 +1,142 @@
+﻿@page "/"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject LocalDbService DbService
+<div class="animate-fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <small class="text-muted">Hoş geldin,</small>
+            <h4 class="fw-bold text-gradient">@(_user?.FirstName ?? "Sporcu")!</h4>
+        </div>
+        <div class="profile-icon">
+            <i class="bi bi-person-fill"></i>
+        </div>
+    </div>
+
+    <div class="refine-card p-3 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <small class="text-muted d-block">Bu haftaki antrenman</small>
+            <span class="fs-4 fw-bold">3</span> <span class="text-muted fs-6">/ 5 Hedef</span>
+        </div>
+        <div class="circular-chart" style="background: conic-gradient(var(--refine-primary) 60%, #333 0);">
+            <div class="inner-circle">60%</div>
+        </div>
+    </div>
+
+    <h5 class="fw-bold mb-3">Programlarım</h5>
+
+    @if (_programs == null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    }
+    else if (_programs.Count == 0)
+    {
+        <div class="text-center text-muted py-4">
+            Henüz programın yok.
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3">
+            @foreach (var prog in _programs.Take(3))
+            {
+                <a href="/programs/@prog.Id" class="text-decoration-none">
+                    <div class="refine-card p-3 d-flex justify-content-between align-items-center hover-effect">
+                        <div>
+                            <span class="badge bg-dark text-white border border-secondary mb-2">@prog.Level</span>
+                            <h6 class="fw-bold m-0 text-white">@prog.Name</h6>
+                            <small class="text-muted">@prog.Goal</small>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    /* Basit animasyonlar */
+    .animate-fade-in {
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .text-gradient {
+        background: linear-gradient(45deg, #fff, var(--refine-text-muted));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .profile-icon {
+        width: 45px;
+        height: 45px;
+        background: var(--refine-card);
+        border: 1px solid var(--refine-card-border);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--refine-primary);
+    }
+
+    .circular-chart {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .inner-circle {
+        width: 42px;
+        height: 42px;
+        background-color: var(--refine-card);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+
+    .hover-effect:active {
+        transform: scale(0.98);
+        background-color: var(--refine-card-border);
+    }
+</style>
+
+@code {
+    private User? _user;
+    private List<WorkoutProgram>? _programs;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Kullanıcıyı DB'den çek
+            _user = await DbService.GetUserAsync();
+            // Programları DB'den çek
+            _programs = await DbService.GetAllProgramsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"HATA: {ex.Message}");
+        }
+    }
+}

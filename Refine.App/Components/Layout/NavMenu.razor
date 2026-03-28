@@ -1,0 +1,164 @@
+﻿<div class="bottom-nav">
+
+    <NavLink class="nav-item" href="workouts">
+        <div class="icon-container">
+            <i class="bi bi-lightning-charge icon-outline"></i>
+            <i class="bi bi-lightning-charge-fill icon-filled"></i>
+        </div>
+        <span class="nav-text">Antrenman</span>
+    </NavLink>
+
+    <NavLink class="nav-item" href="programs">
+        <div class="icon-container">
+            <i class="bi bi-collection icon-outline"></i>
+            <i class="bi bi-collection-fill icon-filled"></i>
+        </div>
+        <span class="nav-text">Programlar</span>
+    </NavLink>
+
+    <div class="nav-item-center-wrapper">
+        <NavLink class="nav-item-center" href="" Match="NavLinkMatch.All">
+            <i class="bi bi-house-door icon-outline"></i>
+            <i class="bi bi-house-door-fill icon-filled"></i>
+        </NavLink>
+    </div>
+
+    <NavLink class="nav-item" href="exercises">
+        <div class="icon-container">
+            <i class="bi bi-clipboard icon-outline"></i>
+            <i class="bi bi-clipboard-fill icon-filled"></i>
+        </div>
+        <span class="nav-text">Hareket</span>
+    </NavLink>
+
+    <NavLink class="nav-item" href="profile">
+        <div class="icon-container">
+            <i class="bi bi-person icon-outline"></i>
+            <i class="bi bi-person-fill icon-filled"></i>
+        </div>
+        <span class="nav-text">Profil</span>
+    </NavLink>
+
+</div>
+
+<style>
+    :root {
+        --nav-height-reduced: 60px;
+    }
+
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: var(--nav-height-reduced);
+        background-color: var(--refine-card);
+        border-top: 1px solid var(--refine-card-border);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 1000;
+        padding-bottom: env(safe-area-inset-bottom);
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+    }
+
+    /* --- NORMAL BUTONLAR --- */
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--refine-text-muted);
+        text-decoration: none;
+        height: 100%;
+        width: 60px;
+        background: transparent !important;
+        padding-top: 4px;
+    }
+
+    .nav-text {
+        font-size: 0.65rem;
+        font-weight: 600;
+        line-height: 1;
+        margin-top: 4px;
+        text-align: center; /* Metni de zorla ortala */
+        width: 100%; /* Genişliği tam kapsasın */
+    }
+
+    .icon-container {
+        height: 24px;
+        width: 100%; /* Konteyner tam genişlikte olsun */
+        display: flex;
+        align-items: center;
+        justify-content: center; /* İkonu ortala */
+    }
+
+    /* --- !!! KRİTİK DÜZELTME BURADA !!! --- */
+    /* İkonların sağındaki/solundaki varsayılan boşlukları siler */
+    .bottom-nav i {
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+        font-size: 1.4rem;
+        display: block;
+        text-align: center;
+    }
+
+    /* --- DOLU / BOŞ İKON MANTIĞI --- */
+    .icon-outline { display: block !important; }
+    .icon-filled { display: none !important; }
+
+    .nav-item.active .icon-outline,
+    .nav-item-center.active .icon-outline {
+        display: none !important;
+    }
+
+    .nav-item.active .icon-filled,
+    .nav-item-center.active .icon-filled {
+        display: block !important;
+    }
+
+    .nav-item.active {
+        color: var(--refine-primary);
+    }
+
+    .nav-item.active i {
+        transform: scale(1.1);
+        transition: transform 0.2s;
+    }
+
+    /* --- ORTA BUTON --- */
+    .nav-item-center-wrapper {
+        position: relative;
+        top: -20px;
+        height: 56px;
+        width: 56px;
+        display: flex;
+        justify-content: center;
+        z-index: 1001;
+    }
+
+    .nav-item-center {
+        width: 56px;
+        height: 56px;
+        background: var(--refine-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: black !important;
+        font-size: 1.6rem;
+        box-shadow: 0 4px 15px rgba(230, 57, 70, 0.4);
+        text-decoration: none;
+        transition: transform 0.1s;
+    }
+    
+    /* Orta butondaki ikonu özel olarak sıfırla */
+    .nav-item-center i {
+        font-size: 1.6rem !important; 
+    }
+
+    .nav-item-center:active {
+        transform: scale(0.95);
+    }
+</style>
