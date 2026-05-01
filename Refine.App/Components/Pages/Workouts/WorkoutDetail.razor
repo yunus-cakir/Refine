@@ -1,4 +1,4 @@
-﻿@page "/workouts/detail/{id:int}"
+@page "/workouts/detail/{id:int}"
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService ProgramService
@@ -13,6 +13,32 @@ else
     <div class="mb-4">
         <h3 class="fw-bold">@_workout.Name</h3>
         <p class="text-muted">@_workout.Description</p>
+
+        <!-- CNS YÜKÜ PROGRESS BAR -->
+        <div class="mt-3">
+            @{
+                var percentage = CnsThreshold > 0 ? Math.Min((TotalCnsLoad / CnsThreshold) * 100, 100) : 0;
+                var dynamicColor = Refine.App.Services.CnsHelper.GetCnsColor(percentage);
+            }
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small fw-bold text-muted">CNS Yorgunluk Yükü (Tahmini)</span>
+                <span class="small fw-bold" style="color: @dynamicColor;">
+                    %@percentage.ToString("0")
+                </span>
+            </div>
+            <div class="progress" style="height: 6px; background-color: #2a2a2a;">
+                <div class="progress-bar" role="progressbar" style="width: @percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%; background-color: @dynamicColor;"></div>
+            </div>
+            @if (TotalCnsLoad >= CnsThreshold)
+            {
+                <div class="mt-2 py-2 px-3 d-flex align-items-center gap-2 mb-0 rounded" style="font-size: 0.8rem; border-left: 4px solid @dynamicColor; background-color: rgba(255,255,255,0.05); color: @dynamicColor;">
+                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                    <div>
+                        <strong>Yüksek CNS Yorgunluğu!</strong> Bu program sinir sisteminizi limitlerin üzerinde yorabilir.
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 
     @if (_workout.Items != null)
@@ -23,7 +49,7 @@ else
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <div>
                         <span class="badge bg-secondary bg-opacity-10 text-secondary mb-1" style="font-size:0.7rem">
-                            @(item.Exercise?.MuscleGroup?.ToUpper() ?? "GENEL")
+                            @(item.Exercise?.PrimaryMuscleCategory?.ToUpper() ?? "GENEL")
                         </span>
                         <h5 class="fw-bold mb-0">@(item.Exercise?.Name ?? "Bilinmeyen Hareket")</h5>
                     </div>
@@ -56,8 +82,35 @@ else
     [Parameter] public int Id { get; set; }
     private Workout? _workout;
 
+    private decimal TotalCnsLoad => _workout?.Items?.Sum(i => CalculateItemCnsLoad(i)) ?? 0;
+    private decimal CnsThreshold = 150m;
+    private int PreferredRIR = 2;
+
+    private decimal CalculateItemCnsLoad(WorkoutItem item)
+    {
+        decimal baseScore = item.Exercise?.CnsFatigueScore ?? 0m;
+        
+        int reps = 10;
+        if (!string.IsNullOrWhiteSpace(item.RepsRange))
+        {
+            var parts = item.RepsRange.Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length > 0 && int.TryParse(parts.Last().Trim(), out int parsedRep))
+            {
+                reps = parsedRep;
+            }
+        }
+        
+        decimal repMultiplier = reps > 0 ? (reps / 10m) : 1.0m;
+        decimal rirMultiplier = 1.0m + ((3m - PreferredRIR) * 0.1m);
+        
+        return baseScore * item.Sets * repMultiplier * rirMultiplier;
+    }
+
     protected override async Task OnParametersSetAsync()
     {
+        CnsThreshold = await ProgramService.GetSettingValueAsync("CnsThreshold", 150m);
+        PreferredRIR = await ProgramService.GetSettingValueAsync("PreferredRIR", 2);
+
         _workout = await ProgramService.GetWorkoutByIdAsync(Id);
     }
 

@@ -1,25 +1,59 @@
-﻿using Refine.App.Services;
-using Microsoft.Maui.Controls.Shapes; // Path Geometry için gerekli
+using Refine.App.Services;
 
 namespace Refine.App;
 
 public partial class MainPage : ContentPage
 {
     private readonly NavigationBridge _navBridge;
-    private readonly PathGeometryConverter _converter = new PathGeometryConverter();
+    private bool _isSwitchLeftActive = true;
 
     public MainPage(NavigationBridge navBridge)
     {
         InitializeComponent();
         _navBridge = navBridge;
 
-        // --- İLK AÇILIŞ AYARLARI ---
-
-        // 1. Home İkonunu Yükle (Sabit olduğu için buraya ekledik)
-        PathHome.Data = (Geometry)_converter.ConvertFromInvariantString(IconPaths.Home_Filled)!;
-
-        // 2. Diğer sekmeleri varsayılan (Home seçili) hale getir
+        // Varsayılan sekmeyi ayarla (Home)
         UpdateActiveTab("");
+    }
+
+    private void OnSwitchTapped(object? sender, EventArgs e)
+    {
+        _isSwitchLeftActive = !_isSwitchLeftActive;
+        
+        if (_isSwitchLeftActive)
+        {
+            // Left is Blue, Right is Gray
+            SwitchLeftCircle.BackgroundColor = Color.FromArgb("#3b82f6"); 
+            SwitchRightCircle.BackgroundColor = Color.FromArgb("#3f3f46"); 
+
+            if (SwitchLeftCircle.Shadow is Shadow leftShadow)
+            {
+                leftShadow.Brush = new SolidColorBrush(Color.FromArgb("#3b82f6"));
+                leftShadow.Opacity = 0.5f;
+            }
+
+            if (SwitchRightCircle.Shadow is Shadow rightShadow)
+            {
+                rightShadow.Opacity = 0f;
+            }
+        }
+        else
+        {
+            // Left is Gray, Right is Green
+            SwitchLeftCircle.BackgroundColor = Color.FromArgb("#3f3f46"); 
+            SwitchRightCircle.BackgroundColor = Color.FromArgb("#22c55e"); 
+
+            if (SwitchLeftCircle.Shadow is Shadow leftShadow)
+            {
+                leftShadow.Opacity = 0f;
+            }
+
+            if (SwitchRightCircle.Shadow is Shadow rightShadow)
+            {
+                rightShadow.Brush = new SolidColorBrush(Color.FromArgb("#22c55e"));
+                rightShadow.Opacity = 0.5f;
+            }
+        }
     }
 
     private void OnNavTapped(object? sender, EventArgs e)
@@ -29,8 +63,6 @@ public partial class MainPage : ContentPage
             if (view.GestureRecognizers[0] is TapGestureRecognizer tap)
             {
                 string targetUrl = tap.CommandParameter?.ToString() ?? "";
-
-                // Url boş gelirse Home demektir
                 _navBridge.NavigateTo(targetUrl);
                 UpdateActiveTab(targetUrl);
             }
@@ -42,54 +74,52 @@ public partial class MainPage : ContentPage
         // RENKLER
         var inactiveColor = Color.FromArgb("#66ffffff"); // Soluk Beyaz
         var activeColor = Color.FromArgb("#ccff00");     // NEON LIME
+        
+        string fontOutlined = "MaterialOutlined";
+        string fontFilled = "MaterialFilled";
 
-        // 1. Önce hepsini SIFIRLA (Outline İkon + Soluk Renk)
+        // 1. Önce hepsini SIFIRLA (Outlined Font + Soluk Renk)
+        IconHome.FontFamily = fontOutlined;
+        IconHome.TextColor = inactiveColor;
+        TextHome.TextColor = inactiveColor;
 
-        PathWorkouts.Data = (Geometry)_converter.ConvertFromInvariantString(IconPaths.Workout_Outline)!;
-        PathWorkouts.Fill = inactiveColor;
+        IconWorkouts.FontFamily = fontOutlined;
+        IconWorkouts.TextColor = inactiveColor;
         TextWorkouts.TextColor = inactiveColor;
 
-        PathPrograms.Data = (Geometry)_converter.ConvertFromInvariantString(IconPaths.Program_Outline)!;
-        PathPrograms.Fill = inactiveColor;
-        TextPrograms.TextColor = inactiveColor;
+        IconAnalytics.FontFamily = fontOutlined;
+        IconAnalytics.TextColor = inactiveColor;
+        TextAnalytics.TextColor = inactiveColor;
 
-        PathExercises.Data = (Geometry)_converter.ConvertFromInvariantString(IconPaths.Exercise_Outline)!;
-        PathExercises.Fill = inactiveColor;
-        TextExercises.TextColor = inactiveColor;
+        IconPreferences.FontFamily = fontOutlined;
+        IconPreferences.TextColor = inactiveColor;
+        TextPreferences.TextColor = inactiveColor;
 
-        PathProfile.Data = (Geometry)_converter.ConvertFromInvariantString(IconPaths.Profile_Outline)!;
-        PathProfile.Fill = inactiveColor;
-        TextProfile.TextColor = inactiveColor;
-
-        // 2. Seçili olanı AKTİF YAP (Filled İkon + Neon Renk)
+        // 2. Seçili olanı AKTİF YAP (Filled Font + Neon Renk)
         switch (activeUrl)
         {
+            case "":
+                IconHome.FontFamily = fontFilled;
+                IconHome.TextColor = activeColor;
+                TextHome.TextColor = activeColor;
+                break;
+
             case "workouts":
-                PathWorkouts.Data = (Geometry)_converter.ConvertFromInvariantString(IconPaths.Workout_Filled)!;
-                PathWorkouts.Fill = activeColor;
+                IconWorkouts.FontFamily = fontFilled;
+                IconWorkouts.TextColor = activeColor;
                 TextWorkouts.TextColor = activeColor;
                 break;
 
-            case "programs":
-                PathPrograms.Data = (Geometry)_converter.ConvertFromInvariantString(IconPaths.Program_Filled)!;
-                PathPrograms.Fill = activeColor;
-                TextPrograms.TextColor = activeColor;
+            case "analytics":
+                IconAnalytics.FontFamily = fontFilled;
+                IconAnalytics.TextColor = activeColor;
+                TextAnalytics.TextColor = activeColor;
                 break;
 
-            case "exercises":
-                PathExercises.Data = (Geometry)_converter.ConvertFromInvariantString(IconPaths.Exercise_Filled)!;
-                PathExercises.Fill = activeColor;
-                TextExercises.TextColor = activeColor;
-                break;
-
-            case "profile":
-                PathProfile.Data = (Geometry)_converter.ConvertFromInvariantString(IconPaths.Profile_Filled)!;
-                PathProfile.Fill = activeColor;
-                TextProfile.TextColor = activeColor;
-                break;
-
-            default:
-                // Home (Orta Buton) zaten sabittir, değişmez.
+            case "preferences":
+                IconPreferences.FontFamily = fontFilled;
+                IconPreferences.TextColor = activeColor;
+                TextPreferences.TextColor = activeColor;
                 break;
         }
     }

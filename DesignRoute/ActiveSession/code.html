@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Refine Studio - Active Workout</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Lexend:wght@700&amp;family=Space+Grotesk:wght@500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#343535",
+                        "surface-container": "#1e2020",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "outline": "#8e9379",
+                        "tertiary": "#ffffff",
+                        "inverse-primary": "#506600",
+                        "on-tertiary": "#303030",
+                        "surface-container-high": "#292a2a",
+                        "on-primary-fixed": "#161e00",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "surface-bright": "#383939",
+                        "on-tertiary-container": "#646464",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-error": "#690005",
+                        "surface-tint": "#abd600",
+                        "on-secondary-fixed-variant": "#474649",
+                        "primary-container": "#c3f400",
+                        "on-background": "#e3e2e2",
+                        "secondary-fixed": "#e4e2e4",
+                        "inverse-surface": "#e3e2e2",
+                        "outline-variant": "#444933",
+                        "primary-fixed": "#c3f400",
+                        "inverse-on-surface": "#2f3131",
+                        "on-secondary": "#303032",
+                        "surface-container-low": "#1a1c1c",
+                        "on-surface": "#e3e2e2",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "surface-dim": "#121414",
+                        "on-primary-container": "#556d00",
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "background": "#121414",
+                        "surface-container-highest": "#343535",
+                        "surface": "#121414",
+                        "on-primary": "#283500",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-container": "#e2e2e2",
+                        "secondary-fixed-dim": "#c8c6c8",
+                        "on-surface-variant": "#c4c9ac",
+                        "secondary": "#c8c6c8",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#1b1b1d",
+                        "on-secondary-container": "#b6b4b7",
+                        "secondary-container": "#474649",
+                        "primary": "#ffffff",
+                        "surface-container-lowest": "#0d0e0f",
+                        "primary-fixed-dim": "#abd600",
+                        "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "sm": "8px",
+                        "lg": "24px",
+                        "margin": "20px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "xl": "40px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Space Grotesk"],
+                        "stat-lg": ["Space Grotesk"],
+                        "headline-md": ["Space Grotesk"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Lexend"],
+                        "title-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "stat-lg": ["40px", { "lineHeight": "1", "fontWeight": "700" }],
+                        "headline-md": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "title-sm": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Hide scrollbar for clean reel feel */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased h-screen overflow-hidden flex flex-col">
+<!-- TopAppBar from JSON -->
+<header class="bg-zinc-950 dark:bg-[#0d0d0d] flex justify-between items-center w-full px-5 py-4 border-b border-white/10 docked full-width top-0 sticky z-50">
+<div class="flex items-center bg-black rounded-full p-1 border border-white/20 w-16 h-8 cursor-pointer relative shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+<div class="flex w-full h-full relative">
+<!-- Active Left (Blue) -->
+<div class="flex-1 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)] border border-blue-400/30 flex items-center justify-center transition-all duration-300">
+<div class="w-1.5 h-1.5 rounded-full bg-white shadow-sm"></div>
+</div>
+<!-- Inactive Right (Greyed out) -->
+<div class="flex-1 rounded-full bg-zinc-800/50 flex items-center justify-center transition-all duration-300">
+<div class="w-1.5 h-1.5 rounded-full bg-zinc-600"></div>
+</div>
+</div>
+</div>
+<div class="text-xl font-black italic tracking-tighter text-lime-400 dark:text-[#ccff00] uppercase">
+            REFINE STUDIO
+        </div>
+<button class="hover:opacity-80 transition-all active:scale-95 duration-200 w-8 h-8 rounded-full bg-surface-container flex items-center justify-center overflow-hidden border border-outline/30">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="Close up portrait of a male athlete with intense gaze in dark moody lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAc7yb4EhHNAiIrCaNq-MA2DvcMy_E3swi5hXNkFJZmKjoPx4E__ZrnQGNkL-FOgEAuSzT4k5pyhWprHiU3BxIgU7JBEAkh8sLmewLm4XFUOr9KNyz-X5CZtS8TOBmOs6ZKW3u8rBZhLpMSUavhF9CSG4vKBWKfruXQUDkUrx6AD-_YrxGiA1saQERJ-SqtpfKrQjKhJqFnTf6DwmmlDzsmbbX0cbQShYrVX_PGr9_68zJDTT0lGi8hRVNzlvYlhTEQ5G8EQQ-tyA"/>
+</button>
+</header>
+<!-- Main Content Area - Reel Scroll Snap -->
+<main class="flex-1 overflow-y-auto snap-y snap-mandatory relative pb-[80px]">
+<!-- Reel Item 1: Active Exercise -->
+<section class="h-full w-full snap-start relative flex flex-col justify-between pt-lg pb-margin px-margin">
+<!-- Dynamic Background -->
+<div class="absolute inset-0 z-0 bg-cover bg-center" data-alt="Dark, moody wide shot of a heavy barbell loaded with plates on a squat rack in a dimly lit underground, industrial gym setting" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAGAu4maGWtgwQhZmOumfz5XSAYrxdnzesrRWFY9xyJ12jwXfZHkPX1c8v5QbbuhQb-n7R8fHgk5sRiK6NPhOT9DItBi1Yh6IdsUaJHXHRYMWmcIaiS3WLlP8wcL3L1HaU-gJJ8-b0yMK0NgFTHLV4-RVa1y7dLGmfBdodiHamEaDRSaPb3lCm4hIgg0ZZsNfsbiJ-9hTrSSGtyLMId6nKrK4oM-SoX6nS3Bjq62IE95EvIkxr1j4tldy_FbwB4hGs3aMRv9cUyQA");'></div>
+<!-- Tonal Layering Overlay -->
+<div class="absolute inset-0 z-0 bg-gradient-to-b from-[#121414]/95 via-[#121414]/50 to-[#121414]/95"></div>
+<!-- Top Overlay Content -->
+<div class="relative z-10 flex flex-col gap-md pt-sm">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label-caps text-label-caps text-primary-container bg-primary-container/15 px-3 py-1 rounded-full border border-primary-container/20">Set 2 of 4</span>
+<h1 class="font-headline-md text-headline-md text-primary mt-sm tracking-tight drop-shadow-md">Barbell Squat</h1>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-sm" style='font-variation-settings: "wght" 300;'>fitness_center</span>
+                            Primary: Quads, Glutes
+                        </p>
+</div>
+<button class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center backdrop-blur-md bg-[#1c1c1e]/60 text-primary hover:bg-[#1c1c1e] transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+<!-- CNS Fatigue Visualization -->
+<div class="mt-sm bg-[#1c1c1e]/40 backdrop-blur-sm p-4 rounded-xl border border-white/5">
+<div class="flex justify-between font-label-caps text-label-caps mb-2">
+<span class="text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">timer</span> Rest Timer</span>
+<div class="flex items-center gap-4"><div class="flex items-center gap-2"><button class="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center bg-surface-container hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-[18px]">pause</span></button><button class="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center bg-surface-container hover:text-error transition-colors"><span class="material-symbols-outlined text-[18px]">stop</span></button></div><span class="text-primary-container font-stat-lg text-title-sm">42 <span class="text-on-surface-variant text-label-caps font-label-caps">/ 1:30</span></span></div>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden relative border border-black/50">
+<!-- Glow effect track -->
+<div class="absolute inset-0 bg-gradient-to-r from-transparent to-primary-container/20" style="width: 47%;"></div>
+<!-- Active fill -->
+<div class="h-full bg-primary-container rounded-full shadow-[0_0_12px_rgba(195,244,0,0.6)] relative z-10" style="width: 47%;"></div>
+</div>
+</div>
+</div>
+<!-- Bottom Control Panel (Glassmorphism Card) -->
+<div class="relative z-10 bg-[#1c1c1e]/85 backdrop-blur-xl border border-white/10 rounded-xl p-margin shadow-[0_8px_32px_rgba(0,0,0,0.4)] mb-sm">
+<!-- Input Grid -->
+<div class="grid grid-cols-3 gap-md mb-lg">
+<!-- Weight Input -->
+<div class="flex flex-col items-center">
+<label class="font-label-caps text-label-caps text-on-surface-variant mb-2">Weight (kg)</label>
+<div class="relative w-full">
+<input class="w-full bg-[#0d0e0f] border border-white/10 rounded-lg text-center font-stat-lg text-stat-lg py-3 text-primary focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 focus:outline-none transition-all shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)] appearance-none" type="number" value="120"/>
+</div>
+</div>
+<!-- Reps Input -->
+<div class="flex flex-col items-center">
+<label class="font-label-caps text-label-caps text-on-surface-variant mb-2">Reps</label>
+<div class="relative w-full">
+<input class="w-full bg-[#0d0e0f] border border-white/10 rounded-lg text-center font-stat-lg text-stat-lg py-3 text-primary focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 focus:outline-none transition-all shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)] appearance-none" type="number" value="8"/>
+</div>
+</div>
+<!-- RIR Input -->
+<div class="flex flex-col items-center">
+<label class="font-label-caps text-label-caps text-on-surface-variant mb-2">RIR</label>
+<div class="relative w-full">
+<input class="w-full bg-[#0d0e0f] border border-white/10 rounded-lg text-center font-stat-lg text-stat-lg py-3 text-primary focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 focus:outline-none transition-all shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)] appearance-none" type="number" value="2"/>
+</div>
+</div>
+</div>
+<!-- Primary Action -->
+<button class="w-full bg-primary-container text-on-primary-fixed font-label-caps text-label-caps py-4 rounded-lg uppercase tracking-widest shadow-[0_0_15px_rgba(195,244,0,0.2)] hover:shadow-[0_0_25px_rgba(195,244,0,0.4)] transition-all font-bold flex items-center justify-center gap-2 active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "wght" 700;'>done_all</span>
+                    Log Set 2
+                </button>
+<!-- Quick adjustments -->
+<div class="flex justify-center gap-4 mt-4">
+<button class="text-on-surface-variant font-label-caps text-[10px] uppercase tracking-wider flex items-center gap-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[14px]">history</span> History
+                    </button>
+<button class="text-on-surface-variant font-label-caps text-[10px] uppercase tracking-wider flex items-center gap-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[14px]">videocam</span> Form Video
+                    </button>
+</div>
+</div>
+<!-- Scroll Hint -->
+<div class="absolute bottom-4 left-0 right-0 flex justify-center z-10 opacity-50 animate-pulse pointer-events-none">
+<span class="material-symbols-outlined text-white">keyboard_arrow_down</span>
+</div>
+</section>
+<!-- Dummy Reel Item 2 for scroll demonstration -->
+<section class="h-full w-full snap-start relative flex flex-col justify-center items-center bg-[#0d0e0f]">
+<span class="font-headline-md text-headline-md text-on-surface-variant">Next Exercise...</span>
+</section>
+</main>
+<!-- BottomNavBar from JSON -->
+<nav class="bg-zinc-950/90 dark:bg-[#0d0d0d]/80 backdrop-blur-xl fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe border-t border-white/10 shadow-[0_-4px_24px_rgba(0,0,0,0.6)] z-50">
+<!-- Home -->
+<button class="flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-600 hover:text-white dark:hover:text-zinc-200 transition-colors active:scale-90 duration-150 ease-out">
+<span class="material-symbols-outlined mb-1 text-[24px]">home</span>
+<span class="font-['Space_Grotesk'] font-medium text-[10px] tracking-tight">Home</span>
+</button>
+<!-- Workouts (ACTIVE STATE APPLIED) -->
+<button class="flex flex-col items-center justify-center text-lime-400 dark:text-[#ccff00] drop-shadow-[0_0_10px_rgba(204,255,0,0.3)] hover:text-white dark:hover:text-zinc-200 transition-colors active:scale-90 duration-150 ease-out">
+<span class="material-symbols-outlined mb-1 text-[24px]" style='font-variation-settings: "FILL" 1;'>fitness_center</span>
+<span class="font-['Space_Grotesk'] font-medium text-[10px] tracking-tight">Workouts</span>
+</button>
+<!-- Analytics -->
+<button class="flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-600 hover:text-white dark:hover:text-zinc-200 transition-colors active:scale-90 duration-150 ease-out">
+<span class="material-symbols-outlined mb-1 text-[24px]">monitoring</span>
+<span class="font-['Space_Grotesk'] font-medium text-[10px] tracking-tight">Analytics</span>
+</button>
+<!-- Profile -->
+<button class="flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-600 hover:text-white dark:hover:text-zinc-200 transition-colors active:scale-90 duration-150 ease-out">
+<span class="material-symbols-outlined mb-1 text-[24px]">handyman</span>
+<span class="font-['Space_Grotesk'] font-medium text-[10px] tracking-tight">Profile</span>
+</button>
+</nav>
+</body></html>

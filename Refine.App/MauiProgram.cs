@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Refine.App.Services; // Servislerin olduğu namespace
 
 namespace Refine.App;
@@ -13,6 +13,8 @@ public static class MauiProgram
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialFilled");
+                fonts.AddFont("MaterialIconsOutlined-Regular.otf", "MaterialOutlined");
             });
 
         // --- KRİTİK BÖLÜM: SERVİS KAYITLARI ---

@@ -1,4 +1,5 @@
-﻿using SQLite;
+using SQLite;
+using SQLiteNetExtensions.Attributes;
 
 namespace Refine.App.Models;
 
@@ -13,6 +14,6 @@ public class WorkoutProgram
     public string TargetMuscles { get; set; } = "";
     public string Environment { get; set; } = "";
 
-    [Ignore]
+    [OneToMany(CascadeOperations = CascadeOperation.All)]
     public List<Workout> Workouts { get; set; } = new();
 }

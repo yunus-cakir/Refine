@@ -1,125 +1,114 @@
-﻿@page "/"
+@page "/"
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService DbService
-<div class="animate-fade-in">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <small class="text-muted">Hoş geldin,</small>
-            <h4 class="fw-bold text-gradient">@(_user?.FirstName ?? "Sporcu")!</h4>
-        </div>
-        <div class="profile-icon">
-            <i class="bi bi-person-fill"></i>
-        </div>
-    </div>
 
-    <div class="refine-card p-3 mb-4 d-flex justify-content-between align-items-center">
-        <div>
-            <small class="text-muted d-block">Bu haftaki antrenman</small>
-            <span class="fs-4 fw-bold">3</span> <span class="text-muted fs-6">/ 5 Hedef</span>
-        </div>
-        <div class="circular-chart" style="background: conic-gradient(var(--refine-primary) 60%, #333 0);">
-            <div class="inner-circle">60%</div>
-        </div>
-    </div>
+<div class="bg-background font-body-md text-on-surface min-h-screen">
 
-    <h5 class="fw-bold mb-3">Programlarım</h5>
+    <main class="flex flex-col gap-6 max-w-3xl mx-auto">
+        <!-- Welcome Section -->
+        <section class="flex flex-col gap-2">
+            <p class="text-label-caps text-on-surface-variant">@DateTime.Now.ToString("dddd, MMM dd").ToUpper()</p>
+            <h1 class="text-headline-md text-tertiary">Welcome, @(_user?.FirstName ?? "Sporcu")!</h1>
+        </section>
 
-    @if (_programs == null)
-    {
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status"></div>
-        </div>
-    }
-    else if (_programs.Count == 0)
-    {
-        <div class="text-center text-muted py-4">
-            Henüz programın yok.
-        </div>
-    }
-    else
-    {
-        <div class="d-flex flex-column gap-3">
-            @foreach (var prog in _programs.Take(3))
-            {
-                <a href="/programs/@prog.Id" class="text-decoration-none">
-                    <div class="refine-card p-3 d-flex justify-content-between align-items-center hover-effect">
-                        <div>
-                            <span class="badge bg-dark text-white border border-secondary mb-2">@prog.Level</span>
-                            <h6 class="fw-bold m-0 text-white">@prog.Name</h6>
-                            <small class="text-muted">@prog.Goal</small>
-                        </div>
-                        <i class="bi bi-chevron-right text-muted"></i>
+        <!-- Main CTA Card: Next Workout -->
+        <section>
+            <div class="bg-primary-fixed rounded-xl p-6 shadow-[0_0_20px_rgba(204,255,0,0.15)] relative overflow-hidden group hover:scale-[1.01] transition-transform duration-300 cursor-pointer">
+                <!-- Abstract grid overlay -->
+                <div class="absolute inset-0 opacity-10 pointer-events-none chart-grid"></div>
+                <div class="relative z-10 flex flex-col gap-4">
+                    <div class="flex justify-between items-start">
+                        <span class="bg-black/10 px-3 py-1 rounded-full text-label-caps text-on-primary-fixed">UP NEXT</span>
+                        <span class="material-symbols-outlined text-on-primary-fixed" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
                     </div>
-                </a>
-            }
-        </div>
-    }
+                    <div>
+                        <h2 class="text-display-lg text-on-primary-fixed mb-1">Chest & Triceps</h2>
+                        <p class="text-body-md text-on-primary-fixed-variant">~60 Min • High Intensity</p>
+                    </div>
+                    <div class="mt-2 flex items-center justify-between">
+                        <div class="flex gap-2">
+                            <span class="w-2 h-2 rounded-full bg-on-primary-fixed"></span>
+                            <span class="w-2 h-2 rounded-full bg-on-primary-fixed/30"></span>
+                            <span class="w-2 h-2 rounded-full bg-on-primary-fixed/30"></span>
+                        </div>
+                        <button class="bg-on-primary-fixed text-primary-fixed px-6 py-2 rounded-lg text-title-sm flex items-center gap-2 hover:bg-black transition-colors">
+                            BAŞLA
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bento Grid: Stats & Analytics -->
+        <section class="grid grid-cols-2 gap-4">
+            <!-- Recovery Metric -->
+            <div class="refine-card flex flex-col gap-2">
+                <div class="flex items-center gap-2 text-on-surface-variant">
+                    <span class="material-symbols-outlined text-[18px]">favorite</span>
+                    <span class="text-label-caps">RECOVERY</span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-stat-lg text-tertiary">84</span>
+                    <span class="text-body-md text-on-surface-variant">%</span>
+                </div>
+                <div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden mt-auto">
+                    <div class="bg-primary-fixed w-[84%] h-full rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Volume Metric -->
+            <div class="refine-card flex flex-col gap-2">
+                <div class="flex items-center gap-2 text-on-surface-variant">
+                    <span class="material-symbols-outlined text-[18px]">bolt</span>
+                    <span class="text-label-caps">HFT. HACİM</span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-stat-lg text-tertiary">14.2</span>
+                    <span class="text-body-md text-on-surface-variant">k lbs</span>
+                </div>
+                <p class="text-[10px] text-primary-fixed mt-auto flex items-center gap-1 font-bold uppercase tracking-wider">
+                    <span class="material-symbols-outlined text-[12px]">trending_up</span> geçen haftaya göre +5%
+                </p>
+            </div>
+
+            <!-- Analytics Chart Mockup -->
+            <div class="refine-card col-span-2 flex flex-col gap-4 relative overflow-hidden">
+                <div class="flex justify-between items-start z-10">
+                    <div>
+                        <h3 class="text-title-sm text-tertiary">Bench Press</h3>
+                        <p class="text-label-caps text-on-surface-variant mt-1">PROGRESSIVE OVERLOAD (30 GÜN)</p>
+                    </div>
+                    <span class="material-symbols-outlined text-primary-fixed">monitoring</span>
+                </div>
+                
+                <div class="h-[120px] w-full relative mt-2 z-10">
+                    <!-- Faux Grid -->
+                    <div class="absolute inset-0 flex flex-col justify-between">
+                        <div class="border-b border-white/5 w-full h-0"></div>
+                        <div class="border-b border-white/5 w-full h-0"></div>
+                        <div class="border-b border-white/5 w-full h-0"></div>
+                        <div class="border-b border-white/5 w-full h-0"></div>
+                    </div>
+                    <!-- Faux SVG Line Chart -->
+                    <svg class="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                        <defs>
+                            <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0%" stop-color="#ccff00" stop-opacity="0.2"></stop>
+                                <stop offset="100%" stop-color="#ccff00" stop-opacity="0"></stop>
+                            </linearGradient>
+                        </defs>
+                        <path d="M0,80 L20,75 L40,60 L60,65 L80,40 L100,30 L100,100 L0,100 Z" fill="url(#chartFill)"></path>
+                        <path d="M0,80 L20,75 L40,60 L60,65 L80,40 L100,30" fill="none" stroke="#ccff00" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+                        <circle cx="80" cy="40" fill="#121414" r="4" stroke="#ccff00" stroke-width="2"></circle>
+                        <circle cx="100" cy="30" fill="#ccff00" r="4"></circle>
+                    </svg>
+                </div>
+            </div>
+        </section>
+    </main>
 </div>
-
-<style>
-    /* Basit animasyonlar */
-    .animate-fade-in {
-        animation: fadeIn 0.4s ease-out;
-    }
-
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .text-gradient {
-        background: linear-gradient(45deg, #fff, var(--refine-text-muted));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .profile-icon {
-        width: 45px;
-        height: 45px;
-        background: var(--refine-card);
-        border: 1px solid var(--refine-card-border);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        color: var(--refine-primary);
-    }
-
-    .circular-chart {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .inner-circle {
-        width: 42px;
-        height: 42px;
-        background-color: var(--refine-card);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-
-    .hover-effect:active {
-        transform: scale(0.98);
-        background-color: var(--refine-card-border);
-    }
-</style>
 
 @code {
     private User? _user;
@@ -129,9 +118,7 @@
     {
         try
         {
-            // Kullanıcıyı DB'den çek
             _user = await DbService.GetUserAsync();
-            // Programları DB'den çek
             _programs = await DbService.GetAllProgramsAsync();
         }
         catch (Exception ex)

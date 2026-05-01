@@ -1,86 +1,112 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:Refine.App"
              xmlns:components="clr-namespace:Refine.App.Components" 
              x:Class="Refine.App.MainPage"
-             BackgroundColor="#0f1115">
+             BackgroundColor="#0d0d0d">
 
-    <Grid>
-        <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
+    <Grid RowDefinitions="Auto, *, Auto">
+        
+        <!-- TOP APP BAR -->
+        <Grid Grid.Row="0" HeightRequest="60" BackgroundColor="#0d0d0d" Padding="20,0">
+            <Border StrokeThickness="0" BackgroundColor="#0d0d0d" VerticalOptions="Fill" HorizontalOptions="Fill">
+                <BoxView HeightRequest="1" Color="#1Affffff" VerticalOptions="End" />
+            </Border>
+
+            <!-- Custom Switch (Left) -->
+            <Border HorizontalOptions="Start" VerticalOptions="Center" 
+                    Stroke="#1Affffff" StrokeThickness="1" 
+                    BackgroundColor="#1c1c1e" 
+                    StrokeShape="RoundRectangle 16"
+                    Padding="4">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnSwitchTapped" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="28,28" ColumnSpacing="4">
+                    <Border x:Name="SwitchLeftCircle" Grid.Column="0" StrokeThickness="0" BackgroundColor="#3b82f6" StrokeShape="RoundRectangle 14" HeightRequest="28" WidthRequest="28">
+                        <Border.Shadow>
+                            <Shadow Brush="#3b82f6" Offset="0,0" Opacity="0.5" Radius="12" />
+                        </Border.Shadow>
+                        <BoxView Color="#ffffff" HeightRequest="8" WidthRequest="8" CornerRadius="4" HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                    <Border x:Name="SwitchRightCircle" Grid.Column="1" StrokeThickness="0" BackgroundColor="#3f3f46" StrokeShape="RoundRectangle 14" HeightRequest="28" WidthRequest="28">
+                        <Border.Shadow>
+                            <Shadow Brush="Transparent" Offset="0,0" Opacity="0" Radius="0" />
+                        </Border.Shadow>
+                        <BoxView Color="#71717a" HeightRequest="8" WidthRequest="8" CornerRadius="4" HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Center Logo Text -->
+            <Label Text="REFINE STUDIO" 
+                   TextColor="#ccff00" 
+                   FontFamily="Space Grotesk"
+                   FontAttributes="Bold,Italic" 
+                   FontSize="18" 
+                   HorizontalOptions="Center" 
+                   VerticalOptions="Center" 
+                   CharacterSpacing="1.5" />
+
+            <!-- Profile Photo (Right) -->
+            <Border HorizontalOptions="End" VerticalOptions="Center"
+                    Stroke="#1Affffff" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16"
+                    HeightRequest="32" WidthRequest="32">
+                <Image Source="https://i.pravatar.cc/150?img=33" Aspect="AspectFill" />
+            </Border>
+        </Grid>
+
+        <!-- BLAZOR CONTENT -->
+        <BlazorWebView Grid.Row="1" x:Name="blazorWebView" HostPage="wwwroot/index.html">
             <BlazorWebView.RootComponents>
                 <RootComponent Selector="#app" ComponentType="{x:Type components:Routes}" />
             </BlazorWebView.RootComponents>
         </BlazorWebView>
 
-        <Grid VerticalOptions="End" HeightRequest="60" Margin="0" 
-              InputTransparent="False"
-              CascadeInputTransparent="False">
-
-            <Border StrokeThickness="0" 
-                    BackgroundColor="#FE0d0d0d" 
-                    VerticalOptions="Fill" 
-                    HorizontalOptions="Fill">
-                <BoxView HeightRequest="1" Color="#33ffffff" VerticalOptions="Start" />
+        <!-- BOTTOM APP BAR -->
+        <Grid Grid.Row="2" HeightRequest="60" BackgroundColor="#0d0d0d">
+            <Border StrokeThickness="0" BackgroundColor="#0d0d0d" VerticalOptions="Fill" HorizontalOptions="Fill">
+                <BoxView HeightRequest="1" Color="#1Affffff" VerticalOptions="Start" />
             </Border>
 
-            <Grid ColumnDefinitions="*,*,*,*,*" Padding="0,5,0,0">
-
+            <Grid ColumnDefinitions="*,*,*,*" Padding="0,5,0,0">
+                <!-- 1. Home -->
                 <VerticalStackLayout Grid.Column="0" VerticalOptions="Center" HorizontalOptions="Center" Spacing="2">
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnNavTapped" CommandParameter=""/>
+                    </VerticalStackLayout.GestureRecognizers>
+                    <Label x:Name="IconHome" Text="{x:Static local:IconPaths.Home}" FontFamily="MaterialOutlined" FontSize="24" HorizontalOptions="Center" />
+                    <Label Text="Home" FontSize="10" FontAttributes="Bold" HorizontalOptions="Center" x:Name="TextHome"/>
+                </VerticalStackLayout>
+
+                <!-- 2. Workouts -->
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" HorizontalOptions="Center" Spacing="2">
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnNavTapped" CommandParameter="workouts"/>
                     </VerticalStackLayout.GestureRecognizers>
-                    <Path x:Name="PathWorkouts" Aspect="Uniform" HeightRequest="22" WidthRequest="22" HorizontalOptions="Center"/>
-                    <Label Text="Antrenman" FontSize="10" FontAttributes="Bold" HorizontalOptions="Center" x:Name="TextWorkouts"/>
+                    <Label x:Name="IconWorkouts" Text="{x:Static local:IconPaths.Workouts}" FontFamily="MaterialOutlined" FontSize="24" HorizontalOptions="Center" />
+                    <Label Text="Workouts" FontSize="10" FontAttributes="Bold" HorizontalOptions="Center" x:Name="TextWorkouts"/>
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" HorizontalOptions="Center" Spacing="2">
+                <!-- 3. Analytics -->
+                <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="Center" Spacing="2">
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnNavTapped" CommandParameter="programs"/>
+                        <TapGestureRecognizer Tapped="OnNavTapped" CommandParameter="analytics"/>
                     </VerticalStackLayout.GestureRecognizers>
-                    <Path x:Name="PathPrograms" Aspect="Uniform" HeightRequest="22" WidthRequest="22" HorizontalOptions="Center"/>
-                    <Label Text="Programlar" FontSize="10" FontAttributes="Bold" HorizontalOptions="Center" x:Name="TextPrograms"/>
+                    <Label x:Name="IconAnalytics" Text="{x:Static local:IconPaths.Analytics}" FontFamily="MaterialOutlined" FontSize="24" HorizontalOptions="Center" />
+                    <Label Text="Analytics" FontSize="10" FontAttributes="Bold" HorizontalOptions="Center" x:Name="TextAnalytics"/>
                 </VerticalStackLayout>
 
-                <Grid Grid.Column="2" WidthRequest="56" HeightRequest="56" VerticalOptions="Start" Margin="0,-30,0,0">
-                    <Border StrokeShape="RoundRectangle 28"
-                            StrokeThickness="4"
-                            Stroke="#0f1115"
-                            BackgroundColor="#ccff00"
-                            HorizontalOptions="Fill"
-                            VerticalOptions="Fill">
-
-                        <Border.Shadow>
-                            <Shadow Brush="#ccff00" Offset="0,2" Opacity="0.15" Radius="5" />
-                        </Border.Shadow>
-
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnNavTapped" CommandParameter=""/>
-                        </Border.GestureRecognizers>
-
-                        <Path x:Name="PathHome"
-                              Fill="#000000"
-                              Aspect="Uniform" HeightRequest="24" WidthRequest="24" 
-                              HorizontalOptions="Center" VerticalOptions="Center"/>
-                    </Border>
-                </Grid>
-
+                <!-- 4. Preferences -->
                 <VerticalStackLayout Grid.Column="3" VerticalOptions="Center" HorizontalOptions="Center" Spacing="2">
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnNavTapped" CommandParameter="exercises"/>
+                        <TapGestureRecognizer Tapped="OnNavTapped" CommandParameter="preferences"/>
                     </VerticalStackLayout.GestureRecognizers>
-                    <Path x:Name="PathExercises" Aspect="Uniform" HeightRequest="22" WidthRequest="22" HorizontalOptions="Center"/>
-                    <Label Text="Hareket" FontSize="10" FontAttributes="Bold" HorizontalOptions="Center" x:Name="TextExercises"/>
+                    <Label x:Name="IconPreferences" Text="{x:Static local:IconPaths.Preferences}" FontFamily="MaterialOutlined" FontSize="24" HorizontalOptions="Center" />
+                    <Label Text="Preferences" FontSize="10" FontAttributes="Bold" HorizontalOptions="Center" x:Name="TextPreferences"/>
                 </VerticalStackLayout>
-
-                <VerticalStackLayout Grid.Column="4" VerticalOptions="Center" HorizontalOptions="Center" Spacing="2">
-                    <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnNavTapped" CommandParameter="profile"/>
-                    </VerticalStackLayout.GestureRecognizers>
-                    <Path x:Name="PathProfile" Aspect="Uniform" HeightRequest="22" WidthRequest="22" HorizontalOptions="Center"/>
-                    <Label Text="Profil" FontSize="10" FontAttributes="Bold" HorizontalOptions="Center" x:Name="TextProfile"/>
-                </VerticalStackLayout>
-
             </Grid>
         </Grid>
     </Grid>

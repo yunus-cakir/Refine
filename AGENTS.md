@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Must-follow constraints
-- **SQLite Limitation:** `sqlite-net-pcl` does not support `List<T>` properties. [cite_start]You must use the `[Ignore]` attribute on list properties and manage relationships manually via Foreign Keys (IDs). [cite: 375, 376, 377]
+- **SQLite Relationships:** We use `SQLiteNetExtensions` for relationships. Use `[OneToMany]`, `[ManyToOne]`, `[ManyToMany]` attributes and `[ForeignKey]` instead of manual `[Ignore]` tracking. Always use `*WithChildrenAsync` methods (e.g., `GetWithChildrenAsync`) in the repository layer to load/save navigation properties.
 - **UI Alerts:** Do not call `Application.Current.MainPage.DisplayAlert` directly. [cite_start]You must use `UiHelper.ShowConfirm` or `UiHelper.ShowAlert` to prevent null reference crashes and handle the `.NET 9` windowing model safely. [cite: 130, 134]
 - [cite_start]**Navigation:** All cross-platform navigation must be triggered via `NavigationBridge` to ensure the Native XAML TabBar and Blazor WebView stay in sync. [cite: 216]
 - **App Startup:** Do not set `MainPage` in `App.xaml.cs`. You must override `CreateWindow` and return a `new Window(mainPage)`.

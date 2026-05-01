@@ -1,4 +1,4 @@
-﻿@page "/exercises/edit/{id:int}"
+@page "/exercises/edit/{id:int}"
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService DbService
@@ -22,16 +22,11 @@
         </div>
 
         <div class="mb-3">
-            <label class="form-label text-muted small">Kas Grubu</label>
-            <InputSelect @bind-Value="_exercise.MuscleGroup" class="form-select bg-dark text-white border-secondary">
-                <option value="">Seçiniz...</option>
-                <option value="Chest">Chest (Göğüs)</option>
-                <option value="Back">Back (Sırt)</option>
-                <option value="Legs">Legs (Bacak)</option>
-                <option value="Shoulders">Shoulders (Omuz)</option>
-                <option value="Arms">Arms (Kol)</option>
-                <option value="Core">Core (Karın)</option>
-            </InputSelect>
+            <label class="form-label text-muted small">Birincil Kas Kategorisi</label>
+            <input value="@_exercise.PrimaryMuscleCategory" disabled class="form-control bg-dark text-white border-secondary" />
+            <div class="form-text text-muted" style="font-size: 0.75rem;">
+                Kas grubu atamaları "Advanced Muscle Mapping" menüsünden düzenlenmektedir.
+            </div>
         </div>
 
         <div class="mb-3">

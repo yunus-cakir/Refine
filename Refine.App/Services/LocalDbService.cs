@@ -1,5 +1,6 @@
-﻿using SQLite;
+using SQLite;
 using Refine.App.Models;
+using SQLiteNetExtensionsAsync.Extensions;
 
 namespace Refine.App.Services;
 
@@ -15,7 +16,8 @@ public class LocalDbService
 
         _connection = new SQLiteAsyncConnection(DbConstants.DatabasePath, DbConstants.Flags);
 
-        // Tabloları oluştur
+        await _connection.CreateTableAsync<MuscleGroup>();
+        await _connection.CreateTableAsync<ExerciseMuscleMap>();
         await _connection.CreateTableAsync<Exercise>();
         await _connection.CreateTableAsync<WorkoutProgram>();
         await _connection.CreateTableAsync<Workout>();
@@ -24,11 +26,19 @@ public class LocalDbService
         await _connection.CreateTableAsync<User>();
         await _connection.CreateTableAsync<AppSetting>();
 
+        // Ayarları her zaman kontrol et ve eksikleri yükle
+        await SeedUserSettingsAsync();
+
         // Eğer Egzersiz tablosu boşsa, örnek verileri yükle
         if (await _connection.Table<Exercise>().CountAsync() == 0)
         {
             await SeedDataAsync();
-            await SeedUserSettingsAsync();
+        }
+
+        var mockProgramExists = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "W's Hypertrophy").CountAsync();
+        if (mockProgramExists == 0)
+        {
+            await SeedMockProgramAsync();
         }
     }
 
@@ -111,7 +121,8 @@ public class LocalDbService
             new AppSetting { Key = "PreferredRIR", Value = "2", DataType = "int", Category = "Workout", Description = "Varsayılan Rezerv Tekrar (RIR)" },
             new AppSetting { Key = "DefaultRestTime", Value = "60", DataType = "int", Category = "Workout", Description = "Varsayılan Dinlenme Süresi (sn)" },
             new AppSetting { Key = "ShowTips", Value = "true", DataType = "bool", Category = "General", Description = "İpuçlarını Göster" },
-            new AppSetting { Key = "WeightUnit", Value = "kg", DataType = "string", Category = "General", Description = "Ağırlık Birimi (kg/lbs)" }
+            new AppSetting { Key = "WeightUnit", Value = "kg", DataType = "string", Category = "General", Description = "Ağırlık Birimi (kg/lbs)" },
+            new AppSetting { Key = "CnsThreshold", Value = "150", DataType = "int", Category = "Workout", Description = "CNS Yorgunluk Eşiği" }
         };
 
         foreach (var def in defaultSettings)
@@ -152,7 +163,12 @@ public class LocalDbService
     public async Task<List<Exercise>> GetExercisesAsync()
     {
         await Init();
-        return await _connection!.Table<Exercise>().ToListAsync();
+        var exercises = await _connection!.Table<Exercise>().ToListAsync();
+        foreach (var ex in exercises)
+        {
+            await _connection.GetChildrenAsync(ex, recursive: true);
+        }
+        return exercises;
     }
 
     // --------------------------------------------
@@ -164,36 +180,17 @@ public class LocalDbService
         await Init();
 
         if (workout.Id != 0)
-            await _connection!.UpdateAsync(workout);
+            await _connection!.UpdateWithChildrenAsync(workout);
         else
-            await _connection!.InsertAsync(workout);
-
-        var oldItems = await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == workout.Id).ToListAsync();
-        foreach (var old in oldItems)
-        {
-            await _connection.DeleteAsync(old);
-        }
-
-        if (workout.Items != null && workout.Items.Any())
-        {
-            foreach (var item in workout.Items)
-            {
-                item.Id = 0;
-                item.WorkoutId = workout.Id;
-                await _connection.InsertAsync(item);
-            }
-        }
+            await _connection!.InsertWithChildrenAsync(workout, recursive: true);
     }
 
     public async Task DeleteWorkoutAsync(int workoutId)
     {
         await Init();
-
-        var items = await _connection!.Table<WorkoutItem>().Where(i => i.WorkoutId == workoutId).ToListAsync();
-        foreach (var item in items) await _connection.DeleteAsync(item);
-
-        var workout = await _connection.Table<Workout>().Where(w => w.Id == workoutId).FirstOrDefaultAsync();
-        if (workout != null) await _connection.DeleteAsync(workout);
+        var workout = await GetWorkoutByIdAsync(workoutId);
+        if (workout != null)
+            await _connection!.DeleteAsync(workout, recursive: true);
     }
 
     // --------------------------------------------
@@ -211,8 +208,7 @@ public class LocalDbService
 
         foreach (var w in workouts)
         {
-            var items = await _connection.Table<WorkoutItem>().Where(wi => wi.WorkoutId == w.Id).ToListAsync();
-            w.Items = items;
+            await _connection.GetChildrenAsync(w, recursive: true);
         }
 
         return workouts;
@@ -319,17 +315,34 @@ public class LocalDbService
     //              WORKOUTPROGRAM CRUD
     // --------------------------------------------
 
+    public async Task<WorkoutProgram?> GetSelectedWorkoutProgramAsync()
+    {
+        var user = await GetUserAsync();
+        if (user.SelectedWorkoutProgramId.HasValue && user.SelectedWorkoutProgramId.Value > 0)
+        {
+            return await GetProgramByIdAsync(user.SelectedWorkoutProgramId.Value);
+        }
+        return null;
+    }
+
+    public async Task SetSelectedWorkoutProgramAsync(int programId)
+    {
+        var user = await GetUserAsync();
+        user.SelectedWorkoutProgramId = programId;
+        await UpdateUserAsync(user);
+    }
+
     public async Task<int> SaveWorkoutProgramAsync(WorkoutProgram program)
     {
         await Init();
         if (program.Id != 0)
         {
-            await _connection!.UpdateAsync(program);
+            await _connection!.UpdateWithChildrenAsync(program);
             return program.Id;
         }
         else
         {
-            await _connection!.InsertAsync(program);
+            await _connection!.InsertWithChildrenAsync(program, recursive: true);
             return program.Id;
         }
     }
@@ -348,25 +361,24 @@ public class LocalDbService
             WorkoutProgramId = targetProgramId,
             Name = sourceWorkout.Name,
             Description = sourceWorkout.Description,
-            Order = existingCount + 1
+            Order = existingCount + 1,
+            Items = new List<WorkoutItem>()
         };
-        await _connection!.InsertAsync(newWorkout);
 
         if (sourceWorkout.Items != null)
         {
             foreach (var item in sourceWorkout.Items)
             {
-                var newItem = new WorkoutItem
+                newWorkout.Items.Add(new WorkoutItem
                 {
-                    WorkoutId = newWorkout.Id,
                     ExerciseId = item.ExerciseId,
                     Sets = item.Sets,
                     RepsRange = item.RepsRange,
                     Order = item.Order
-                };
-                await _connection!.InsertAsync(newItem);
+                });
             }
         }
+        await _connection!.InsertWithChildrenAsync(newWorkout, recursive: true);
     }
 
     public async Task UpdateWorkoutOrdersAsync(List<Workout> workouts)
@@ -390,96 +402,76 @@ public class LocalDbService
     public async Task<WorkoutProgram?> GetProgramByIdAsync(int id)
     {
         await Init();
-
-        var program = await _connection!.Table<WorkoutProgram>()
-                                        .Where(p => p.Id == id)
-                                        .FirstOrDefaultAsync();
-        if (program == null) return null;
-
-        program.Workouts = await _connection.Table<Workout>()
-                                            .Where(w => w.WorkoutProgramId == id)
-                                            .OrderBy(w => w.Order)
-                                            .ToListAsync();
-
-        foreach (var workout in program.Workouts)
+        try
         {
-            workout.Items = await _connection.Table<WorkoutItem>()
-                                             .Where(wi => wi.WorkoutId == workout.Id)
-                                             .ToListAsync();
+            return await _connection!.GetWithChildrenAsync<WorkoutProgram>(id, recursive: true);
         }
-
-        return program;
+        catch
+        {
+            return null;
+        }
     }
 
-    // DÜZELTME: Items listesi ve içindeki Exercise nesnesi burada dolduruluyor
     public async Task<Workout?> GetWorkoutByIdAsync(int workoutId)
     {
         await Init();
-
-        var workout = await _connection!.Table<Workout>()
-                                        .Where(w => w.Id == workoutId)
-                                        .FirstOrDefaultAsync();
-        if (workout == null) return null;
-
-        var items = await _connection.Table<WorkoutItem>()
-                                     .Where(wi => wi.WorkoutId == workoutId)
-                                     .OrderBy(wi => wi.Order)
-                                     .ToListAsync();
-
-        foreach (var item in items)
+        try
         {
-            item.Exercise = await _connection.Table<Exercise>()
-                                             .Where(e => e.Id == item.ExerciseId)
-                                             .FirstOrDefaultAsync();
+            return await _connection!.GetWithChildrenAsync<Workout>(workoutId, recursive: true);
         }
-
-        workout.Items = items;
-        return workout;
+        catch
+        {
+            return null;
+        }
     }
 
     public async Task DeleteProgramAsync(int programId)
     {
         await Init();
-
-        var workouts = await _connection!.Table<Workout>()
-                                        .Where(w => w.WorkoutProgramId == programId)
-                                        .ToListAsync();
-
-        foreach (var workout in workouts)
-        {
-            await DeleteWorkoutAsync(workout.Id);
-        }
-
-        var program = await _connection.Table<WorkoutProgram>()
-                                       .Where(p => p.Id == programId)
-                                       .FirstOrDefaultAsync();
-
+        var program = await GetProgramByIdAsync(programId);
         if (program != null)
         {
-            await _connection.DeleteAsync(program);
+            await _connection!.DeleteAsync(program, recursive: true);
         }
     }
 
     private async Task SeedDataAsync()
     {
-        // --- 1. EGZERSİZLERİ OLUŞTUR ---
+        // --- 1. KAS GRUPLARINI OLUŞTUR ---
+        var muscles = new List<MuscleGroup>
+        {
+            new MuscleGroup { Category = "Chest", Name = "Pectoralis Major" },
+            new MuscleGroup { Category = "Chest", Name = "Upper Chest" },
+            new MuscleGroup { Category = "Back", Name = "Lats" },
+            new MuscleGroup { Category = "Back", Name = "Rhomboids" },
+            new MuscleGroup { Category = "Shoulders", Name = "Front Delt" },
+            new MuscleGroup { Category = "Shoulders", Name = "Side Delt" },
+            new MuscleGroup { Category = "Shoulders", Name = "Rear Delt" },
+            new MuscleGroup { Category = "Arms", Name = "Biceps" },
+            new MuscleGroup { Category = "Arms", Name = "Triceps" },
+            new MuscleGroup { Category = "Legs", Name = "Quads" },
+            new MuscleGroup { Category = "Legs", Name = "Hamstrings" },
+            new MuscleGroup { Category = "Legs", Name = "Glutes" },
+            new MuscleGroup { Category = "Core", Name = "Abs" }
+        };
+        await _connection!.InsertAllAsync(muscles);
+        var dbMuscles = await _connection.Table<MuscleGroup>().ToListAsync();
+        int GetMusId(string name) => dbMuscles.FirstOrDefault(m => m.Name == name)?.Id ?? 0;
+
+        // --- 2. EGZERSİZLERİ OLUŞTUR ---
         var exercises = new List<Exercise>
         {
-            new Exercise { Name = "Bench Press", Difficulty = "Intermediate", Equipment = "Barbell", MuscleGroup = "Chest", ImageUrl = "bench_press.png" },
-            new Exercise { Name = "Squat", Difficulty = "Intermediate", Equipment = "Barbell", MuscleGroup = "Legs", ImageUrl = "squat.png" },
-            new Exercise { Name = "Deadlift", Difficulty = "Advanced", Equipment = "Barbell", MuscleGroup = "Back", ImageUrl = "deadlift.png" },
-            new Exercise { Name = "Overhead Press", Difficulty = "Intermediate", Equipment = "Barbell", MuscleGroup = "Shoulders", ImageUrl = "ohp.png" },
-            new Exercise { Name = "Pull Up", Difficulty = "Intermediate", Equipment = "Bodyweight", MuscleGroup = "Back", ImageUrl = "pullup.png" },
-            
-            // --- EKSİK OLAN HAREKET BURAYA EKLENDİ ---
-            new Exercise { Name = "Barbell Row", Difficulty = "Intermediate", Equipment = "Barbell", MuscleGroup = "Back", ImageUrl = "barbell_row.png" },
-            // -----------------------------------------
-
-            new Exercise { Name = "Dumbbell Curl", Difficulty = "Beginner", Equipment = "Dumbbell", MuscleGroup = "Arms", ImageUrl = "curl.png" },
-            new Exercise { Name = "Triceps Pushdown", Difficulty = "Beginner", Equipment = "Machine", MuscleGroup = "Arms", ImageUrl = "pushdown.png" },
-            new Exercise { Name = "Lunges", Difficulty = "Beginner", Equipment = "Dumbbell", MuscleGroup = "Legs", ImageUrl = "lunges.png" },
-            new Exercise { Name = "Plank", Difficulty = "Beginner", Equipment = "Bodyweight", MuscleGroup = "Core", ImageUrl = "plank.png" },
-            new Exercise { Name = "Lateral Raise", Difficulty = "Beginner", Equipment = "Dumbbell", MuscleGroup = "Shoulders", ImageUrl = "lateral_raise.png" }
+            new Exercise { Name = "Bench Press", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "bench_press.png", CnsFatigueScore = 6.5m },
+            new Exercise { Name = "Squat", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "squat.png", CnsFatigueScore = 8.5m },
+            new Exercise { Name = "Deadlift", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "deadlift.png", CnsFatigueScore = 9.5m },
+            new Exercise { Name = "Overhead Press", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "ohp.png", CnsFatigueScore = 7.0m },
+            new Exercise { Name = "Pull Up", Difficulty = "Intermediate", Equipment = "Bodyweight", ImageUrl = "pullup.png", CnsFatigueScore = 6.0m },
+            new Exercise { Name = "Barbell Row", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "barbell_row.png", CnsFatigueScore = 7.5m },
+            new Exercise { Name = "Dumbbell Curl", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "curl.png", CnsFatigueScore = 3.0m },
+            new Exercise { Name = "Triceps Pushdown", Difficulty = "Beginner", Equipment = "Machine", ImageUrl = "pushdown.png", CnsFatigueScore = 3.0m },
+            new Exercise { Name = "Lunges", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "lunges.png", CnsFatigueScore = 6.0m },
+            new Exercise { Name = "Plank", Difficulty = "Beginner", Equipment = "Bodyweight", ImageUrl = "plank.png", CnsFatigueScore = 4.0m },
+            new Exercise { Name = "Lateral Raise", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "lateral_raise.png", CnsFatigueScore = 3.5m }
         };
 
         // Toplu ekle
@@ -490,6 +482,44 @@ public class LocalDbService
 
         // Helper fonksiyon
         int GetExId(string name) => dbExercises.FirstOrDefault(e => e.Name == name)?.Id ?? 0;
+
+        // --- 3. MAPPING (ÇOKA ÇOK) OLUŞTUR ---
+        var mappings = new List<ExerciseMuscleMap>
+        {
+            new ExerciseMuscleMap { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Pectoralis Major"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Front Delt"), ImpactMultiplier = 0.5 },
+            new ExerciseMuscleMap { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Triceps"), ImpactMultiplier = 0.5 },
+
+            new ExerciseMuscleMap { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.7 },
+            new ExerciseMuscleMap { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.4 },
+
+            new ExerciseMuscleMap { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.8 },
+            new ExerciseMuscleMap { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.6 },
+            
+            new ExerciseMuscleMap { ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Front Delt"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap { ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Triceps"), ImpactMultiplier = 0.6 },
+
+            new ExerciseMuscleMap { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5 },
+
+            new ExerciseMuscleMap { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Rhomboids"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.8 },
+            new ExerciseMuscleMap { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5 },
+
+            new ExerciseMuscleMap { ExerciseId = GetExId("Dumbbell Curl"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 1.0 },
+            
+            new ExerciseMuscleMap { ExerciseId = GetExId("Triceps Pushdown"), MuscleGroupId = GetMusId("Triceps"), ImpactMultiplier = 1.0 },
+
+            new ExerciseMuscleMap { ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap { ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.6 },
+            
+            new ExerciseMuscleMap { ExerciseId = GetExId("Plank"), MuscleGroupId = GetMusId("Abs"), ImpactMultiplier = 1.0 },
+
+            new ExerciseMuscleMap { ExerciseId = GetExId("Lateral Raise"), MuscleGroupId = GetMusId("Side Delt"), ImpactMultiplier = 1.0 }
+        };
+        await _connection.InsertAllAsync(mappings);
 
 
         // --- 2. PROGRAM 1: BAŞLANGIÇ ---
@@ -562,5 +592,184 @@ public class LocalDbService
             new WorkoutItem { WorkoutId = p2_legs.Id, ExerciseId = GetExId("Lunges"), Sets = 3, RepsRange = "10-12", Order = 2 },
             new WorkoutItem { WorkoutId = p2_legs.Id, ExerciseId = GetExId("Plank"), Sets = 3, RepsRange = "60sn", Order = 3 }
         });
+    }
+
+    private async Task SeedMockProgramAsync()
+    {
+        var dbMuscles = await _connection!.Table<MuscleGroup>().ToListAsync();
+        int GetMusId(string name) => dbMuscles.FirstOrDefault(m => m.Name == name)?.Id ?? 0;
+
+        // Ensure "Calves" muscle group exists
+        if (GetMusId("Calves") == 0)
+        {
+            var calves = new MuscleGroup { Category = "Legs", Name = "Calves" };
+            await _connection.InsertAsync(calves);
+            dbMuscles.Add(calves);
+        }
+
+        var exercisesToSeed = new List<Exercise>
+        {
+            new Exercise { Name = "Cable Lat Pull Over", Difficulty = "Intermediate", Equipment = "Cable", CnsFatigueScore = 5.0m },
+            new Exercise { Name = "Smith Incline Bench Press", Difficulty = "Intermediate", Equipment = "Machine", CnsFatigueScore = 6.0m },
+            new Exercise { Name = "Fly Machine", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 4.0m },
+            new Exercise { Name = "Shoulder Machine", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 4.5m },
+            new Exercise { Name = "Triceps Kickback", Difficulty = "Beginner", Equipment = "Dumbbell", CnsFatigueScore = 3.0m },
+            new Exercise { Name = "Ab Crunch", Difficulty = "Beginner", Equipment = "Bodyweight", CnsFatigueScore = 3.5m },
+            new Exercise { Name = "Leg Raise", Difficulty = "Beginner", Equipment = "Bodyweight", CnsFatigueScore = 4.0m },
+            new Exercise { Name = "Leg Press", Difficulty = "Intermediate", Equipment = "Machine", CnsFatigueScore = 7.0m },
+            new Exercise { Name = "Leg Extension", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 5.0m },
+            new Exercise { Name = "Leg Curl", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 5.0m },
+            new Exercise { Name = "Rear Delt Machine Fly", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 4.0m },
+            new Exercise { Name = "Hammer Curl", Difficulty = "Beginner", Equipment = "Dumbbell", CnsFatigueScore = 3.0m },
+            new Exercise { Name = "Barbell Curl", Difficulty = "Intermediate", Equipment = "Barbell", CnsFatigueScore = 4.0m },
+            new Exercise { Name = "Calf Raise", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 3.5m },
+            new Exercise { Name = "Vertical Row", Difficulty = "Intermediate", Equipment = "Machine", CnsFatigueScore = 6.0m },
+            new Exercise { Name = "One Arm Cable Row", Difficulty = "Intermediate", Equipment = "Cable", CnsFatigueScore = 5.0m },
+            new Exercise { Name = "Cable Lateral Raise", Difficulty = "Beginner", Equipment = "Cable", CnsFatigueScore = 3.5m },
+            new Exercise { Name = "Pushdown", Difficulty = "Beginner", Equipment = "Cable", CnsFatigueScore = 3.0m }
+        };
+
+        var dbExercises = await _connection.Table<Exercise>().ToListAsync();
+        
+        foreach(var ex in exercisesToSeed)
+        {
+            if (!dbExercises.Any(e => e.Name == ex.Name))
+            {
+                await _connection.InsertAsync(ex);
+                dbExercises.Add(ex);
+            }
+        }
+
+        int GetExId(string name) => dbExercises.FirstOrDefault(e => e.Name == name)?.Id ?? 0;
+
+        var program = new WorkoutProgram
+        {
+            Name = "Mock İdman Programı",
+            Level = "Advanced",
+            Goal = "Hipertrofi",
+            TargetMuscles = "Tüm Vücut",
+            Environment = "Spor Salonu"
+        };
+        await _connection.InsertAsync(program);
+
+        // Idman 1
+        var w1 = new Workout { WorkoutProgramId = program.Id, Name = "İdman 1", Order = 1 };
+        await _connection.InsertAsync(w1);
+        await _connection.InsertAllAsync(new[] {
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Pull Up"), Sets = 2, RepsRange = "Tükeniş", Order = 1 },
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Cable Lat Pull Over"), Sets = 2, RepsRange = "Tükeniş", Order = 2 },
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Smith Incline Bench Press"), Sets = 2, RepsRange = "Tükeniş", Order = 3 },
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Fly Machine"), Sets = 2, RepsRange = "Tükeniş", Order = 4 },
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Shoulder Machine"), Sets = 2, RepsRange = "Tükeniş", Order = 5 },
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 6 },
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Triceps Pushdown"), Sets = 2, RepsRange = "Tükeniş", Order = 7 },
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Triceps Kickback"), Sets = 2, RepsRange = "Tükeniş", Order = 8 },
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Ab Crunch"), Sets = 2, RepsRange = "Tükeniş", Order = 9 },
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Leg Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 10 }
+        });
+
+        // Idman 2
+        var w2 = new Workout { WorkoutProgramId = program.Id, Name = "İdman 2", Order = 2 };
+        await _connection.InsertAsync(w2);
+        await _connection.InsertAllAsync(new[] {
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Leg Press"), Sets = 2, RepsRange = "Tükeniş", Order = 1 },
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Leg Extension"), Sets = 2, RepsRange = "Tükeniş", Order = 2 },
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Leg Curl"), Sets = 2, RepsRange = "Tükeniş", Order = 3 },
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 4 },
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Rear Delt Machine Fly"), Sets = 2, RepsRange = "Tükeniş", Order = 5 },
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Hammer Curl"), Sets = 2, RepsRange = "Tükeniş", Order = 6 },
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Barbell Curl"), Sets = 2, RepsRange = "Tükeniş", Order = 7 },
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Calf Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 8 },
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Ab Crunch"), Sets = 2, RepsRange = "Tükeniş", Order = 9 },
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Leg Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 10 }
+        });
+
+        // Idman 3
+        var w3 = new Workout { WorkoutProgramId = program.Id, Name = "İdman 3", Order = 3 };
+        await _connection.InsertAsync(w3);
+        await _connection.InsertAllAsync(new[] {
+            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Smith Incline Bench Press"), Sets = 2, RepsRange = "Tükeniş", Order = 1 },
+            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Fly Machine"), Sets = 2, RepsRange = "Tükeniş", Order = 2 },
+            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Pull Up"), Sets = 2, RepsRange = "Tükeniş", Order = 3 },
+            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Vertical Row"), Sets = 2, RepsRange = "Tükeniş", Order = 4 },
+            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("One Arm Cable Row"), Sets = 2, RepsRange = "Tükeniş", Order = 5 },
+            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 6 },
+            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Cable Lateral Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 7 },
+            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Pushdown"), Sets = 2, RepsRange = "Tükeniş", Order = 8 },
+            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Ab Crunch"), Sets = 2, RepsRange = "Tükeniş", Order = 9 },
+            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Leg Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 10 }
+        });
+
+        // Generate 3 months of mock logs
+        var logs = new List<WorkoutLog>();
+        var r = new Random();
+        var startDate = DateTime.Now.Date.AddDays(-90);
+        int dayIndex = 0;
+        
+        var workouts = new[] { w1, w2, w3 };
+        var workoutItems = new List<List<WorkoutItem>>();
+        workoutItems.Add(await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == w1.Id).ToListAsync());
+        workoutItems.Add(await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == w2.Id).ToListAsync());
+        workoutItems.Add(await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == w3.Id).ToListAsync());
+
+        double GetProgressiveWeight(int dayIdx, double startWeight)
+        {
+            double weeksPassed = dayIdx / 7.0;
+            return Math.Round(startWeight + (weeksPassed * 1.5) + (r.NextDouble() * 2 - 1), 1);
+        }
+        
+        int GetProgressiveReps(int dayIdx, int baseReps)
+        {
+             return baseReps + (r.Next(0, 3));
+        }
+
+        while (dayIndex <= 90)
+        {
+            int weekDay = dayIndex % 7;
+            int? workoutIdx = null;
+            if (weekDay == 0) workoutIdx = 0;
+            else if (weekDay == 2) workoutIdx = 1;
+            else if (weekDay == 4) workoutIdx = 2;
+
+            if (workoutIdx.HasValue)
+            {
+                var wDate = startDate.AddDays(dayIndex).AddHours(18); // 18:00
+                var currentWorkout = workouts[workoutIdx.Value];
+                var currentItems = workoutItems[workoutIdx.Value];
+
+                foreach(var item in currentItems)
+                {
+                    var exName = dbExercises.FirstOrDefault(e => e.Id == item.ExerciseId)?.Name ?? "";
+                    
+                    double baseWeight = 50;
+                    if (exName.Contains("Press")) baseWeight = 60;
+                    if (exName.Contains("Fly")) baseWeight = 40;
+                    if (exName.Contains("Curl") || exName.Contains("Raise") || exName.Contains("Pushdown") || exName.Contains("Kickback")) baseWeight = 15;
+                    if (exName.Contains("Leg Press")) baseWeight = 120;
+                    if (exName.Contains("Leg Extension") || exName.Contains("Leg Curl")) baseWeight = 45;
+                    if (exName.Contains("Pull Up") || exName.Contains("Ab Crunch") || exName.Contains("Leg Raise") || exName.Contains("Plank")) baseWeight = 0;
+
+                    for(int s = 1; s <= item.Sets; s++)
+                    {
+                        logs.Add(new WorkoutLog
+                        {
+                            WorkoutId = currentWorkout.Id,
+                            ExerciseId = item.ExerciseId,
+                            ExerciseNameSnapshot = exName,
+                            Date = wDate.AddMinutes(item.Order * 5 + s * 2), // staggered times
+                            SetNumber = s,
+                            Weight = baseWeight > 0 ? GetProgressiveWeight(dayIndex, baseWeight) : 0,
+                            Reps = GetProgressiveReps(dayIndex, r.Next(8, 12)),
+                            RIR = 0, // Tükeniş
+                            FormRating = r.Next(3, 6),
+                            Note = ""
+                        });
+                    }
+                }
+            }
+            dayIndex++;
+        }
+
+        await _connection.InsertAllAsync(logs);
     }
 }

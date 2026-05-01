@@ -1,4 +1,5 @@
-﻿using SQLite;
+using SQLite;
+using SQLiteNetExtensions.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,12 @@ public class User
     public string Gender { get; set; } = "";
     public double Height { get; set; }
     public double Weight { get; set; }
+
+    [ForeignKey(typeof(WorkoutProgram))]
+    public int? SelectedWorkoutProgramId { get; set; }
+
+    [ManyToOne(CascadeOperations = CascadeOperation.CascadeRead)]
+    public WorkoutProgram? SelectedWorkoutProgram { get; set; }
 
     [Ignore]
     public List<WorkoutProgram> WorkoutPrograms { get; set; } = new();

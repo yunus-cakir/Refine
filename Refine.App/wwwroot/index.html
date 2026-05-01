@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Refine.App</title>
     <base href="/" />
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&amp;family=Inter:wght@400;500;600&amp;family=Lexend:wght@700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="Refine.App.styles.css" />
     <link rel="icon" href="data:,">
@@ -18,11 +26,15 @@
 
     <div id="app">Loading...</div>
 
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
+    <div id="blazor-error-ui"
+        class="hidden bg-red-900 text-white p-4 fixed bottom-0 w-full z-50 flex justify-between items-center">
+        <span>An unhandled error has occurred.</span>
+        <div>
+            <a href="" class="reload underline mr-4 cursor-pointer">Reload</a>
+            <a class="dismiss cursor-pointer font-bold">🗙</a>
+        </div>
     </div>
+
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
 
@@ -55,4 +67,5 @@
 </body>
 
 </body>
+
 </html>

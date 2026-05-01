@@ -1,4 +1,4 @@
-﻿@page "/history/detail/{WorkoutId:int}/{DateTicks:long}"
+@page "/history/detail/{WorkoutId:int}/{DateTicks:long}"
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService DbService
@@ -18,6 +18,28 @@
     <a href="@($"/session/edit/{WorkoutId}/{DateTicks}")" class="btn btn-dark btn-sm border-secondary text-white mt-3">
         <i class="bi bi-pencil-fill me-1"></i> Düzenle
     </a>
+</div>
+
+<div class="refine-card p-3 mb-4">
+    @{
+        var percentage = CnsThreshold > 0 ? Math.Min((TotalActualCnsLoad / CnsThreshold) * 100, 100) : 0;
+        var dynamicColor = Refine.App.Services.CnsHelper.GetCnsColor(percentage);
+    }
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="small fw-bold text-muted">Gerçekleşen CNS Yükü</span>
+        <span class="small fw-bold" style="color: @dynamicColor;">
+            %@percentage.ToString("0")
+        </span>
+    </div>
+    <div class="progress" style="height: 6px; background-color: #1a1a1a;">
+        <div class="progress-bar" role="progressbar" style="width: @percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%; background-color: @dynamicColor;"></div>
+    </div>
+    @if (TotalActualCnsLoad >= CnsThreshold)
+    {
+        <div class="mt-2 small d-flex align-items-center gap-1" style="color: @dynamicColor;">
+            <i class="bi bi-exclamation-triangle-fill"></i> Antrenman güvenli yorgunluk sınırını aşmış görünüyor.
+        </div>
+    }
 </div>
 
 @if (_logsGrouped == null)
@@ -88,13 +110,36 @@ else
     private class ExerciseHistoryGroup
     {
         public string ExerciseName { get; set; } = "";
+        public decimal BaseCnsScore { get; set; } = 0;
         public List<WorkoutLog> Logs { get; set; } = new();
     }
 
     private List<ExerciseHistoryGroup>? _logsGrouped;
+    private decimal CnsThreshold = 150m;
+    private int PreferredRIR = 2;
+
+    private decimal TotalActualCnsLoad => _logsGrouped?.Sum(g => 
+        g.Logs.Sum(l => 
+            CalculateLogCnsLoad(l, g.BaseCnsScore)
+        )
+    ) ?? 0;
+
+    private decimal CalculateLogCnsLoad(WorkoutLog log, decimal baseScore)
+    {
+        int reps = log.Reps ?? 10;
+        int rir = log.RIR ?? PreferredRIR;
+
+        decimal repMultiplier = reps > 0 ? (reps / 10m) : 1.0m;
+        decimal rirMultiplier = 1.0m + ((3m - rir) * 0.1m);
+
+        return baseScore * 1 /* 1 set */ * repMultiplier * rirMultiplier;
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        CnsThreshold = await DbService.GetSettingValueAsync("CnsThreshold", 150m);
+        PreferredRIR = await DbService.GetSettingValueAsync("PreferredRIR", 2);
+
         // Ticks'i tekrar DateTime'a çevir
         _sessionDate = new DateTime(DateTicks);
 
@@ -109,10 +154,15 @@ else
         var allExercises = await DbService.GetExercisesAsync();
 
         _logsGrouped = logs.GroupBy(l => l.ExerciseId)
-                           .Select(g => new ExerciseHistoryGroup
+                           .Select(g => 
                            {
-                               ExerciseName = allExercises.FirstOrDefault(e => e.Id == g.Key)?.Name ?? "Bilinmeyen Hareket",
-                               Logs = g.OrderBy(l => l.SetNumber).ToList()
+                               var ex = allExercises.FirstOrDefault(e => e.Id == g.Key);
+                               return new ExerciseHistoryGroup
+                               {
+                                   ExerciseName = ex?.Name ?? "Bilinmeyen Hareket",
+                                   BaseCnsScore = ex?.CnsFatigueScore ?? 0m,
+                                   Logs = g.OrderBy(l => l.SetNumber).ToList()
+                               };
                            })
                            .ToList();
     }

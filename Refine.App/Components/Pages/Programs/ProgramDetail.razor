@@ -1,4 +1,4 @@
-﻿@page "/programs/{id:int}"
+@page "/programs/{id:int}"
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService ProgramService
@@ -14,9 +14,23 @@ else
             <h2 class="fw-bold">@_program.Name</h2>
             <p class="text-muted mb-0">@_program.Goal • @_program.Level</p>
         </div>
-        <a href="@($"/workouts/edit/{Id}/0")" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
-            <i class="bi bi-plus-lg"></i> Ekle
-        </a>
+        <div class="d-flex gap-2 align-items-center">
+            @if (!_isSelected)
+            {
+                <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold" @onclick="SelectProgram">
+                    <i class="bi bi-check-circle me-1"></i> Seçili Yap
+                </button>
+            }
+            else
+            {
+                <span class="badge bg-success px-3 py-2 rounded-pill d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill me-1"></i> Seçili Program
+                </span>
+            }
+            <a href="@($"/workouts/edit/{Id}/0")" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
+                <i class="bi bi-plus-lg"></i> Ekle
+            </a>
+        </div>
     </div>
 
     <h5 class="mb-3 fw-bold">Antrenman Günleri</h5>
@@ -61,11 +75,24 @@ else
 @code {
     [Parameter] public int Id { get; set; }
     private WorkoutProgram? _program;
+    private bool _isSelected;
 
     protected override async Task OnParametersSetAsync()
     {
         // DÜZELTME: GetByIdAsync -> GetProgramByIdAsync oldu
         _program = await ProgramService.GetProgramByIdAsync(Id);
+        
+        var selectedProgram = await ProgramService.GetSelectedWorkoutProgramAsync();
+        _isSelected = selectedProgram != null && selectedProgram.Id == Id;
+    }
+
+    private async Task SelectProgram()
+    {
+        if (_program != null)
+        {
+            await ProgramService.SetSelectedWorkoutProgramAsync(_program.Id);
+            await OnParametersSetAsync();
+        }
     }
 
     private async Task DeleteWorkout(Workout workout)

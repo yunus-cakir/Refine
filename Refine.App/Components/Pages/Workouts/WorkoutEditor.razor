@@ -1,4 +1,4 @@
-﻿@page "/workouts/edit/{ProgramId:int}/{WorkoutId:int}"
+@page "/workouts/edit/{ProgramId:int}/{WorkoutId:int}"
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService DbService
@@ -33,6 +33,29 @@
         }
     </div>
 
+    <!-- YENİ: CNS YÜKÜ PROGRESS BAR (CANLI) -->
+    <div class="refine-card p-3 mb-4">
+        @{
+            var percentage = CnsThreshold > 0 ? Math.Min((TotalCnsLoad / CnsThreshold) * 100, 100) : 0;
+            var dynamicColor = Refine.App.Services.CnsHelper.GetCnsColor(percentage);
+        }
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small fw-bold text-muted">Anlık CNS Yükü</span>
+            <span class="small fw-bold" style="color: @dynamicColor;">
+                %@percentage.ToString("0")
+            </span>
+        </div>
+        <div class="progress" style="height: 6px; background-color: #1a1a1a;">
+            <div class="progress-bar" role="progressbar" style="width: @percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%; background-color: @dynamicColor;"></div>
+        </div>
+        @if (TotalCnsLoad >= CnsThreshold)
+        {
+            <div class="mt-2 small d-flex align-items-center gap-1">
+                <i class="bi bi-exclamation-triangle-fill"></i> Yüksek CNS Yorgunluğu! Bu antrenman sinir sisteminizi aşırı yorabilir.
+            </div>
+        }
+    </div>
+
     <div class="d-flex gap-2 mb-3">
         <select class="form-select bg-dark text-white border-secondary" @bind="_selectedExerciseId">
             <option value="0">Hareket Seç...</option>
@@ -40,7 +63,7 @@
             {
                 @foreach (var ex in _allExercises)
                 {
-                    <option value="@ex.Id">@ex.Name (@ex.MuscleGroup)</option>
+                    <option value="@ex.Id">@ex.Name (@ex.PrimaryMuscleCategory)</option>
                 }
             }
         </select>
@@ -119,8 +142,36 @@
     private List<Exercise>? _allExercises;
     private int _selectedExerciseId;
 
+    private decimal TotalCnsLoad => _workout?.Items?.Sum(i => CalculateItemCnsLoad(i)) ?? 0;
+    private decimal CnsThreshold = 150m;
+    private int PreferredRIR = 2;
+
+    private decimal CalculateItemCnsLoad(WorkoutItem item)
+    {
+        decimal baseScore = item.Exercise?.CnsFatigueScore ?? 0m;
+        
+        // Parse RepsRange (e.g. "8-12" -> 12, "10" -> 10)
+        int reps = 10; // default
+        if (!string.IsNullOrWhiteSpace(item.RepsRange))
+        {
+            var parts = item.RepsRange.Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length > 0 && int.TryParse(parts.Last().Trim(), out int parsedRep))
+            {
+                reps = parsedRep;
+            }
+        }
+        
+        decimal repMultiplier = reps > 0 ? (reps / 10m) : 1.0m;
+        decimal rirMultiplier = 1.0m + ((3m - PreferredRIR) * 0.1m);
+        
+        return baseScore * item.Sets * repMultiplier * rirMultiplier;
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        CnsThreshold = await DbService.GetSettingValueAsync("CnsThreshold", 150m);
+        PreferredRIR = await DbService.GetSettingValueAsync("PreferredRIR", 2);
+
         _allExercises = await DbService.GetExercisesAsync();
 
         if (WorkoutId != 0)

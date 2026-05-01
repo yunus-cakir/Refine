@@ -1,4 +1,4 @@
-﻿@page "/exercises"
+@page "/exercises"
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService DbService
@@ -31,7 +31,7 @@ else
 
                         <div>
                             <h6 class="fw-bold mb-0">@item.Name</h6>
-                            <small class="text-muted">@item.MuscleGroup • @item.Difficulty</small>
+                            <small class="text-muted">@item.PrimaryMuscleCategory • @item.Difficulty</small>
                         </div>
                     </div>
 

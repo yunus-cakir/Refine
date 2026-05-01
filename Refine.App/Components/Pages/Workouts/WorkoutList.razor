@@ -1,4 +1,4 @@
-﻿@page "/workouts"
+@page "/workouts"
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService DbService
@@ -6,26 +6,35 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold m-0">Antrenmanlar</h3>
-    <a href="/workouts/edit/0/0" class="btn btn-primary rounded-pill px-3 fw-bold">
-        <i class="bi bi-plus-lg me-1"></i> Yeni
-    </a>
 </div>
 
-@if (_workouts == null)
+@if (_isLoading)
 {
     <div class="text-center"><div class="spinner-border text-primary"></div></div>
 }
-else if (_workouts.Count == 0)
+else if (_selectedProgram == null)
+{
+    <div class="text-center text-muted mt-5">
+        <i class="bi bi-journal-x fs-1 d-block mb-3"></i>
+        <p>You don't have a selected Workout Program.</p>
+        <button class="btn btn-primary mt-2" @onclick="GoToPrograms">Select Program</button>
+    </div>
+}
+else if (_selectedProgram.Workouts == null || !_selectedProgram.Workouts.Any())
 {
     <div class="text-center text-muted mt-5">
         <i class="bi bi-journal-plus fs-1 d-block mb-3"></i>
-        <p>Henüz serbest antrenman oluşturmadın.</p>
+        <p>Seçili programda henüz antrenman bulunmuyor.</p>
     </div>
 }
 else
 {
+    <div class="mb-3">
+        <span class="badge bg-primary">Seçili Program: @_selectedProgram.Name</span>
+    </div>
+
     <div class="d-flex flex-column gap-3 pb-5">
-        @foreach (var workout in _workouts)
+        @foreach (var workout in _selectedProgram.Workouts.OrderBy(w => w.Order))
         {
             <div class="refine-card p-3">
                 <div class="d-flex align-items-center justify-content-between">
@@ -40,20 +49,11 @@ else
                             <div>
                                 <h6 class="fw-bold mb-0">@workout.Name</h6>
                                 <small class="text-muted" style="font-size: 0.8rem;">
-                                    @(workout.Items?.Count ?? 0) Hareket • @(string.IsNullOrEmpty(workout.Description) ? "Serbest Çalışma" : workout.Description)
+                                    @(workout.Items?.Count ?? 0) Hareket • @(string.IsNullOrEmpty(workout.Description) ? "Program İdmanı" : workout.Description)
                                 </small>
                             </div>
                         </div>
                     </a>
-
-                    <div class="d-flex gap-2 ms-2">
-                        <a href="@($"/workouts/edit/0/{workout.Id}")" class="btn btn-dark btn-sm border-secondary text-muted">
-                            <i class="bi bi-pencil-fill"></i>
-                        </a>
-                        <button class="btn btn-dark btn-sm border-secondary text-danger" @onclick="() => DeleteWorkout(workout)">
-                            <i class="bi bi-trash-fill"></i>
-                        </button>
-                    </div>
 
                 </div>
             </div>
@@ -62,7 +62,8 @@ else
 }
 
 @code {
-    private List<Workout>? _workouts;
+    private WorkoutProgram? _selectedProgram;
+    private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,20 +72,13 @@ else
 
     private async Task LoadData()
     {
-        // Serviste yazdığımız "GetStandaloneWorkoutsAsync" metodunu çağırıyoruz
-        _workouts = await DbService.GetStandaloneWorkoutsAsync();
+        _isLoading = true;
+        _selectedProgram = await DbService.GetSelectedWorkoutProgramAsync();
+        _isLoading = false;
     }
 
-    private async Task DeleteWorkout(Workout workout)
+    private void GoToPrograms()
     {
-        bool confirm = await UiHelper.ShowConfirm("Sil",
-            $"{workout.Name} silinsin mi?",
-            "Evet", "Hayır");
-
-        if (confirm)
-        {
-            await DbService.DeleteWorkoutAsync(workout.Id);
-            await LoadData();
-        }
+        NavManager.NavigateTo("/programs");
     }
 }

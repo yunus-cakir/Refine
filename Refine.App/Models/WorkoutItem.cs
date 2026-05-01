@@ -1,4 +1,5 @@
-﻿using SQLite;
+using SQLite;
+using SQLiteNetExtensions.Attributes;
 
 namespace Refine.App.Models;
 
@@ -8,15 +9,16 @@ public class WorkoutItem
     public int Id { get; set; }
 
     // FOREIGN KEY: Hangi antrenman gününe ait?
-    [Indexed]
+    [ForeignKey(typeof(Workout))]
     public int WorkoutId { get; set; }
 
     // FOREIGN KEY: Hangi egzersiz?
+    [ForeignKey(typeof(Exercise))]
     public int ExerciseId { get; set; }
 
     // Egzersiz detaylarını (Adı, Resmi) çekmek için kullanacağız
     // ama veritabanına tüm nesneyi kaydetmiyoruz.
-    [Ignore]
+    [ManyToOne(CascadeOperations = CascadeOperation.CascadeRead)]
     public Exercise Exercise { get; set; } = new Exercise();
 
     public int Sets { get; set; }
