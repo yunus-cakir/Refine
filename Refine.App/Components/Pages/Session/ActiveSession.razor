@@ -1,127 +1,221 @@
-﻿@page "/session/active/{WorkoutId:int}"
+@page "/session/active/{WorkoutId:int}"
 @page "/session/edit/{WorkoutId:int}/{DateTicks:long}"
+@layout Refine.App.Components.Layout.FullScreenLayout
 
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime
 
-<div class="d-flex justify-content-between align-items-center mb-4 sticky-top py-3"
-     style="background-color: var(--refine-bg); z-index: 100;">
-    <div>
-        <small class="text-muted">@(DateTicks.HasValue ? "EDIT SESSION" : "CURRENT SESSION")</small>
-        <h4 class="fw-bold m-0">@(_workout?.Name ?? "Loading...")</h4>
-    </div>
+<style>
+    /* Hide scrollbar for clean reel feel */
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    /* Ensure the main page is full screen */
+    .active-session-page {
+        height: 100dvh;
+        width: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
 
-    <button class="btn btn-primary rounded-pill px-4 fw-bold" @onclick="FinishWorkout">
-        @(DateTicks.HasValue ? "UPDATE" : "FINISH")
-    </button>
-</div>
+    /* Force snapping to stop at each section */
+    .snap-section {
+        scroll-snap-stop: always;
+    }
+</style>
 
 @if (_workout == null)
 {
-    <div class="text-center"><div class="spinner-border text-primary"></div></div>
+    <div class="h-screen w-full flex items-center justify-center bg-background text-primary">
+        <div class="spinner-border text-primary-container"></div>
+    </div>
 }
 else
 {
-    <div class="d-flex flex-column gap-4 pb-5">
-        @foreach (var item in (_workout.Items ?? new List<WorkoutItem>()).OrderBy(i => i.Order))
-        {
-            <div class="refine-card p-0 overflow-hidden">
-                <div class="p-3 border-bottom border-secondary bg-secondary bg-opacity-10 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold m-0 text-primary">@item.Exercise.Name</h5>
+    <div class="active-session-page bg-background text-on-surface font-body-md antialiased relative">
+        <!-- Main Reels -->
+        <main class="flex-1 overflow-y-auto snap-y snap-mandatory relative pb-safe hide-scrollbar">
+            @{ var exercisesList = (_workout.Items ?? new List<WorkoutItem>()).OrderBy(i => i.Order).ToList(); }
+            
+            @for (int i = 0; i < exercisesList.Count; i++)
+            {
+                var item = exercisesList[i];
+                var currentIndex = i; // local copy for closure
+                var currentLogs = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).OrderBy(l => l.SetNumber).ToList();
+                
+                int currentSet = _currentSetIndex.GetValueOrDefault(item.ExerciseId, 1);
+                var activeLog = currentLogs.FirstOrDefault(l => l.SetNumber == currentSet);
+                
+                // Fallback (shouldn't happen with proper init)
+                if(activeLog == null) 
+                {
+                    activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, WorkoutId = WorkoutId, SetNumber = currentSet, Date = _targetDate, FormRating = 3 };
+                    _activeLogs.Add(activeLog);
+                    currentLogs.Add(activeLog);
+                }
 
-                    <button class="btn btn-sm btn-link text-muted text-decoration-none p-0"
-                            @onclick="() => CopyPreviousData(item.ExerciseId)">
-                        <i class="bi bi-files me-1"></i> Geçmişi Kopyala
-                    </button>
-                </div>
+                var history = GetHistoryLog(item.ExerciseId, currentSet);
 
-                <div class="p-3">
-                    <div class="row g-2 mb-2 text-center text-muted small fw-bold">
-                        <div class="col-1">SET</div>
-                        <div class="col-3">KG</div>
-                        <div class="col-3">REPS</div>
-                        <div class="col-2">RIR</div>
-                        <div class="col-3">FORM</div>
-                    </div>
+                <section id="exercise-@currentIndex" class="h-full w-full snap-start snap-section relative flex flex-col justify-between pt-4 pb-6 px-4 border-b border-white/5">
+                    
+                    <!-- Dynamic Background Placeholder -->
+                    <div class="absolute inset-0 z-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAGAu4maGWtgwQhZmOumfz5XSAYrxdnzesrRWFY9xyJ12jwXfZHkPX1c8v5QbbuhQb-n7R8fHgk5sRiK6NPhOT9DItBi1Yh6IdsUaJHXHRYMWmcIaiS3WLlP8wcL3L1HaU-gJJ8-b0yMK0NgFTHLV4-RVa1y7dLGmfBdodiHamEaDRSaPb3lCm4hIgg0ZZsNfsbiJ-9hTrSSGtyLMId6nKrK4oM-SoX6nS3Bjq62IE95EvIkxr1j4tldy_FbwB4hGs3aMRv9cUyQA");'></div>
+                    <div class="absolute inset-0 z-0 bg-gradient-to-b from-[#121414]/95 via-[#121414]/50 to-[#121414]/95"></div>
 
-                    @{
-                        // O anki logları filtrele
-                        var currentLogs = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).OrderBy(l => l.SetNumber).ToList();
-                    }
-
-                    @foreach (var log in currentLogs)
-                    {
-                        var history = GetHistoryLog(item.ExerciseId, log.SetNumber);
-
-                        <div class="row g-2 mb-2 align-items-center">
-                            <div class="col-1 text-center">
-                                <span class="badge bg-secondary rounded-circle" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center;">
-                                    @log.SetNumber
+                    <!-- Top Info & Menu Container -->
+                    <div class="relative z-50 flex flex-col gap-4">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <span class="refine-badge">
+                                    Set @currentSet of @item.Sets
                                 </span>
+                                <h1 class="font-headline text-3xl font-bold text-white mt-3 tracking-tight drop-shadow-md">
+                                    @item.Exercise.Name
+                                </h1>
+                                <p class="font-body text-[14px] text-on-surface-variant flex items-center gap-2 mt-2">
+                                    <span class="material-symbols-outlined text-sm">fitness_center</span>
+                                    @item.Exercise.PrimaryMuscleCategory
+                                </p>
                             </div>
 
-                            <div class="col-3">
-                                <input type="number" inputmode="decimal"
-                                       class="form-control form-control-sm bg-dark text-white border-secondary text-center fw-bold"
-                                       placeholder="@(history?.Weight.ToString() ?? "-")"
-                                       @bind="log.Weight" />
-                            </div>
-
-                            <div class="col-3">
-                                <input type="number" inputmode="numeric"
-                                       class="form-control form-control-sm bg-dark text-white border-secondary text-center fw-bold"
-                                       placeholder="@(history?.Reps.ToString() ?? "-")"
-                                       @bind="log.Reps" />
-                            </div>
-
-                            <div class="col-2">
-                                <input type="number" inputmode="numeric"
-                                       class="form-control form-control-sm bg-dark text-white border-secondary text-center text-warning"
-                                       placeholder="@(history?.RIR.ToString() ?? "-")"
-                                       @bind="log.RIR" />
-                            </div>
-
-                            <div class="col-3 d-flex justify-content-center gap-2">
-
-                                <button class="btn btn-sm p-0 @(log.FormRating == 1 ? "text-warning" : "text-muted opacity-25")"
-                                        @onclick="() => log.FormRating = 1">
-                                    <i class="bi bi-emoji-neutral-fill fs-5"></i>
+                            <!-- Slide Menu -->
+                            <div class="relative">
+                                <button class="refine-icon-btn" @onclick="() => ToggleMenu(item.ExerciseId)">
+                                    <span class="material-symbols-outlined">more_vert</span>
                                 </button>
 
-                                <button class="btn btn-sm p-0 @(log.FormRating == 2 ? "text-success" : "text-muted opacity-25")"
-                                        @onclick="() => log.FormRating = 2">
-                                    <i class="bi bi-emoji-smile-fill fs-5"></i>
-                                </button>
-
-                                <button class="btn btn-sm p-0 @(log.FormRating == 3 ? "text-fire" : "text-muted opacity-25")"
-                                        @onclick="() => log.FormRating = 3">
-                                    <i class="bi bi-fire fs-5"></i>
-                                </button>
+                                @if (_openMenuId == item.ExerciseId)
+                                {
+                                    <div class="fixed inset-0 z-40" @onclick="CloseMenu"></div>
+                                    <div class="refine-dropdown">
+                                        @if (currentSet > 1)
+                                        {
+                                            <button class="refine-dropdown-item" 
+                                                    @onclick="() => { CloseMenu(); ReturnToPreviousSet(item.ExerciseId); }">
+                                                <span class="material-symbols-outlined text-[20px]">undo</span>
+                                                Önceki Sete Dön
+                                            </button>
+                                        }
+                                        <button class="refine-dropdown-item" 
+                                                @onclick="() => { CloseMenu(); CopyAllPreviousData(); }">
+                                            <span class="material-symbols-outlined text-[20px]">content_copy</span>
+                                            Copy All Previous Data
+                                        </button>
+                                        <button class="refine-dropdown-item-primary" 
+                                                @onclick="() => { CloseMenu(); _ = FinishWorkout(); }">
+                                            <span class="material-symbols-outlined text-[20px]">task_alt</span>
+                                            @(DateTicks.HasValue ? "Update" : "Finish")
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         </div>
-                    }
-
-                    <div class="text-center mt-3">
-                        <button class="btn btn-sm btn-dark w-100 border-secondary border-dashed text-muted"
-                                @onclick="() => AddSet(item.ExerciseId)">
-                            <i class="bi bi-plus-lg"></i> Set Ekle
-                        </button>
                     </div>
-                </div>
-            </div>
-        }
+
+                    <!-- Bottom Sets Panel (Single Set View) -->
+                    <div class="refine-active-card mb-2">
+                        
+                        <!-- Inputs Grid -->
+                        <div class="grid grid-cols-3 gap-3 mb-2">
+                            <!-- Weight -->
+                            <div class="flex flex-col items-center">
+                                <span class="refine-input-label">Weight</span>
+                                <input type="number" inputmode="decimal"
+                                       class="refine-number-input"
+                                       placeholder="@(history?.Weight.ToString() ?? "-")"
+                                       @bind="activeLog.Weight" />
+                            </div>
+                            <!-- Reps -->
+                            <div class="flex flex-col items-center">
+                                <span class="refine-input-label">Reps</span>
+                                <input type="number" inputmode="numeric"
+                                       class="refine-number-input"
+                                       placeholder="@(history?.Reps.ToString() ?? "-")"
+                                       @bind="activeLog.Reps" />
+                            </div>
+                            <!-- RIR -->
+                            <div class="flex flex-col items-center">
+                                <span class="refine-input-label">RIR</span>
+                                <input type="number" inputmode="numeric"
+                                       class="refine-number-input"
+                                       placeholder="@(history?.RIR.ToString() ?? "-")"
+                                       @bind="activeLog.RIR" />
+                            </div>
+                        </div>
+
+                        <!-- Form Rating -->
+                        <div class="flex justify-center items-center gap-4 mb-2">
+                            <button class="p-0 hover:scale-110 transition-transform @(activeLog.FormRating == 1 ? "text-warning drop-shadow-[0_0_12px_rgba(255,193,7,0.6)] scale-110" : "text-white/20")"
+                                    @onclick="() => activeLog.FormRating = 1">
+                                <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' @(activeLog.FormRating == 1 ? "1" : "0");">sentiment_neutral</span>
+                            </button>
+                            <button class="p-0 hover:scale-110 transition-transform @(activeLog.FormRating == 2 ? "text-success drop-shadow-[0_0_12px_rgba(25,135,84,0.6)] scale-110" : "text-white/20")"
+                                    @onclick="() => activeLog.FormRating = 2">
+                                <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' @(activeLog.FormRating == 2 ? "1" : "0");">sentiment_satisfied</span>
+                            </button>
+                            <button class="p-0 hover:scale-110 transition-transform @(activeLog.FormRating == 3 ? "text-orange-500 drop-shadow-[0_0_12px_rgba(249,115,22,0.6)] scale-110" : "text-white/20")"
+                                    @onclick="() => activeLog.FormRating = 3">
+                                <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' @(activeLog.FormRating == 3 ? "1" : "0");">local_fire_department</span>
+                            </button>
+                        </div>
+
+                        <!-- Log Button -->
+                        <button class="refine-glow-btn"
+                                @onclick="() => LogSet(item.ExerciseId, currentIndex, item.Sets, exercisesList.Count)">
+                            <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "wght" 700;'>done_all</span>
+                            LOG SET @currentSet
+                        </button>
+
+                        <!-- Bottom Links -->
+                        <div class="flex justify-center gap-6 mt-2 opacity-70 transform scale-[0.9] origin-top">
+                            <button class="refine-ghost-btn">
+                                <span class="material-symbols-outlined text-[18px]">history</span> HISTORY
+                            </button>
+                            <button class="refine-ghost-btn">
+                                <span class="material-symbols-outlined text-[18px]">videocam</span> FORM VIDEO
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Scroll Hint (Only if not the last set of the last exercise) -->
+                    @if (!(currentIndex == exercisesList.Count - 1 && currentSet == item.Sets))
+                    {
+                        <div class="absolute bottom-6 left-0 right-0 flex justify-center z-10 opacity-50 animate-pulse pointer-events-none">
+                            <span class="material-symbols-outlined text-white text-3xl">keyboard_arrow_down</span>
+                        </div>
+                    }
+                </section>
+            }
+
+            <!-- Final Summary / Finish Slide -->
+            <section id="finish-slide" class="h-full w-full snap-start snap-section relative flex flex-col justify-center items-center bg-background px-8 text-center border-t border-white/5">
+                <span class="material-symbols-outlined text-6xl text-primary-container mb-4 drop-shadow-[0_0_20px_rgba(195,244,0,0.5)]">task_alt</span>
+                <h2 class="font-headline text-3xl font-bold text-white mb-2">Great Job!</h2>
+                <p class="font-body text-on-surface-variant mb-8 max-w-xs">You've reached the end of your session. Review your sets and complete the workout.</p>
+                <button class="refine-glow-btn-lg"
+                        @onclick="FinishWorkout">
+                    <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "wght" 700;'>done_all</span>
+                    @(DateTicks.HasValue ? "UPDATE SESSION" : "FINISH WORKOUT")
+                </button>
+            </section>
+        </main>
     </div>
 }
 
 @if (_showToast)
 {
-    <div class="toast-container">
-        <div class="refine-toast">
-            <i class="bi bi-info-circle-fill text-primary me-2"></i>
-            <span>Mevcut antrenmanına yönlendirildin.</span>
-        </div>
+    <div class="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-[#1c1c1e]/90 backdrop-blur-md border border-primary-container/30 px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+        <i class="bi bi-info-circle-fill text-primary-container"></i>
+        <span class="text-sm font-medium text-white whitespace-nowrap">Mevcut antrenmanına yönlendirildin.</span>
     </div>
 }
 
@@ -138,7 +232,10 @@ else
     private Workout? _workout;
     private List<WorkoutLog> _activeLogs = new();
     private Dictionary<int, List<WorkoutLog>> _historyData = new();
+    
     private bool _showToast = false;
+    private int? _openMenuId = null;
+    private Dictionary<int, int> _currentSetIndex = new();
 
     // İşlem yapılacak hedef tarih (Edit ise geçmiş tarih, Yeni ise şimdiki zaman)
     private DateTime _targetDate;
@@ -201,6 +298,12 @@ else
                 }
             }
 
+            // Init current sets
+            foreach(var item in _workout.Items)
+            {
+                _currentSetIndex[item.ExerciseId] = 1;
+            }
+
             // 3. Geçmiş Verileri (Ghost Text) Hazırla
             foreach (var item in _workout.Items)
             {
@@ -209,6 +312,68 @@ else
                 {
                     _historyData[item.ExerciseId] = history;
                 }
+            }
+        }
+    }
+
+    private void ToggleMenu(int exerciseId)
+    {
+        if (_openMenuId == exerciseId)
+            _openMenuId = null;
+        else
+            _openMenuId = exerciseId;
+    }
+
+    private void CloseMenu()
+    {
+        _openMenuId = null;
+    }
+
+    private void ReturnToPreviousSet(int exerciseId)
+    {
+        if (_currentSetIndex.ContainsKey(exerciseId) && _currentSetIndex[exerciseId] > 1)
+        {
+            _currentSetIndex[exerciseId]--;
+        }
+    }
+
+    private async Task LogSet(int exerciseId, int currentExerciseIndex, int maxSets, int totalExercises)
+    {
+        if (!_currentSetIndex.ContainsKey(exerciseId)) return;
+
+        if (_currentSetIndex[exerciseId] >= maxSets)
+        {
+            // We reached the max sets for this exercise.
+            bool isLastExercise = (currentExerciseIndex == totalExercises - 1);
+
+            if (isLastExercise)
+            {
+                // Scroll to Finish slide
+                await JSRuntime.InvokeVoidAsync("eval", "document.getElementById('finish-slide').scrollIntoView({ behavior: 'smooth' });");
+            }
+            else
+            {
+                // Scroll to Next exercise
+                await JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('exercise-{currentExerciseIndex + 1}').scrollIntoView({{ behavior: 'smooth' }});");
+            }
+        }
+        else
+        {
+            // Move to next set
+            _currentSetIndex[exerciseId]++;
+            
+            // Just in case the user went above planned sets (e.g. they added more)
+            var exists = _activeLogs.Any(l => l.ExerciseId == exerciseId && l.SetNumber == _currentSetIndex[exerciseId]);
+            if (!exists)
+            {
+                _activeLogs.Add(new WorkoutLog
+                {
+                    ExerciseId = exerciseId,
+                    WorkoutId = WorkoutId,
+                    SetNumber = _currentSetIndex[exerciseId],
+                    Date = _targetDate,
+                    FormRating = 3
+                });
             }
         }
     }
@@ -222,37 +387,29 @@ else
         return null;
     }
 
-    private void CopyPreviousData(int exerciseId)
+    private void CopyAllPreviousData()
     {
-        if (!_historyData.ContainsKey(exerciseId)) return;
-
-        var historyLogs = _historyData[exerciseId];
-        var currentExerciseLogs = _activeLogs.Where(l => l.ExerciseId == exerciseId).ToList();
-
-        foreach (var current in currentExerciseLogs)
+        if (_workout?.Items == null) return;
+        
+        foreach (var item in _workout.Items)
         {
-            var match = historyLogs.FirstOrDefault(h => h.SetNumber == current.SetNumber);
-            if (match != null)
+            if (!_historyData.ContainsKey(item.ExerciseId)) continue;
+
+            var historyLogs = _historyData[item.ExerciseId];
+            var currentExerciseLogs = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).ToList();
+
+            foreach (var current in currentExerciseLogs)
             {
-                current.Weight = match.Weight;
-                current.Reps = match.Reps;
-                current.RIR = match.RIR;
-                current.FormRating = match.FormRating;
+                var match = historyLogs.FirstOrDefault(h => h.SetNumber == current.SetNumber);
+                if (match != null)
+                {
+                    current.Weight = match.Weight;
+                    current.Reps = match.Reps;
+                    current.RIR = match.RIR;
+                    current.FormRating = match.FormRating;
+                }
             }
         }
-    }
-
-    private void AddSet(int exerciseId)
-    {
-        var existingCount = _activeLogs.Count(l => l.ExerciseId == exerciseId);
-        _activeLogs.Add(new WorkoutLog
-        {
-            ExerciseId = exerciseId,
-            WorkoutId = WorkoutId,
-            SetNumber = existingCount + 1,
-            Date = _targetDate, // ÖNEMLİ: Seansın tarihini kullan
-            FormRating = 3
-        });
     }
 
     private async Task FinishWorkout()
@@ -260,21 +417,9 @@ else
         string title = DateTicks.HasValue ? "Güncelle" : "Bitir";
         string msg = DateTicks.HasValue ? "Değişiklikler kaydedilsin mi?" : "Antrenman kaydedilsin mi?";
 
-        // Varsayılan değer (Eğer pencere bulunamazsa işlem iptal sayılır)
-        bool confirm = false;
+        // AGENTS.md kuralına göre doğrudan UiHelper.ShowConfirm kullanıyoruz.
+        bool confirm = await UiHelper.ShowConfirm(title, msg, "Evet", "Hayır");
 
-        // 1. GÜVENLİ ERİŞİM BLOĞU
-        // Bu blok, "Dereference of a possibly null reference" uyarısını siler.
-        if (Application.Current is not null && Application.Current.Windows.Count > 0)
-        {
-            var page = Application.Current.Windows[0].Page;
-            if (page is not null)
-            {
-                confirm = await page.DisplayAlert(title, msg, "Evet", "Hayır");
-            }
-        }
-
-        // 2. İşlem Onaylandıysa Kaydet
         if (confirm)
         {
             if (DateTicks.HasValue)

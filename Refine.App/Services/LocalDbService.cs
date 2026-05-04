@@ -35,7 +35,7 @@ public class LocalDbService
             await SeedDataAsync();
         }
 
-        var mockProgramExists = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "W's Hypertrophy").CountAsync();
+        var mockProgramExists = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "Mock İdman Programı").CountAsync();
         if (mockProgramExists == 0)
         {
             await SeedMockProgramAsync();

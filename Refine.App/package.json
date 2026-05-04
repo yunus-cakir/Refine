@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch:css": "npx @tailwindcss/cli -i wwwroot/css/tailwind-input.css -o wwwroot/css/app.css --watch"
   },
   "keywords": [],
   "author": "",
