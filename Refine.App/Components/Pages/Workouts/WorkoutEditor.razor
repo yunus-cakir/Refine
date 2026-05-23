@@ -3,13 +3,10 @@
 @using Refine.App.Services
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+@inject IJSRuntime JS
+@implements IDisposable
 
-<div class="mb-4">
-    <button class="btn btn-link text-muted p-0 text-decoration-none mb-2" @onclick="GoBack">
-        <i class="bi bi-arrow-left"></i> @(ProgramId == 0 ? "Listeye Dön" : "Programa Dön")
-    </button>
-    <h3 class="fw-bold">@(WorkoutId == 0 ? "Yeni Antrenman Günü" : "Antrenmanı Düzenle")</h3>
-</div>
 
 <EditForm Model="@_workout" OnValidSubmit="SaveWorkout">
     <DataAnnotationsValidator />
@@ -167,6 +164,11 @@
         return baseScore * item.Sets * repMultiplier * rirMultiplier;
     }
 
+    protected override void OnInitialized()
+    {
+        TopBar.OnLeftActionTapped += HandleLeftAction;
+    }
+
     protected override async Task OnInitializedAsync()
     {
         var user = await DbService.GetUserAsync();
@@ -190,6 +192,18 @@
         {
             _workout.WorkoutProgramId = ProgramId;
         }
+
+        TopBar.SetDetailMode(WorkoutId == 0 ? "Yeni Antrenman Günü" : "Antrenmanı Düzenle");
+    }
+
+    private async void HandleLeftAction()
+    {
+        await GoBack();
+    }
+
+    public void Dispose()
+    {
+        TopBar.OnLeftActionTapped -= HandleLeftAction;
     }
 
     // YENİ EKLEME (Listenin sonuna)
@@ -258,18 +272,11 @@
     {
         if (string.IsNullOrWhiteSpace(_workout.Name)) return;
         await DbService.SaveWorkoutWithItemsAsync(_workout);
-        GoBack();
+        await GoBack();
     }
 
-    private void GoBack()
+    private async Task GoBack()
     {
-        if (ProgramId == 0)
-        {
-            NavManager.NavigateTo("/workouts");
-        }
-        else
-        {
-            NavManager.NavigateTo($"/programs/{ProgramId}");
-        }
+        await JS.InvokeVoidAsync("history.back");
     }
 }

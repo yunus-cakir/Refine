@@ -4,38 +4,38 @@
 @inject LocalDbService DbService
 @inject TopBarBridge TopBar
 
-<div class="bg-background font-body-md text-on-surface min-h-screen">
+<div class="font-body min-h-screen" style="background-color: var(--color-background); color: var(--color-on-surface); min-height: 100vh;">
 
-    <main class="flex flex-col gap-6 max-w-3xl mx-auto">
+    <main class="rf-flex-col" style="gap: 24px; max-width: 768px; margin: 0 auto;">
         <!-- Welcome Section -->
-        <section class="flex flex-col gap-2">
-            <p class="text-label-caps text-on-surface-variant">@DateTime.Now.ToString("dddd, MMM dd").ToUpper()</p>
-            <h1 class="text-headline-md text-tertiary">Welcome, @(_user?.FirstName ?? "Sporcu")!</h1>
+        <section class="rf-flex-col" style="gap: 8px;">
+            <p class="font-label" style="color: var(--color-on-surface-variant); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;">@DateTime.Now.ToString("dddd, MMM dd").ToUpper()</p>
+            <h1 class="font-headline" style="color: var(--color-tertiary); font-size: 28px; font-weight: bold;">Welcome, @(_user?.FirstName ?? "Sporcu")!</h1>
         </section>
 
         <!-- Main CTA Card: Next Workout -->
         <section>
-            <div class="bg-primary-fixed rounded-xl p-6 shadow-[0_0_20px_rgba(204,255,0,0.15)] relative overflow-hidden group hover:scale-[1.01] transition-transform duration-300 cursor-pointer">
+            <div class="rf-card" style="background-color: var(--color-primary-container); color: var(--color-on-primary-fixed); overflow: hidden; position: relative; cursor: pointer; padding: 24px; border: none; box-shadow: 0 0 20px rgba(195,244,0,0.15);">
                 <!-- Abstract grid overlay -->
-                <div class="absolute inset-0 opacity-10 pointer-events-none chart-grid"></div>
-                <div class="relative z-10 flex flex-col gap-4">
-                    <div class="flex justify-between items-start">
-                        <span class="bg-black/10 px-3 py-1 rounded-full text-label-caps text-on-primary-fixed">UP NEXT</span>
-                        <span class="material-symbols-outlined text-on-primary-fixed" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+                <div style="position: absolute; inset: 0; opacity: 0.1; pointer-events: none; background-image: radial-gradient(circle, #000 1px, transparent 1px); background-size: 20px 20px;"></div>
+                <div class="rf-flex-col" style="position: relative; z-index: 10; gap: 16px;">
+                    <div class="rf-flex-row rf-justify-between rf-items-center">
+                        <span class="font-label" style="background-color: rgba(0,0,0,0.1); padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: bold; letter-spacing: 0.1em; color: var(--color-on-primary-fixed);">UP NEXT</span>
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; color: var(--color-on-primary-fixed);">fitness_center</span>
                     </div>
                     <div>
-                        <h2 class="text-display-lg text-on-primary-fixed mb-1">Chest & Triceps</h2>
-                        <p class="text-body-md text-on-primary-fixed-variant">~60 Min • High Intensity</p>
+                        <h2 class="font-headline" style="font-size: 32px; font-weight: bold; margin-bottom: 4px; color: var(--color-on-primary-fixed);">Chest & Triceps</h2>
+                        <p class="font-body" style="font-size: 14px; color: var(--color-on-primary-fixed-variant);">~60 Min • High Intensity</p>
                     </div>
-                    <div class="mt-2 flex items-center justify-between">
-                        <div class="flex gap-2">
-                            <span class="w-2 h-2 rounded-full bg-on-primary-fixed"></span>
-                            <span class="w-2 h-2 rounded-full bg-on-primary-fixed/30"></span>
-                            <span class="w-2 h-2 rounded-full bg-on-primary-fixed/30"></span>
+                    <div class="rf-flex-row rf-justify-between rf-items-center" style="margin-top: 8px;">
+                        <div class="rf-flex-row" style="gap: 8px;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-on-primary-fixed);"></span>
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
                         </div>
-                        <button class="bg-on-primary-fixed text-primary-fixed px-6 py-2 rounded-lg text-title-sm flex items-center gap-2 hover:bg-black transition-colors">
+                        <button class="font-label" style="background-color: var(--color-on-primary-fixed); color: var(--color-primary-container); padding: 8px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                             BAŞLA
-                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                            <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
                         </button>
                     </div>
                 </div>
@@ -43,57 +43,57 @@
         </section>
 
         <!-- Bento Grid: Stats & Analytics -->
-        <section class="grid grid-cols-2 gap-4">
+        <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
             <!-- Recovery Metric -->
-            <div class="refine-card flex flex-col gap-2">
-                <div class="flex items-center gap-2 text-on-surface-variant">
-                    <span class="material-symbols-outlined text-[18px]">favorite</span>
-                    <span class="text-label-caps">RECOVERY</span>
+            <div class="rf-card-half">
+                <div class="rf-flex-row rf-items-center" style="gap: 8px; color: var(--color-on-surface-variant);">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">favorite</span>
+                    <span class="font-label" style="font-size: 11px; text-transform: uppercase;">RECOVERY</span>
                 </div>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-stat-lg text-tertiary">84</span>
-                    <span class="text-body-md text-on-surface-variant">%</span>
+                <div class="rf-flex-row" style="align-items: baseline; gap: 8px;">
+                    <span class="font-headline" style="font-size: 36px; font-weight: bold; color: var(--color-tertiary);">84</span>
+                    <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">%</span>
                 </div>
-                <div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden mt-auto">
-                    <div class="bg-primary-fixed w-[84%] h-full rounded-full"></div>
+                <div style="width: 100%; background-color: var(--color-surface-container-highest); height: 6px; border-radius: 9999px; overflow: hidden; margin-top: auto;">
+                    <div style="background-color: var(--color-primary-container); width: 84%; height: 100%; border-radius: 9999px;"></div>
                 </div>
             </div>
 
             <!-- Volume Metric -->
-            <div class="refine-card flex flex-col gap-2">
-                <div class="flex items-center gap-2 text-on-surface-variant">
-                    <span class="material-symbols-outlined text-[18px]">bolt</span>
-                    <span class="text-label-caps">HFT. HACİM</span>
+            <div class="rf-card-half">
+                <div class="rf-flex-row rf-items-center" style="gap: 8px; color: var(--color-on-surface-variant);">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">bolt</span>
+                    <span class="font-label" style="font-size: 11px; text-transform: uppercase;">HFT. HACİM</span>
                 </div>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-stat-lg text-tertiary">14.2</span>
-                    <span class="text-body-md text-on-surface-variant">k lbs</span>
+                <div class="rf-flex-row" style="align-items: baseline; gap: 8px;">
+                    <span class="font-headline" style="font-size: 36px; font-weight: bold; color: var(--color-tertiary);">14.2</span>
+                    <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">k lbs</span>
                 </div>
-                <p class="text-[10px] text-primary-fixed mt-auto flex items-center gap-1 font-bold uppercase tracking-wider">
-                    <span class="material-symbols-outlined text-[12px]">trending_up</span> geçen haftaya göre +5%
+                <p class="font-label" style="font-size: 10px; color: var(--color-primary-container); margin-top: auto; display: flex; align-items: center; gap: 4px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em;">
+                    <span class="material-symbols-outlined" style="font-size: 12px;">trending_up</span> geçen haftaya göre +5%
                 </p>
             </div>
 
             <!-- Analytics Chart Mockup -->
-            <div class="refine-card col-span-2 flex flex-col gap-4 relative overflow-hidden">
-                <div class="flex justify-between items-start z-10">
+            <div class="rf-card" style="grid-column: span 2 / span 2; display: flex; flex-direction: column; gap: 16px; position: relative; overflow: hidden;">
+                <div class="rf-flex-row rf-justify-between" style="align-items: flex-start; z-index: 10;">
                     <div>
-                        <h3 class="text-title-sm text-tertiary">Bench Press</h3>
-                        <p class="text-label-caps text-on-surface-variant mt-1">PROGRESSIVE OVERLOAD (30 GÜN)</p>
+                        <h3 class="font-body" style="font-size: 14px; font-weight: 600; color: var(--color-tertiary);">Bench Press</h3>
+                        <p class="font-label" style="font-size: 11px; color: var(--color-on-surface-variant); margin-top: 4px;">PROGRESSIVE OVERLOAD (30 GÜN)</p>
                     </div>
-                    <span class="material-symbols-outlined text-primary-fixed">monitoring</span>
+                    <span class="material-symbols-outlined" style="color: var(--color-primary-container);">monitoring</span>
                 </div>
                 
-                <div class="h-[120px] w-full relative mt-2 z-10">
+                <div style="height: 120px; width: 100%; position: relative; margin-top: 8px; z-index: 10;">
                     <!-- Faux Grid -->
-                    <div class="absolute inset-0 flex flex-col justify-between">
-                        <div class="border-b border-white/5 w-full h-0"></div>
-                        <div class="border-b border-white/5 w-full h-0"></div>
-                        <div class="border-b border-white/5 w-full h-0"></div>
-                        <div class="border-b border-white/5 w-full h-0"></div>
+                    <div class="rf-flex-col rf-justify-between" style="position: absolute; inset: 0;">
+                        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; height: 0;"></div>
+                        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; height: 0;"></div>
+                        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; height: 0;"></div>
+                        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; height: 0;"></div>
                     </div>
                     <!-- Faux SVG Line Chart -->
-                    <svg class="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                    <svg style="position: absolute; inset: 0; height: 100%; width: 100%;" preserveAspectRatio="none" viewBox="0 0 100 100">
                         <defs>
                             <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
                                 <stop offset="0%" stop-color="#ccff00" stop-opacity="0.2"></stop>

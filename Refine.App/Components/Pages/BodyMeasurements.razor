@@ -1,18 +1,12 @@
 @page "/profile/body-measurements"
 @using Refine.App.Models
 @using Refine.App.Services
+@implements IDisposable
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
+@inject TopBarBridge TopBar
 
 <div class="page-container py-4 px-3 min-h-screen">
-    <!-- Header with Back Button -->
-    <div class="d-flex align-items-center gap-3 mb-4">
-        <button class="back-btn d-flex align-items-center justify-content-center" @onclick='() => NavManager.NavigateTo("/profile")'>
-            <span class="material-symbols-outlined text-white" style="font-size: 20px;">arrow_back</span>
-        </button>
-        <h3 class="font-headline fw-bold m-0 text-white">Body Measurements</h3>
-    </div>
-
     @if (_user == null)
     {
         <div class="text-center py-5">
@@ -23,15 +17,110 @@
     }
     else
     {
-        <!-- Placeholder Card -->
-        <div class="settings-card animate-fade-in p-4 mb-4 text-center">
-            <div class="icon-glow mb-3 mx-auto d-flex align-items-center justify-content-center">
-                <span class="material-symbols-outlined text-primary-container" style="font-size: 32px;">straighten</span>
+        <div class="animate-fade-in">
+            <!-- Top measurement cards: BOY & KILO -->
+            <div class="row g-3 mb-4">
+                <!-- BOY Card -->
+                <div class="col-6">
+                    <div class="measurement-card-top">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="card-label-top font-label">BOY</span>
+                            <span class="material-symbols-outlined label-icon-top">height</span>
+                        </div>
+                        <div class="input-wrapper">
+                            <input type="number" step="any" class="body-input" placeholder="@(_ghostHeight?.ToString() ?? "---")" @bind="_inputHeight" />
+                            <span class="unit-label">cm</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KILO Card -->
+                <div class="col-6">
+                    <div class="measurement-card-top">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="card-label-top font-label">KILO</span>
+                            <span class="material-symbols-outlined label-icon-top">scale</span>
+                        </div>
+                        <div class="input-wrapper">
+                            <input type="number" step="any" class="body-input" placeholder="@(_ghostWeight?.ToString() ?? "---")" @bind="_inputWeight" />
+                            <span class="unit-label">kg</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <h5 class="text-white fw-bold mb-2">Track Measurements</h5>
-            <p class="text-on-surface-variant small mb-0 px-3">
-                Biometric logs, circumference tracking (neck, shoulder, waist, hip), and historical body tracking logs will be fully editable here soon.
-            </p>
+
+            <!-- Circumference Section Header -->
+            <div class="mb-3">
+                <h5 class="font-headline fw-bold uppercase tracking-wider mb-2" style="font-size: 13px; letter-spacing: 0.1em; color: var(--color-on-surface-variant);">CIRCUMFERENCE DATA</h5>
+                <hr style="border-color: rgba(255, 255, 255, 0.08); margin: 0;" />
+            </div>
+
+            <!-- Circumference rows -->
+            <div class="d-flex flex-column gap-3 mb-4">
+                <!-- Boyun çevresi -->
+                <div class="circumference-row-card p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="row-icon-container">
+                            <span class="material-symbols-outlined row-icon">line_weight</span>
+                        </div>
+                        <span class="row-title font-body text-white">Boyun çevresi</span>
+                    </div>
+                    <div class="input-wrapper" style="width: 130px;">
+                        <input type="number" step="any" class="body-input" placeholder="@(_ghostNeck?.ToString() ?? "---")" @bind="_inputNeck" />
+                        <span class="unit-label">cm</span>
+                    </div>
+                </div>
+
+                <!-- Omuz çevresi -->
+                <div class="circumference-row-card p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="row-icon-container">
+                            <span class="material-symbols-outlined row-icon">sports_gymnastics</span>
+                        </div>
+                        <span class="row-title font-body text-white">Omuz çevresi</span>
+                    </div>
+                    <div class="input-wrapper" style="width: 130px;">
+                        <input type="number" step="any" class="body-input" placeholder="@(_ghostShoulder?.ToString() ?? "---")" @bind="_inputShoulder" />
+                        <span class="unit-label">cm</span>
+                    </div>
+                </div>
+
+                <!-- Bel çevresi -->
+                <div class="circumference-row-card p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="row-icon-container">
+                            <span class="material-symbols-outlined row-icon">accessibility</span>
+                        </div>
+                        <span class="row-title font-body text-white">Bel çevresi</span>
+                    </div>
+                    <div class="input-wrapper" style="width: 130px;">
+                        <input type="number" step="any" class="body-input" placeholder="@(_ghostWaist?.ToString() ?? "---")" @bind="_inputWaist" />
+                        <span class="unit-label">cm</span>
+                    </div>
+                </div>
+
+                <!-- Kalça çevresi -->
+                <div class="circumference-row-card p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="row-icon-container">
+                            <span class="material-symbols-outlined row-icon">boy</span>
+                        </div>
+                        <span class="row-title font-body text-white">Kalça çevresi</span>
+                    </div>
+                    <div class="input-wrapper" style="width: 130px;">
+                        <input type="number" step="any" class="body-input" placeholder="@(_ghostHip?.ToString() ?? "---")" @bind="_inputHip" />
+                        <span class="unit-label">cm</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="mt-4 px-1">
+                <button class="refine-glow-btn w-100 py-3 rounded-pill fw-bold" @onclick="SaveMeasurements">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">save</span>
+                    KAYDET
+                </button>
+            </div>
         </div>
     }
 </div>
@@ -39,8 +128,128 @@
 @code {
     private User? _user;
 
+    // Optional input fields (null unless entered)
+    private double? _inputHeight;
+    private double? _inputWeight;
+    private double? _inputNeck;
+    private double? _inputShoulder;
+    private double? _inputWaist;
+    private double? _inputHip;
+
+    // Previous values for ghost text placeholders
+    private double? _ghostHeight;
+    private double? _ghostWeight;
+    private double? _ghostNeck;
+    private double? _ghostShoulder;
+    private double? _ghostWaist;
+    private double? _ghostHip;
+
+    protected override void OnInitialized()
+    {
+        // Register left navigation action and configure native top bar
+        TopBar.OnLeftActionTapped += HandleLeftAction;
+        TopBar.SetDetailMode("BODY MEASUREMENTS");
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        await LoadUserAndGhostValues();
+    }
+
+    private void HandleLeftAction()
+    {
+        NavManager.NavigateTo("/profile");
+    }
+
+    private async Task LoadUserAndGhostValues()
+    {
         _user = await DbService.GetUserAsync();
+        if (_user != null)
+        {
+            // Height is a flat cached biometric property
+            _ghostHeight = _user.Height > 0 ? _user.Height : null;
+            
+            // Weight is also flat cached on User but we can check if they have logs
+            _ghostWeight = _user.Weight > 0 ? _user.Weight : null;
+
+            // Load latest non-null values for optional circumferences from BiometricLogs
+            if (_user.BiometricLogs != null && _user.BiometricLogs.Any())
+            {
+                var sortedLogs = _user.BiometricLogs.OrderByDescending(l => l.Date).ToList();
+                _ghostNeck = sortedLogs.FirstOrDefault(l => l.Neck.HasValue)?.Neck;
+                _ghostShoulder = sortedLogs.FirstOrDefault(l => l.Shoulder.HasValue)?.Shoulder;
+                _ghostWaist = sortedLogs.FirstOrDefault(l => l.Waist.HasValue)?.Waist;
+                _ghostHip = sortedLogs.FirstOrDefault(l => l.Hip.HasValue)?.Hip;
+            }
+        }
+    }
+
+    private async Task SaveMeasurements()
+    {
+        if (_user == null) return;
+
+        // Verify if at least one value was modified/entered
+        bool hasEnteredData = _inputHeight.HasValue || _inputWeight.HasValue || _inputNeck.HasValue ||
+                              _inputShoulder.HasValue || _inputWaist.HasValue || _inputHip.HasValue;
+
+        if (!hasEnteredData)
+        {
+            await UiHelper.ShowAlert("Bilgi", "Kaydetmek için lütfen en az bir yeni ölçüm değeri giriniz.", "Tamam");
+            return;
+        }
+
+        try
+        {
+            // 1. If height was entered, update the User object directly
+            if (_inputHeight.HasValue)
+            {
+                _user.Height = _inputHeight.Value;
+                await DbService.UpdateUserAsync(_user);
+            }
+
+            // 2. If any biometric logs fields were entered, save a new log with only those values
+            bool hasLogData = _inputWeight.HasValue || _inputNeck.HasValue || _inputShoulder.HasValue ||
+                              _inputWaist.HasValue || _inputHip.HasValue;
+
+            if (hasLogData)
+            {
+                var log = new BiometricLog
+                {
+                    UserId = _user.Id,
+                    Date = DateTime.Now,
+                    Weight = _inputWeight, // Null if not entered, AddBiometricLogAsync handles conditionally updating user weight
+                    Neck = _inputNeck,
+                    Shoulder = _inputShoulder,
+                    Waist = _inputWaist,
+                    Hip = _inputHip
+                };
+
+                await DbService.AddBiometricLogAsync(log);
+            }
+
+            // Show safe confirmation alert
+            await UiHelper.ShowAlert("Başarılı", "Girdiğiniz ölçüm verileri başarıyla kaydedildi.", "Tamam");
+
+            // Clear inputs so placeholders show the new values
+            _inputHeight = null;
+            _inputWeight = null;
+            _inputNeck = null;
+            _inputShoulder = null;
+            _inputWaist = null;
+            _inputHip = null;
+
+            // Reload user data and ghost placeholders
+            await LoadUserAndGhostValues();
+        }
+        catch (Exception ex)
+        {
+            await UiHelper.ShowAlert("Hata", $"Ölçümler kaydedilirken bir hata oluştu: {ex.Message}", "Tamam");
+        }
+    }
+
+    public void Dispose()
+    {
+        // Always clean up subscriptions to prevent event memory leaks
+        TopBar.OnLeftActionTapped -= HandleLeftAction;
     }
 }

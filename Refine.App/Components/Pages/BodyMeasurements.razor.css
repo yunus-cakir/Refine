@@ -1,44 +1,138 @@
-.page-container {
-    max-width: 600px;
-    margin: 0 auto;
-    background-color: var(--color-background);
-}
+/* isolated CSS for BodyMeasurements.razor */
 
-.back-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #121312;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.back-btn:hover {
-    background-color: #1a1b1a;
-    transform: scale(1.05);
-}
-
-.settings-card {
-    background: #111211;
+.measurement-card-top {
+    background-color: #111211;
     border: 1px solid rgba(255, 255, 255, 0.03);
     border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+                border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.icon-glow {
-    width: 64px;
-    height: 64px;
-    background: rgba(195, 244, 0, 0.1);
-    border: 1px solid rgba(195, 244, 0, 0.2);
+.measurement-card-top:hover {
+    transform: translateY(-3px);
+    border-color: rgba(195, 244, 0, 0.15);
+    box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(195, 244, 0, 0.05);
+}
+
+.card-label-top {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-on-surface-variant);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+.label-icon-top {
+    font-size: 18px;
+    color: var(--color-primary-container);
+    opacity: 0.8;
+}
+
+/* Input Styles */
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.body-input {
+    width: 100%;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 12px 42px 12px 14px;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: left;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+    outline: none;
+}
+
+.body-input:focus {
+    border-color: var(--color-primary-container);
+    box-shadow: 0 0 0 3px rgba(195, 244, 0, 0.2),
+                inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+}
+
+.body-input::placeholder {
+    color: rgba(0, 0, 0, 0.35) !important;
+    font-style: normal;
+    font-weight: 500;
+}
+
+.unit-label {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8c887d;
+    font-size: 13px;
+    font-weight: 600;
+    pointer-events: none;
+    letter-spacing: 0.02em;
+}
+
+/* Circumference Rows */
+.circumference-row-card {
+    background-color: #111211;
+    border: 1px solid rgba(255, 255, 255, 0.03);
     border-radius: 16px;
-    box-shadow: 0 0 15px rgba(195, 244, 0, 0.15);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.circumference-row-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(195, 244, 0, 0.12);
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.25);
+}
+
+.row-icon-container {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(195, 244, 0, 0.06);
+    border: 1px solid rgba(195, 244, 0, 0.12);
+    color: var(--color-primary-container);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.circumference-row-card:hover .row-icon-container {
+    background: rgba(195, 244, 0, 0.12);
+    border-color: rgba(195, 244, 0, 0.25);
+}
+
+.row-icon {
+    font-size: 20px;
+}
+
+.row-title {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+/* Page Animations */
 .animate-fade-in {
-    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

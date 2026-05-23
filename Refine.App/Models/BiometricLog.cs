@@ -14,7 +14,7 @@ public class BiometricLog
 
     public DateTime Date { get; set; } = DateTime.Now;
 
-    public double Weight { get; set; }
+    public double? Weight { get; set; }
 
     // Opsiyonel Vücut Ölçüleri (cm)
     public double? Neck { get; set; }

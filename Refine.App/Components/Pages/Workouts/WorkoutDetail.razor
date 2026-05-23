@@ -10,16 +10,27 @@
 @if (_workout == null)
 {
     <div class="loader-container">
-        <div class="spinner-border text-primary"></div>
+        <div class="spinner-border" style="color: var(--color-primary-container);"></div>
     </div>
 }
 else
 {
+    @if (_showTopBarMenu)
+    {
+        <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
+        <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
+            <button class="refine-dropdown-item" @onclick="() => { ToggleTopBarMenu(); EditWorkout(); }">
+                <span class="material-symbols-outlined text-[20px]">edit</span>
+                Edit Workout
+            </button>
+        </div>
+    }
+
     <div class="workout-detail-container">
         
         <!-- Target Muscles -->
         <section class="section-margin">
-            <h2 class="font-title-sm text-title-sm target-muscles-title">Target Muscles</h2>
+            <h2 class="font-body target-muscles-title">Target Muscles</h2>
             <div class="muscle-badges-container">
                 @if (_workout.Items != null)
                 {
@@ -46,7 +57,7 @@ else
 
         <!-- Start Button -->
         <div class="button-container section-margin">
-            <button class="refine-glow-btn-lg" @onclick="StartWorkout">
+            <button class="rf-button-secondary" @onclick="StartWorkout">
                 START WORKOUT
             </button>
         </div>
@@ -58,8 +69,8 @@ else
                 var dynamicColor = Refine.App.Services.CnsHelper.GetCnsColor(percentage);
             }
             <div class="cns-header">
-                <span class="font-label text-label-caps cns-label">CNS Yorgunluk Yükü (Tahmini)</span>
-                <span class="font-label text-label-caps" style="color: @dynamicColor;">
+                <span class="font-label cns-label">CNS Yorgunluk Yükü (Tahmini)</span>
+                <span class="font-label" style="color: @dynamicColor; font-size: 11px;">
                     %@percentage.ToString("0")
                 </span>
             </div>
@@ -70,7 +81,7 @@ else
             {
                 <div class="cns-warning" style="border-left: 4px solid @dynamicColor; color: @dynamicColor;">
                     <i class="bi bi-exclamation-triangle-fill cns-warning-icon"></i>
-                    <div class="font-body text-body-md">
+                    <div class="font-body" style="font-size: 14px;">
                         <strong>Severe CNS Fatigue!</strong> This program may overtax your nervous system.
                     </div>
                 </div>
@@ -91,10 +102,10 @@ else
                             </div>
                             <div class="exercise-details">
                                 <div class="exercise-header">
-                                    <h3 class="font-title-sm text-title-sm exercise-title">@(item.Exercise?.Name ?? "Bilinmeyen Hareket")</h3>
+                                    <h3 class="font-body exercise-title">@(item.Exercise?.Name ?? "Bilinmeyen Hareket")</h3>
                                     <span class="material-symbols-outlined exercise-more-icon">more_vert</span>
                                 </div>
-                                <div class="exercise-stats font-body text-body-md">
+                                <div class="exercise-stats font-body">
                                     <span class="stat-item"><span class="material-symbols-outlined stat-icon">repeat</span> @item.Sets Sets</span>
                                     <span class="stat-divider">•</span>
                                     <span class="stat-item"><span class="material-symbols-outlined stat-icon">fitness_center</span> @item.RepsRange Reps</span>
@@ -174,10 +185,25 @@ else
         await JS.InvokeVoidAsync("history.back");
     }
 
+    private bool _showTopBarMenu = false;
+
+    private void ToggleTopBarMenu()
+    {
+        _showTopBarMenu = !_showTopBarMenu;
+    }
+
+    private void EditWorkout()
+    {
+        if (_workout != null)
+        {
+            NavManager.NavigateTo($"/workouts/edit/{_workout.WorkoutProgramId}/{_workout.Id}");
+        }
+    }
+
     private void HandleRightAction()
     {
-        // Settings / Options popup logic here
-        Console.WriteLine("Right action tapped from MAUI header!");
+        ToggleTopBarMenu();
+        InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()

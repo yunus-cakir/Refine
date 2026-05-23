@@ -4,11 +4,16 @@
 
 @using Refine.App.Models
 @using Refine.App.Services
+@using Microsoft.AspNetCore.Components.Routing
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
 @inject IJSRuntime JSRuntime
 @inject TopBarBridge TopBar
+@inject NavigationBridge NavBridge
 @implements IDisposable
+
+<NavigationLock OnBeforeInternalNavigation="HandleInternalNavigation" ConfirmExternalNavigation="false" />
+
 
 <style>
     /* Hide scrollbar for clean reel feel */
@@ -37,13 +42,13 @@
 
 @if (_workout == null)
 {
-    <div class="h-screen w-full flex items-center justify-center bg-background text-primary">
-        <div class="spinner-border text-primary-container"></div>
+    <div style="height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; background-color: var(--color-background); color: var(--color-primary);">
+        <div class="spinner-border" style="color: var(--color-primary-container);"></div>
     </div>
 }
 else
 {
-    <div class="active-session-page bg-background text-on-surface font-body-md antialiased relative">
+    <div class="active-session-page font-body" style="background-color: var(--color-background); color: var(--color-on-surface); position: relative;">
         @if (_showTopBarMenu)
         {
             <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
@@ -56,7 +61,7 @@ else
         }
 
         <!-- Main Reels -->
-        <main class="flex-1 overflow-y-auto snap-y snap-mandatory relative pb-safe hide-scrollbar">
+        <main class="hide-scrollbar" style="flex: 1; overflow-y: auto; scroll-snap-type: y mandatory; position: relative; padding-bottom: env(safe-area-inset-bottom);">
             @{ var exercisesList = (_workout.Items ?? new List<WorkoutItem>()).OrderBy(i => i.Order).ToList(); }
             
             @for (int i = 0; i < exercisesList.Count; i++)
@@ -78,38 +83,38 @@ else
 
                 var history = GetHistoryLog(item.ExerciseId, currentSet);
 
-                <section id="exercise-@currentIndex" class="h-full w-full snap-start snap-section relative flex flex-col justify-between pt-4 pb-6 px-4 border-b border-white/5">
+                <section id="exercise-@currentIndex" class="snap-section" style="height: 100%; width: 100%; scroll-snap-align: start; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 16px 16px 24px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);">
                     
                     <!-- Dynamic Background Placeholder -->
-                    <div class="absolute inset-0 z-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAGAu4maGWtgwQhZmOumfz5XSAYrxdnzesrRWFY9xyJ12jwXfZHkPX1c8v5QbbuhQb-n7R8fHgk5sRiK6NPhOT9DItBi1Yh6IdsUaJHXHRYMWmcIaiS3WLlP8wcL3L1HaU-gJJ8-b0yMK0NgFTHLV4-RVa1y7dLGmfBdodiHamEaDRSaPb3lCm4hIgg0ZZsNfsbiJ-9hTrSSGtyLMId6nKrK4oM-SoX6nS3Bjq62IE95EvIkxr1j4tldy_FbwB4hGs3aMRv9cUyQA");'></div>
-                    <div class="absolute inset-0 z-0 bg-gradient-to-b from-[#121414]/95 via-[#121414]/50 to-[#121414]/95"></div>
+                    <div style='position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAGAu4maGWtgwQhZmOumfz5XSAYrxdnzesrRWFY9xyJ12jwXfZHkPX1c8v5QbbuhQb-n7R8fHgk5sRiK6NPhOT9DItBi1Yh6IdsUaJHXHRYMWmcIaiS3WLlP8wcL3L1HaU-gJJ8-b0yMK0NgFTHLV4-RVa1y7dLGmfBdodiHamEaDRSaPb3lCm4hIgg0ZZsNfsbiJ-9hTrSSGtyLMId6nKrK4oM-SoX6nS3Bjq62IE95EvIkxr1j4tldy_FbwB4hGs3aMRv9cUyQA");'></div>
+                    <div style="position: absolute; inset: 0; z-index: 0; background: linear-gradient(to bottom, rgba(18,20,20,0.95), rgba(18,20,20,0.5), rgba(18,20,20,0.95));"></div>
 
                     <!-- Top Info & Menu Container -->
-                    <div class="relative z-50 flex flex-col gap-4">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
+                    <div class="rf-flex-col" style="position: relative; z-index: 50; gap: 16px;">
+                        <div class="rf-flex-row rf-justify-between" style="align-items: flex-start;">
+                            <div style="flex: 1;">
                                 <span class="refine-badge">
                                     Set @currentSet of @item.Sets
                                 </span>
-                                <h1 class="font-headline text-3xl font-bold text-white mt-3 tracking-tight drop-shadow-md">
+                                <h1 class="font-headline" style="font-size: 30px; font-weight: bold; color: white; margin-top: 12px; letter-spacing: -0.025em; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.07));">
                                     @item.Exercise.Name
                                 </h1>
-                                <p class="font-body text-[14px] text-on-surface-variant flex items-center gap-2 mt-2">
-                                    <span class="material-symbols-outlined text-sm">fitness_center</span>
+                                <p class="font-body rf-flex-row rf-items-center" style="font-size: 14px; color: var(--color-on-surface-variant); gap: 8px; margin-top: 8px;">
+                                    <span class="material-symbols-outlined" style="font-size: 14px;">fitness_center</span>
                                     @item.Exercise.PrimaryMuscleCategory
                                 </p>
                             </div>
 
                             <!-- Slide Menu -->
-                            <div class="relative">
+                            <div style="position: relative;">
                                 <button class="refine-icon-btn" @onclick="() => ToggleMenu(item.ExerciseId)">
                                     <span class="material-symbols-outlined">more_vert</span>
                                 </button>
 
                                 @if (_openMenuId == item.ExerciseId)
                                 {
-                                    <div class="fixed inset-0 z-40" @onclick="CloseMenu"></div>
-                                    <div class="refine-dropdown">
+                                    <div style="position: fixed; inset: 0; z-index: 40;" @onclick="CloseMenu"></div>
+                                    <div class="rf-dropdown">
                                         @if (currentSet > 1)
                                         {
                                             <button class="refine-dropdown-item" 
@@ -130,66 +135,66 @@ else
                     </div>
 
                     <!-- Bottom Sets Panel (Single Set View) -->
-                    <div class="refine-active-card mb-2">
+                    <div class="refine-active-card" style="margin-bottom: 8px;">
                         
                         <!-- Inputs Grid -->
-                        <div class="grid grid-cols-3 gap-3 mb-2">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 8px;">
                             <!-- Weight -->
-                            <div class="flex flex-col items-center">
+                            <div class="rf-flex-col rf-items-center">
                                 <span class="refine-input-label">Weight</span>
                                 <input type="number" inputmode="decimal"
-                                       class="refine-number-input"
+                                       class="rf-input-number"
                                        placeholder="@(history?.Weight.ToString() ?? "-")"
                                        @bind="activeLog.Weight" />
                             </div>
                             <!-- Reps -->
-                            <div class="flex flex-col items-center">
+                            <div class="rf-flex-col rf-items-center">
                                 <span class="refine-input-label">Reps</span>
                                 <input type="number" inputmode="numeric"
-                                       class="refine-number-input"
+                                       class="rf-input-number"
                                        placeholder="@(history?.Reps.ToString() ?? "-")"
                                        @bind="activeLog.Reps" />
                             </div>
                             <!-- RIR -->
-                            <div class="flex flex-col items-center">
+                            <div class="rf-flex-col rf-items-center">
                                 <span class="refine-input-label">RIR</span>
                                 <input type="number" inputmode="numeric"
-                                       class="refine-number-input"
+                                       class="rf-input-number"
                                        placeholder="@(history?.RIR.ToString() ?? "-")"
                                        @bind="activeLog.RIR" />
                             </div>
                         </div>
 
                         <!-- Form Rating -->
-                        <div class="flex justify-center items-center gap-4 mb-2">
-                            <button class="p-0 hover:scale-110 transition-transform @(activeLog.FormRating == 1 ? "text-warning drop-shadow-[0_0_12px_rgba(255,193,7,0.6)] scale-110" : "text-white/20")"
+                        <div class="rf-flex-row rf-justify-center rf-items-center" style="gap: 16px; margin-bottom: 8px;">
+                            <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 1 ? "#ffc107" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 1 ? "drop-shadow(0 0 12px rgba(255,193,7,0.6))" : "none"); transform: @(activeLog.FormRating == 1 ? "scale(1.1)" : "scale(1)");"
                                     @onclick="() => activeLog.FormRating = 1">
-                                <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' @(activeLog.FormRating == 1 ? "1" : "0");">sentiment_neutral</span>
+                                <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 1 ? "1" : "0");">sentiment_neutral</span>
                             </button>
-                            <button class="p-0 hover:scale-110 transition-transform @(activeLog.FormRating == 2 ? "text-success drop-shadow-[0_0_12px_rgba(25,135,84,0.6)] scale-110" : "text-white/20")"
+                            <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 2 ? "#198754" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 2 ? "drop-shadow(0 0 12px rgba(25,135,84,0.6))" : "none"); transform: @(activeLog.FormRating == 2 ? "scale(1.1)" : "scale(1)");"
                                     @onclick="() => activeLog.FormRating = 2">
-                                <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' @(activeLog.FormRating == 2 ? "1" : "0");">sentiment_satisfied</span>
+                                <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 2 ? "1" : "0");">sentiment_satisfied</span>
                             </button>
-                            <button class="p-0 hover:scale-110 transition-transform @(activeLog.FormRating == 3 ? "text-orange-500 drop-shadow-[0_0_12px_rgba(249,115,22,0.6)] scale-110" : "text-white/20")"
+                            <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 3 ? "#f97316" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 3 ? "drop-shadow(0 0 12px rgba(249,115,22,0.6))" : "none"); transform: @(activeLog.FormRating == 3 ? "scale(1.1)" : "scale(1)");"
                                     @onclick="() => activeLog.FormRating = 3">
-                                <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' @(activeLog.FormRating == 3 ? "1" : "0");">local_fire_department</span>
+                                <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 3 ? "1" : "0");">local_fire_department</span>
                             </button>
                         </div>
 
                         <!-- Log Button -->
-                        <button class="refine-glow-btn"
+                        <button class="rf-button-primary"
                                 @onclick="() => LogSet(item.ExerciseId, currentIndex, item.Sets, exercisesList.Count)">
-                            <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "wght" 700;'>done_all</span>
+                            <span class="material-symbols-outlined" style='font-size: 20px; font-variation-settings: "wght" 700;'>done_all</span>
                             LOG SET @currentSet
                         </button>
 
                         <!-- Bottom Links -->
-                        <div class="flex justify-center gap-6 mt-2 opacity-70 transform scale-[0.9] origin-top">
+                        <div class="rf-flex-row rf-justify-center" style="gap: 24px; margin-top: 8px; opacity: 0.7; transform: scale(0.9); transform-origin: top;">
                             <button class="refine-ghost-btn">
-                                <span class="material-symbols-outlined text-[18px]">history</span> HISTORY
+                                <span class="material-symbols-outlined" style="font-size: 18px;">history</span> HISTORY
                             </button>
                             <button class="refine-ghost-btn">
-                                <span class="material-symbols-outlined text-[18px]">videocam</span> FORM VIDEO
+                                <span class="material-symbols-outlined" style="font-size: 18px;">videocam</span> FORM VIDEO
                             </button>
                         </div>
                     </div>
@@ -197,21 +202,21 @@ else
                     <!-- Scroll Hint (Only if not the last set of the last exercise) -->
                     @if (!(currentIndex == exercisesList.Count - 1 && currentSet == item.Sets))
                     {
-                        <div class="absolute bottom-6 left-0 right-0 flex justify-center z-10 opacity-50 animate-pulse pointer-events-none">
-                            <span class="material-symbols-outlined text-white text-3xl">keyboard_arrow_down</span>
+                        <div class="rf-flex-row rf-justify-center" style="position: absolute; bottom: 24px; left: 0; right: 0; z-index: 10; opacity: 0.5; pointer-events: none; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;">
+                            <span class="material-symbols-outlined" style="color: white; font-size: 30px;">keyboard_arrow_down</span>
                         </div>
                     }
                 </section>
             }
 
             <!-- Final Summary / Finish Slide -->
-            <section id="finish-slide" class="h-full w-full snap-start snap-section relative flex flex-col justify-center items-center bg-background px-8 text-center border-t border-white/5">
-                <span class="material-symbols-outlined text-6xl text-primary-container mb-4 drop-shadow-[0_0_20px_rgba(195,244,0,0.5)]">task_alt</span>
-                <h2 class="font-headline text-3xl font-bold text-white mb-2">Great Job!</h2>
-                <p class="font-body text-on-surface-variant mb-8 max-w-xs">You've reached the end of your session. Review your sets and complete the workout.</p>
-                <button class="refine-glow-btn-lg"
+            <section id="finish-slide" class="snap-section" style="height: 100%; width: 100%; scroll-snap-align: start; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: var(--color-background); padding: 0 32px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05);">
+                <span class="material-symbols-outlined" style="font-size: 60px; color: var(--color-primary-container); margin-bottom: 16px; filter: drop-shadow(0 0 20px rgba(195,244,0,0.5));">task_alt</span>
+                <h2 class="font-headline" style="font-size: 30px; font-weight: bold; color: white; margin-bottom: 8px;">Great Job!</h2>
+                <p class="font-body" style="color: var(--color-on-surface-variant); margin-bottom: 32px; max-width: 320px;">You've reached the end of your session. Review your sets and complete the workout.</p>
+                <button class="rf-button-secondary"
                         @onclick="FinishWorkout">
-                    <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "wght" 700;'>done_all</span>
+                    <span class="material-symbols-outlined" style='font-size: 20px; font-variation-settings: "wght" 700;'>done_all</span>
                     @(DateTicks.HasValue ? "UPDATE SESSION" : "FINISH WORKOUT")
                 </button>
             </section>
@@ -221,9 +226,47 @@ else
 
 @if (_showToast)
 {
-    <div class="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-[#1c1c1e]/90 backdrop-blur-md border border-primary-container/30 px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-        <i class="bi bi-info-circle-fill text-primary-container"></i>
-        <span class="text-sm font-medium text-white whitespace-nowrap">Mevcut antrenmanına yönlendirildin.</span>
+    <div class="toast-container">
+        <div class="refine-toast" style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+            <i class="bi bi-info-circle-fill" style="color: var(--color-primary-container);"></i>
+            <span class="font-body" style="font-size: 14px; font-weight: 500; color: white;">You have been redirected to your current workout.</span>
+        </div>
+    </div>
+}
+
+@if (_showExitModal)
+{
+    <div class="exit-modal-overlay">
+        <div class="exit-modal-container animate-fade-in">
+            <div class="exit-modal-icon-box">
+                <span class="material-symbols-outlined" style="font-size: 36px; color: #ffb4ab;">warning</span>
+            </div>
+            
+            <h3 class="font-headline exit-modal-title">Exit Workout?</h3>
+            <p class="font-body exit-modal-body">
+                You have an ongoing workout. Would you like to save it before leaving the page?
+            </p>
+            
+            <div class="rf-flex-col" style="gap: 12px;">
+                <!-- Return to Workout (Primary) -->
+                <button class="exit-modal-btn exit-modal-btn-primary" @onclick="CancelExit">
+                    <span class="material-symbols-outlined">fitness_center</span>
+                    <span>RETURN TO WORKOUT</span>
+                </button>
+                
+                <!-- Save & Quit (Inverse) -->
+                <button class="exit-modal-btn exit-modal-btn-inverse" @onclick="SaveAndExitAsync">
+                    <span class="material-symbols-outlined">check</span>
+                    <span>SAVE & QUIT</span>
+                </button>
+                
+                <!-- Discard & Quit (Red Ghost) -->
+                <button class="exit-modal-btn exit-modal-btn-ghost" @onclick="DiscardAndExitAsync">
+                    <span class="material-symbols-outlined">delete_forever</span>
+                    <span>DISCARD & QUIT</span>
+                </button>
+            </div>
+        </div>
     </div>
 }
 
@@ -246,6 +289,10 @@ else
     private Dictionary<int, int> _currentSetIndex = new();
     private bool _showTopBarMenu = false;
 
+    private bool _showExitModal = false;
+    private bool _allowNavigation = false;
+    private string? _pendingTargetLocation;
+
     // İşlem yapılacak hedef tarih (Edit ise geçmiş tarih, Yeni ise şimdiki zaman)
     private DateTime _targetDate;
 
@@ -253,6 +300,7 @@ else
     {
         TopBar.OnLeftActionTapped += HandleLeftAction;
         TopBar.OnRightActionTapped += HandleRightAction;
+        NavBridge.OnHardwareBackRequested += HandleHardwareBack;
     }
 
     protected override async Task OnInitializedAsync()
@@ -291,7 +339,11 @@ else
                 if (existingLogs.Any())
                 {
                     _activeLogs = existingLogs.OrderBy(l => l.SetNumber).ToList();
-                    if (IsResuming) _showToast = true;
+                    if (IsResuming)
+                    {
+                        _showToast = true;
+                        _ = RemoveToastAfterDelay();
+                    }
                 }
                 else
                 {
@@ -453,9 +505,11 @@ else
         }
     }
 
-    private async void HandleLeftAction()
+    private void HandleLeftAction()
     {
-        await JSRuntime.InvokeVoidAsync("history.back");
+        _pendingTargetLocation = null; // history.back if exited
+        _showExitModal = true;
+        StateHasChanged();
     }
 
     private void ToggleTopBarMenu()
@@ -469,9 +523,98 @@ else
         InvokeAsync(StateHasChanged);
     }
 
+    private async Task<bool> HandleHardwareBack()
+    {
+        if (!_showExitModal)
+        {
+            _showExitModal = true;
+            _pendingTargetLocation = null; // history.back if exited
+            await InvokeAsync(StateHasChanged);
+            return true;
+        }
+        return true;
+    }
+
+    private async Task HandleInternalNavigation(LocationChangingContext context)
+    {
+        if (_allowNavigation)
+        {
+            return;
+        }
+
+        context.PreventNavigation();
+        _pendingTargetLocation = context.TargetLocation;
+        _showExitModal = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SaveAndExitAsync()
+    {
+        _showExitModal = false;
+        _allowNavigation = true;
+
+        if (DateTicks.HasValue)
+        {
+            // Edit Mode: Update (Upsert) logs
+            await DbService.UpdateSessionLogsAsync(_activeLogs);
+            
+            if (!string.IsNullOrEmpty(_pendingTargetLocation))
+            {
+                NavManager.NavigateTo(_pendingTargetLocation);
+            }
+            else
+            {
+                NavManager.NavigateTo($"/history/detail/{WorkoutId}/{DateTicks}");
+            }
+        }
+        else
+        {
+            // Active Mode: Save/Insert logs
+            await DbService.SaveWorkoutLogsAsync(_activeLogs);
+            
+            if (!string.IsNullOrEmpty(_pendingTargetLocation))
+            {
+                NavManager.NavigateTo(_pendingTargetLocation);
+            }
+            else
+            {
+                NavManager.NavigateTo("/");
+            }
+        }
+    }
+
+    private async Task DiscardAndExitAsync()
+    {
+        _showExitModal = false;
+        _allowNavigation = true;
+
+        if (!string.IsNullOrEmpty(_pendingTargetLocation))
+        {
+            NavManager.NavigateTo(_pendingTargetLocation);
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("history.back");
+        }
+    }
+
+    private void CancelExit()
+    {
+        _showExitModal = false;
+        _pendingTargetLocation = null;
+    }
+
+    private async Task RemoveToastAfterDelay()
+    {
+        await Task.Delay(3000);
+        _showToast = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
         TopBar.OnLeftActionTapped -= HandleLeftAction;
         TopBar.OnRightActionTapped -= HandleRightAction;
+        NavBridge.OnHardwareBackRequested -= HandleHardwareBack;
     }
 }

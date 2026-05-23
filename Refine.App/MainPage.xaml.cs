@@ -132,7 +132,6 @@ public partial class MainPage : ContentPage
     private void OnProfileTapped(object? sender, EventArgs e)
     {
         _navBridge.NavigateTo("profile");
-        UpdateActiveTab("profile");
     }
 
     private void OnNavTapped(object? sender, EventArgs e)
@@ -150,7 +149,6 @@ public partial class MainPage : ContentPage
                 {
                     _navBridge.NavigateTo(targetUrl);
                 }
-                UpdateActiveTab(targetUrl);
             }
         }
     }

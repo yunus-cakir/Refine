@@ -131,8 +131,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        TopBar.SetDetailMode(Id == 0 ? "Yeni Program" : "Programı Düzenle");
-        // Import için serbest antrenmanları hazırla
+        TopBar.SetDetailMode(Id == 0 ? "New Program" : "Edit Program");
         _standaloneWorkouts = await DbService.GetStandaloneWorkoutsAsync();
 
         if (Id != 0)

@@ -7,7 +7,7 @@
 @implements IDisposable
 
 <div class="page bg-background text-on-surface">
-    <main class="content p-4">
+    <main class="content">
         @Body
     </main>
 </div>
@@ -26,6 +26,7 @@
         width: 100%;
         max-width: 600px; /* Çok geniş ekranlarda yayılmasın */
         margin: 0 auto; /* Ortala */
+        padding: 16px;
     }
 </style>
 
@@ -48,7 +49,7 @@
     {
         var relativeUri = NavManager.ToBaseRelativePath(absoluteUri);
         var tabKey = "";
-        if (relativeUri.StartsWith("workouts")) tabKey = "workouts";
+        if (relativeUri.StartsWith("workouts") || relativeUri.StartsWith("session") || relativeUri.StartsWith("history")) tabKey = "workouts";
         else if (relativeUri.StartsWith("analytics")) tabKey = "analytics";
         else if (relativeUri.StartsWith("profile") || relativeUri.StartsWith("preferences")) tabKey = "profile";
 

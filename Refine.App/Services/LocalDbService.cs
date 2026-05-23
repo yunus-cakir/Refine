@@ -119,9 +119,9 @@ public class LocalDbService
         await _connection!.InsertAsync(log);
         
         var user = await GetUserAsync();
-        if (user != null)
+        if (user != null && log.Weight.HasValue)
         {
-            user.Weight = log.Weight;
+            user.Weight = log.Weight.Value;
             // Sadece flat property'yi güncelliyoruz, blob ve ilişkileri değil
             await _connection.UpdateAsync(user); 
         }
