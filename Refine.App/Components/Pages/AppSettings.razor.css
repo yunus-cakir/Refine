@@ -1,0 +1,44 @@
+.page-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: var(--color-background);
+}
+
+.back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #121312;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+    background-color: #1a1b1a;
+    transform: scale(1.05);
+}
+
+.settings-card {
+    background: #111211;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+}
+
+.icon-glow {
+    width: 64px;
+    height: 64px;
+    background: rgba(195, 244, 0, 0.1);
+    border: 1px solid rgba(195, 244, 0, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 0 15px rgba(195, 244, 0, 0.15);
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

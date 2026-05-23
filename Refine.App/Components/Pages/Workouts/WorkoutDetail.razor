@@ -1,85 +1,111 @@
 @page "/workouts/detail/{id:int}"
 @using Refine.App.Models
 @using Refine.App.Services
+@implements IDisposable
 @inject LocalDbService ProgramService
 @inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+@inject IJSRuntime JS
 
 @if (_workout == null)
 {
-    <div class="text-center mt-5"><div class="spinner-border text-primary"></div></div>
+    <div class="loader-container">
+        <div class="spinner-border text-primary"></div>
+    </div>
 }
 else
 {
-    <div class="mb-4">
-        <h3 class="fw-bold">@_workout.Name</h3>
-        <p class="text-muted">@_workout.Description</p>
+    <div class="workout-detail-container">
+        
+        <!-- Target Muscles -->
+        <section class="section-margin">
+            <h2 class="font-title-sm text-title-sm target-muscles-title">Target Muscles</h2>
+            <div class="muscle-badges-container">
+                @if (_workout.Items != null)
+                {
+                    var targetMuscles = _workout.Items
+                        .Where(i => !string.IsNullOrWhiteSpace(i.Exercise?.PrimaryMuscleCategory))
+                        .Select(i => i.Exercise!.PrimaryMuscleCategory!.ToUpper())
+                        .Distinct()
+                        .ToList();
+                    
+                    if (targetMuscles.Any())
+                    {
+                        foreach (var muscle in targetMuscles)
+                        {
+                            <span class="refine-badge">@muscle</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="refine-badge">GENEL</span>
+                    }
+                }
+            </div>
+        </section>
+
+        <!-- Start Button -->
+        <div class="button-container section-margin">
+            <button class="refine-glow-btn-lg" @onclick="StartWorkout">
+                START WORKOUT
+            </button>
+        </div>
 
         <!-- CNS YÜKÜ PROGRESS BAR -->
-        <div class="mt-3">
+        <div class="cns-container section-margin">
             @{
                 var percentage = CnsThreshold > 0 ? Math.Min((TotalCnsLoad / CnsThreshold) * 100, 100) : 0;
                 var dynamicColor = Refine.App.Services.CnsHelper.GetCnsColor(percentage);
             }
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="small fw-bold text-muted">CNS Yorgunluk Yükü (Tahmini)</span>
-                <span class="small fw-bold" style="color: @dynamicColor;">
+            <div class="cns-header">
+                <span class="font-label text-label-caps cns-label">CNS Yorgunluk Yükü (Tahmini)</span>
+                <span class="font-label text-label-caps" style="color: @dynamicColor;">
                     %@percentage.ToString("0")
                 </span>
             </div>
-            <div class="progress" style="height: 6px; background-color: #2a2a2a;">
-                <div class="progress-bar" role="progressbar" style="width: @percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%; background-color: @dynamicColor;"></div>
+            <div class="cns-progress-track">
+                <div class="cns-progress-fill" style="width: @percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%; background-color: @dynamicColor;"></div>
             </div>
             @if (TotalCnsLoad >= CnsThreshold)
             {
-                <div class="mt-2 py-2 px-3 d-flex align-items-center gap-2 mb-0 rounded" style="font-size: 0.8rem; border-left: 4px solid @dynamicColor; background-color: rgba(255,255,255,0.05); color: @dynamicColor;">
-                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                    <div>
-                        <strong>Yüksek CNS Yorgunluğu!</strong> Bu program sinir sisteminizi limitlerin üzerinde yorabilir.
+                <div class="cns-warning" style="border-left: 4px solid @dynamicColor; color: @dynamicColor;">
+                    <i class="bi bi-exclamation-triangle-fill cns-warning-icon"></i>
+                    <div class="font-body text-body-md">
+                        <strong>Severe CNS Fatigue!</strong> This program may overtax your nervous system.
                     </div>
                 </div>
             }
         </div>
 
-        <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold mt-3 shadow text-dark border-0 d-block text-center"
-            @onclick="StartWorkout">
-        ANTRENMANA BAŞLA
-    </button>
+
+        <!-- Exercises List -->
+        <section class="exercises-section">
+            @if (_workout.Items != null)
+            {
+                @foreach (var item in _workout.Items.OrderBy(i => i.Order))
+                {
+                    <article class="refine-card exercise-card">
+                        <div class="exercise-card-content">
+                            <div class="exercise-icon-container">
+                                <span class="material-symbols-outlined exercise-icon" style="font-variation-settings: 'FILL' 0;">fitness_center</span>
+                            </div>
+                            <div class="exercise-details">
+                                <div class="exercise-header">
+                                    <h3 class="font-title-sm text-title-sm exercise-title">@(item.Exercise?.Name ?? "Bilinmeyen Hareket")</h3>
+                                    <span class="material-symbols-outlined exercise-more-icon">more_vert</span>
+                                </div>
+                                <div class="exercise-stats font-body text-body-md">
+                                    <span class="stat-item"><span class="material-symbols-outlined stat-icon">repeat</span> @item.Sets Sets</span>
+                                    <span class="stat-divider">•</span>
+                                    <span class="stat-item"><span class="material-symbols-outlined stat-icon">fitness_center</span> @item.RepsRange Reps</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                }
+            }
+        </section>
     </div>
-
-    
-
-    @if (_workout.Items != null)
-    {
-        @foreach (var item in _workout.Items.OrderBy(i => i.Order))
-        {
-            <div class="refine-card p-3 mb-3">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <span class="badge bg-secondary bg-opacity-10 text-secondary mb-1" style="font-size:0.7rem">
-                            @(item.Exercise?.PrimaryMuscleCategory?.ToUpper() ?? "GENEL")
-                        </span>
-                        <h5 class="fw-bold mb-0">@(item.Exercise?.Name ?? "Bilinmeyen Hareket")</h5>
-                    </div>
-                    <small class="text-muted">@(item.Exercise?.Equipment ?? "-")</small>
-                </div>
-
-                <hr class="my-2 opacity-25" />
-
-                <div class="d-flex gap-2 mt-2">
-                    <div class="stat-box flex-fill">
-                        <div class="stat-label">SETS</div>
-                        <div class="stat-value">@item.Sets</div>
-                    </div>
-                    <div class="stat-box flex-fill">
-                        <div class="stat-label">REPS</div>
-                        <div class="stat-value">@item.RepsRange</div>
-                    </div>
-                </div>
-            </div>
-        }
-    }
-
-    
 }
 
 @code {
@@ -110,12 +136,54 @@ else
         return baseScore * item.Sets * repMultiplier * rirMultiplier;
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override void OnInitialized()
     {
-        CnsThreshold = await ProgramService.GetSettingValueAsync("CnsThreshold", 150m);
-        PreferredRIR = await ProgramService.GetSettingValueAsync("PreferredRIR", 2);
+        TopBar.OnLeftActionTapped += HandleLeftAction;
+        TopBar.OnRightActionTapped += HandleRightAction;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await ProgramService.GetUserAsync();
+        if (user != null)
+        {
+            CnsThreshold = user.WorkoutSettings.CnsThreshold;
+            PreferredRIR = user.WorkoutSettings.PreferredRIR;
+        }
 
         _workout = await ProgramService.GetWorkoutByIdAsync(Id);
+
+        if (_workout != null)
+        {
+            TopBar.SetDetailMode(_workout.Name);
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _workout = await ProgramService.GetWorkoutByIdAsync(Id);
+
+        if (_workout != null)
+        {
+            TopBar.SetDetailMode(_workout.Name);
+        }
+    }
+
+    private async void HandleLeftAction()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+
+    private void HandleRightAction()
+    {
+        // Settings / Options popup logic here
+        Console.WriteLine("Right action tapped from MAUI header!");
+    }
+
+    public void Dispose()
+    {
+        TopBar.OnLeftActionTapped -= HandleLeftAction;
+        TopBar.OnRightActionTapped -= HandleRightAction;
     }
 
     // YENİ METOT: Başlatma Mantığı

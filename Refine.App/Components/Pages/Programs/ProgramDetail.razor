@@ -5,70 +5,106 @@
 
 @if (_program == null)
 {
-    <div class="text-center mt-5"><div class="spinner-border text-primary"></div></div>
+    <div class="flex justify-center mt-10">
+        <span class="material-symbols-outlined animate-spin text-primary-fixed text-4xl">progress_activity</span>
+    </div>
 }
 else
 {
-    <div class="mb-4 d-flex justify-content-between align-items-end">
-        <div>
-            <h2 class="fw-bold">@_program.Name</h2>
-            <p class="text-muted mb-0">@_program.Goal • @_program.Level</p>
+    <div class="flex flex-col gap-6 w-full pb-24 md:pb-0">
+        
+        <!-- Header & Info -->
+        <div class="flex flex-col gap-2">
+            <h2 class="font-headline text-3xl font-bold text-primary tracking-tight">@_program.Name</h2>
+            <div class="flex items-center gap-2 text-on-surface-variant font-label text-[12px] uppercase tracking-widest">
+                <span>@_program.Goal</span>
+                <span class="w-1 h-1 rounded-full bg-surface-container-highest"></span>
+                <span>@_program.Level</span>
+            </div>
         </div>
-        <div class="d-flex gap-2 align-items-center">
-            @if (!_isSelected)
+
+        <!-- Actions -->
+        <div class="flex justify-between items-center bg-[#1c1c1e] p-4 rounded-xl border border-white/5 shadow-md">
+            <div>
+                @if (!_isSelected)
+                {
+                    <button class="refine-ghost-btn !text-primary-fixed hover:!text-primary" @onclick="SelectProgram">
+                        <span class="material-symbols-outlined text-[18px]">radio_button_unchecked</span> 
+                        SEÇİLİ YAP
+                    </button>
+                }
+                else
+                {
+                    <div class="refine-badge flex items-center gap-1 w-max">
+                        <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span> 
+                        SEÇİLİ PROGRAM
+                    </div>
+                }
+            </div>
+            
+            <a href="@($"/workouts/edit/{Id}/0")" class="refine-icon-btn !w-8 !h-8 bg-primary-fixed/10 !text-primary-fixed !border-primary-fixed/20 hover:!bg-primary-fixed hover:!text-black transition-all">
+                <span class="material-symbols-outlined text-[18px]">add</span>
+            </a>
+        </div>
+
+        <!-- Section Title -->
+        <div class="flex items-center justify-between mt-2">
+            <h3 class="font-headline text-xl text-primary font-semibold">Antrenman Günleri</h3>
+            <span class="text-on-surface-variant font-label text-[10px] uppercase tracking-widest bg-surface-container px-2 py-1 rounded-md">
+                @(_program.Workouts?.Count ?? 0) GÜN
+            </span>
+        </div>
+
+        <!-- Workouts List -->
+        <div class="flex flex-col gap-4">
+            @if(_program.Workouts != null && _program.Workouts.Any())
             {
-                <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold" @onclick="SelectProgram">
-                    <i class="bi bi-check-circle me-1"></i> Seçili Yap
-                </button>
+                @foreach (var workout in _program.Workouts.OrderBy(w => w.Order))
+                {
+                    <div class="refine-card relative overflow-hidden group !p-0">
+                        <!-- Primary left border accent -->
+                        <div class="absolute top-0 left-0 w-1 h-full bg-primary-fixed"></div>
+                        
+                        <div class="p-5">
+                            <div class="flex justify-between items-start mb-3">
+                                <a href="@($"/workouts/detail/{workout.Id}")" class="flex-grow block text-decoration-none">
+                                    <div class="text-primary-fixed font-label text-[10px] uppercase tracking-widest mb-1">GÜN @workout.Order</div>
+                                    <h3 class="font-title-sm text-lg text-primary font-semibold leading-tight">@workout.Name</h3>
+                                </a>
+                                <div class="flex items-center gap-1 bg-surface-container rounded-lg p-1 border border-white/5">
+                                    <a href="@($"/workouts/edit/{Id}/{workout.Id}")" class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors rounded-md hover:bg-white/5">
+                                        <span class="material-symbols-outlined text-[18px]">edit</span>
+                                    </a>
+                                    <div class="w-px h-4 bg-white/10"></div>
+                                    <button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-error transition-colors rounded-md hover:bg-error/10" @onclick="() => DeleteWorkout(workout)">
+                                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Bottom Stats -->
+                            <div class="flex justify-between items-end mt-4 pt-3 border-t border-white/5">
+                                <div class="flex items-center gap-1.5 text-on-surface-variant font-label text-[11px] tracking-widest uppercase">
+                                    <span class="material-symbols-outlined text-[16px]">fitness_center</span>
+                                    @(workout.Items?.Count ?? 0) HAREKET
+                                </div>
+                                <a href="@($"/workouts/detail/{workout.Id}")" class="text-primary-fixed font-label text-[10px] uppercase tracking-widest flex items-center gap-1 hover:text-primary transition-colors text-decoration-none">
+                                    İNCELE
+                                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
             }
             else
             {
-                <span class="badge bg-success px-3 py-2 rounded-pill d-flex align-items-center">
-                    <i class="bi bi-check-circle-fill me-1"></i> Seçili Program
-                </span>
-            }
-            <a href="@($"/workouts/edit/{Id}/0")" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
-                <i class="bi bi-plus-lg"></i> Ekle
-            </a>
-        </div>
-    </div>
-
-    <h5 class="mb-3 fw-bold">Antrenman Günleri</h5>
-
-    <div class="d-flex flex-column gap-3">
-        @if(_program.Workouts != null)
-        {
-            @foreach (var workout in _program.Workouts.OrderBy(w => w.Order))
-            {
-                <div class="refine-card p-3 mb-3">
-                    <div class="d-flex align-items-center justify-content-between">
-
-                        <a href="@($"/workouts/detail/{workout.Id}")" class="d-flex align-items-center text-decoration-none text-white flex-grow-1">
-                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3 text-dark"
-                                 style="width: 40px; height: 40px; font-weight:bold; background-color:var(--refine-primary) !important;">
-                                @workout.Order
-                            </div>
-                            <div>
-                                <h6 class="fw-bold mb-0">@workout.Name</h6>
-                                <small class="text-muted" style="font-size: 0.8rem;">
-                                    @(workout.Items?.Count ?? 0) Hareket
-                                </small>
-                            </div>
-                        </a>
-
-                        <div class="d-flex gap-2 ms-2">
-                            <a href="@($"/workouts/edit/{Id}/{workout.Id}")" class="btn btn-dark btn-sm border-secondary text-muted">
-                                <i class="bi bi-pencil-fill"></i>
-                            </a>
-                            <button class="btn btn-dark btn-sm border-secondary text-danger" @onclick="() => DeleteWorkout(workout)">
-                                <i class="bi bi-trash-fill"></i>
-                            </button>
-                        </div>
-
-                    </div>
+                <div class="text-center py-10 bg-surface-container rounded-xl border border-white/5 border-dashed">
+                    <span class="material-symbols-outlined text-4xl text-on-surface-variant mb-2 opacity-50">event_note</span>
+                    <p class="font-body text-on-surface-variant text-sm">Henüz antrenman günü eklenmemiş.</p>
                 </div>
             }
-        }
+        </div>
     </div>
 }
 

@@ -24,10 +24,37 @@ public class LocalDbService
         await _connection.CreateTableAsync<WorkoutItem>();
         await _connection.CreateTableAsync<WorkoutLog>();
         await _connection.CreateTableAsync<User>();
-        await _connection.CreateTableAsync<AppSetting>();
+        await _connection.CreateTableAsync<BiometricLog>();
 
-        // Ayarları her zaman kontrol et ve eksikleri yükle
-        await SeedUserSettingsAsync();
+        // Varsayılan kullanıcı ve ayarları oluştur (Eğer yoksa)
+        var userCount = await _connection.Table<User>().CountAsync();
+        if (userCount == 0)
+        {
+            var newUser = new User
+            {
+                FirstName = "Sporcu",
+                LastName = "",
+                Height = 175,
+                Weight = 75,
+                Gender = "Erkek",
+                TargetDailyCalories = 2500,
+                MetabolismType = "normal",
+                AppSettings = new AppSettings { Language = "tr", UnitSystem = "metric", Theme = "dark" },
+                WorkoutSettings = new WorkoutSettings { PreferredReps = 10, PreferredRIR = 2, AutoCopyPreviousSetData = true }
+            };
+            await _connection.InsertWithChildrenAsync(newUser);
+            
+            var initialLog = new BiometricLog
+            {
+                UserId = newUser.Id,
+                Date = DateTime.Now,
+                Weight = 75,
+                Neck = 38,
+                Shoulder = 115,
+                Waist = 85
+            };
+            await _connection.InsertAsync(initialLog);
+        }
 
         // Eğer Egzersiz tablosu boşsa, örnek verileri yükle
         if (await _connection.Table<Exercise>().CountAsync() == 0)
@@ -51,17 +78,27 @@ public class LocalDbService
     {
         await Init();
         var user = await _connection!.Table<User>().FirstOrDefaultAsync();
-        if (user == null)
+        if (user != null)
         {
-            user = new User
+            user = await _connection.GetWithChildrenAsync<User>(user.Id);
+
+            // Auto-heal settings if they are null due to uninitialized blob columns on older DBs
+            bool needsUpdate = false;
+            if (user.AppSettings == null)
             {
-                FirstName = "Sporcu",
-                LastName = "",
-                Height = 180,
-                Weight = 80,
-                Language = "Tr"
-            };
-            await _connection.InsertAsync(user);
+                user.AppSettings = new AppSettings { Language = "tr", UnitSystem = "metric", Theme = "dark" };
+                needsUpdate = true;
+            }
+            if (user.WorkoutSettings == null)
+            {
+                user.WorkoutSettings = new WorkoutSettings { PreferredReps = 10, PreferredRIR = 2, AutoCopyPreviousSetData = true };
+                needsUpdate = true;
+            }
+
+            if (needsUpdate)
+            {
+                await _connection.UpdateWithChildrenAsync(user);
+            }
         }
         return user;
     }
@@ -69,69 +106,24 @@ public class LocalDbService
     public async Task UpdateUserAsync(User user)
     {
         await Init();
-        await _connection!.UpdateAsync(user);
+        await _connection!.UpdateWithChildrenAsync(user);
     }
 
     // --------------------------------------------
-    //               SETTINGS CRUD
+    //               BIOMETRICS CRUD
     // --------------------------------------------
 
-    public async Task<List<AppSetting>> GetAllSettingsAsync()
+    public async Task AddBiometricLogAsync(BiometricLog log)
     {
         await Init();
-        return await _connection!.Table<AppSetting>().ToListAsync();
-    }
-
-    public async Task<T> GetSettingValueAsync<T>(string key, T defaultValue)
-    {
-        await Init();
-        var setting = await _connection!.Table<AppSetting>().Where(s => s.Key == key).FirstOrDefaultAsync();
-
-        if (setting == null) return defaultValue;
-
-        try
+        await _connection!.InsertAsync(log);
+        
+        var user = await GetUserAsync();
+        if (user != null)
         {
-            return (T)Convert.ChangeType(setting.Value, typeof(T));
-        }
-        catch
-        {
-            return defaultValue;
-        }
-    }
-
-    public async Task UpdateSettingAsync(AppSetting setting)
-    {
-        await Init();
-        await _connection!.UpdateAsync(setting);
-    }
-
-    // Varsayılan Ayarları ve Kullanıcıyı Yükle
-    private async Task SeedUserSettingsAsync()
-    {
-        // Kullanıcı yoksa oluştur
-        var userCount = await _connection!.Table<User>().CountAsync();
-        if (userCount == 0)
-        {
-            await _connection.InsertAsync(new User { FirstName = "New", LastName = "User", Height = 175, Weight = 75 });
-        }
-
-        // Varsayılan Ayarlar (Admin Panel mantığı burasıdır. Buraya eklediğin her şey ayarlar sayfasına düşer)
-        var defaultSettings = new List<AppSetting>
-        {
-            new AppSetting { Key = "PreferredRIR", Value = "2", DataType = "int", Category = "Workout", Description = "Varsayılan Rezerv Tekrar (RIR)" },
-            new AppSetting { Key = "DefaultRestTime", Value = "60", DataType = "int", Category = "Workout", Description = "Varsayılan Dinlenme Süresi (sn)" },
-            new AppSetting { Key = "ShowTips", Value = "true", DataType = "bool", Category = "General", Description = "İpuçlarını Göster" },
-            new AppSetting { Key = "WeightUnit", Value = "kg", DataType = "string", Category = "General", Description = "Ağırlık Birimi (kg/lbs)" },
-            new AppSetting { Key = "CnsThreshold", Value = "150", DataType = "int", Category = "Workout", Description = "CNS Yorgunluk Eşiği" }
-        };
-
-        foreach (var def in defaultSettings)
-        {
-            var existing = await _connection.Table<AppSetting>().Where(s => s.Key == def.Key).FirstOrDefaultAsync();
-            if (existing == null)
-            {
-                await _connection.InsertAsync(def);
-            }
+            user.Weight = log.Weight;
+            // Sadece flat property'yi güncelliyoruz, blob ve ilişkileri değil
+            await _connection.UpdateAsync(user); 
         }
     }
 

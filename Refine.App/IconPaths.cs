@@ -8,6 +8,9 @@ public static class IconPaths
     public const string Analytics = "\uef3e"; // analytics
     public const string Preferences = "\ue8b8"; // settings
     
+    public const string ArrowBack = "\ue5c4"; // arrow_back
+    public const string MoreVert = "\ue5d4"; // more_vert
+
     // Fallbacks to avoid breaking other views that might still reference them
     public const string Workout_Outline = Workouts;
     public const string Workout_Filled = Workouts;

@@ -137,8 +137,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        CnsThreshold = await DbService.GetSettingValueAsync("CnsThreshold", 150m);
-        PreferredRIR = await DbService.GetSettingValueAsync("PreferredRIR", 2);
+        var user = await DbService.GetUserAsync();
+        if (user != null)
+        {
+            CnsThreshold = user.WorkoutSettings.CnsThreshold;
+            PreferredRIR = user.WorkoutSettings.PreferredRIR;
+        }
 
         // Ticks'i tekrar DateTime'a çevir
         _sessionDate = new DateTime(DateTicks);

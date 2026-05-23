@@ -2,6 +2,7 @@
 @using Refine.App.Services
 @inject NavigationManager NavManager
 @inject NavigationBridge NavBridge
+@inject IJSRuntime JS
 
 <div class="page bg-background text-on-surface">
     <main class="content p-4">
@@ -30,6 +31,7 @@
     protected override void OnInitialized()
     {
         NavBridge.OnNavigate += HandleNavigation;
+        NavBridge.OnHardwareBackRequested += HandleHardwareBack;
     }
 
     private void HandleNavigation(string uri)
@@ -38,8 +40,25 @@
         StateHasChanged();
     }
 
+    private async Task<bool> HandleHardwareBack()
+    {
+        var currentUri = NavManager.Uri;
+        var baseUri = NavManager.BaseUri;
+
+        // If we are at the home page or a root tab, let MAUI handle it (which closes the app)
+        if (currentUri == baseUri || currentUri == baseUri + "workouts" || currentUri == baseUri + "analytics" || currentUri == baseUri + "preferences")
+        {
+            return false;
+        }
+
+        // Otherwise, go back using JS history
+        await JS.InvokeVoidAsync("history.back");
+        return true;
+    }
+
     public void Dispose()
     {
         NavBridge.OnNavigate -= HandleNavigation;
+        NavBridge.OnHardwareBackRequested -= HandleHardwareBack;
     }
 }

@@ -1,0 +1,46 @@
+@page "/profile/nutrition-settings"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+
+<div class="page-container py-4 px-3 min-h-screen">
+    <!-- Header with Back Button -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <button class="back-btn d-flex align-items-center justify-content-center" @onclick='() => NavManager.NavigateTo("/profile")'>
+            <span class="material-symbols-outlined text-white" style="font-size: 20px;">arrow_back</span>
+        </button>
+        <h3 class="font-headline fw-bold m-0 text-white">Nutrition Settings</h3>
+    </div>
+
+    @if (_user == null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary-container" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Placeholder Card -->
+        <div class="settings-card animate-fade-in p-4 mb-4 text-center">
+            <div class="icon-glow mb-3 mx-auto d-flex align-items-center justify-content-center">
+                <span class="material-symbols-outlined text-primary-container" style="font-size: 32px;">restaurant</span>
+            </div>
+            <h5 class="text-white fw-bold mb-2">Configure Your Nutrition</h5>
+            <p class="text-on-surface-variant small mb-0 px-3">
+                Nutrition parameters, daily target calorie intake, macronutrient distribution, and metabolism types will be fully editable here soon.
+            </p>
+        </div>
+    }
+</div>
+
+@code {
+    private User? _user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await DbService.GetUserAsync();
+    }
+}

@@ -2,6 +2,7 @@
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService DbService
+@inject TopBarBridge TopBar
 
 <div class="bg-background font-body-md text-on-surface min-h-screen">
 
@@ -116,6 +117,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        TopBar.SetHomeMode();
+        
         try
         {
             _user = await DbService.GetUserAsync();
