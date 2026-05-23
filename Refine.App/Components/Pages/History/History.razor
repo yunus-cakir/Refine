@@ -1,8 +1,10 @@
-﻿@page "/history"
+@page "/history"
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+@implements IDisposable
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold m-0">Geçmiş</h3>
@@ -64,6 +66,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        TopBar.SetStandardMode("Analytics");
         // 1. Tüm logları çek
         var allLogs = await DbService.GetAllLogsAsync();
 
@@ -117,5 +120,21 @@ else
     {
         // Tarihi URL'de taşımak için Ticks (sayısal zaman damgası) kullanıyoruz.
         NavManager.NavigateTo($"/history/detail/{session.WorkoutId}/{session.Date.Ticks}");
+    }
+
+    public void Dispose()
+    {
+        var nextUri = NavManager.Uri;
+        if (nextUri.Contains("/workouts/detail/") || 
+            nextUri.Contains("/session/active/") || 
+            nextUri.Contains("/session/edit/"))
+        {
+            return;
+        }
+
+        if (TopBar.CurrentConfig.Title == "Analytics")
+        {
+            TopBar.SetHomeMode(string.Empty);
+        }
     }
 }

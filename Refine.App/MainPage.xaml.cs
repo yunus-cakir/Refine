@@ -15,6 +15,7 @@ public partial class MainPage : ContentPage
         _topBarBridge = topBarBridge;
 
         _topBarBridge.OnConfigChanged += HandleTopBarConfigChanged;
+        _navBridge.OnLocationChanged += HandleLocationChanged;
 
         // Varsayılan sekmeyi ayarla (Home)
         UpdateActiveTab("");
@@ -42,6 +43,28 @@ public partial class MainPage : ContentPage
             {
                 HomeHeaderGrid.IsVisible = true;
                 DetailHeaderGrid.IsVisible = false;
+
+                HomeHeaderSwitchBorder.IsVisible = true;
+                HomeHeaderProfileBorder.IsVisible = true;
+
+                if (!string.IsNullOrWhiteSpace(config.Title))
+                {
+                    HomeHeaderLogoText.Text = config.Title.ToUpper();
+                }
+                else
+                {
+                    HomeHeaderLogoText.Text = "REFINE STUDIO";
+                }
+            }
+            else if (config.Mode == TopBarMode.Standard)
+            {
+                HomeHeaderGrid.IsVisible = true;
+                DetailHeaderGrid.IsVisible = false;
+
+                HomeHeaderSwitchBorder.IsVisible = false;
+                HomeHeaderProfileBorder.IsVisible = false;
+
+                HomeHeaderLogoText.Text = config.Title?.ToUpper() ?? string.Empty;
             }
             else if (config.Mode == TopBarMode.Detail)
             {
@@ -49,6 +72,14 @@ public partial class MainPage : ContentPage
                 DetailHeaderGrid.IsVisible = true;
                 DetailHeaderTitle.Text = config.Title?.ToUpper() ?? "DETAIL";
             }
+        });
+    }
+
+    private void HandleLocationChanged(string activeUrl)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            UpdateActiveTab(activeUrl);
         });
     }
 

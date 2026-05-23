@@ -7,6 +7,8 @@
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
 @inject IJSRuntime JSRuntime
+@inject TopBarBridge TopBar
+@implements IDisposable
 
 <style>
     /* Hide scrollbar for clean reel feel */
@@ -42,6 +44,17 @@
 else
 {
     <div class="active-session-page bg-background text-on-surface font-body-md antialiased relative">
+        @if (_showTopBarMenu)
+        {
+            <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
+            <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
+                <button class="refine-dropdown-item-primary" @onclick="() => { ToggleTopBarMenu(); _ = FinishWorkout(); }">
+                    <span class="material-symbols-outlined text-[20px]">task_alt</span>
+                    @(DateTicks.HasValue ? "Update Session" : "Finish Workout")
+                </button>
+            </div>
+        }
+
         <!-- Main Reels -->
         <main class="flex-1 overflow-y-auto snap-y snap-mandatory relative pb-safe hide-scrollbar">
             @{ var exercisesList = (_workout.Items ?? new List<WorkoutItem>()).OrderBy(i => i.Order).ToList(); }
@@ -109,11 +122,6 @@ else
                                                 @onclick="() => { CloseMenu(); CopyAllPreviousData(); }">
                                             <span class="material-symbols-outlined text-[20px]">content_copy</span>
                                             Copy All Previous Data
-                                        </button>
-                                        <button class="refine-dropdown-item-primary" 
-                                                @onclick="() => { CloseMenu(); _ = FinishWorkout(); }">
-                                            <span class="material-symbols-outlined text-[20px]">task_alt</span>
-                                            @(DateTicks.HasValue ? "Update" : "Finish")
                                         </button>
                                     </div>
                                 }
@@ -236,9 +244,16 @@ else
     private bool _showToast = false;
     private int? _openMenuId = null;
     private Dictionary<int, int> _currentSetIndex = new();
+    private bool _showTopBarMenu = false;
 
     // İşlem yapılacak hedef tarih (Edit ise geçmiş tarih, Yeni ise şimdiki zaman)
     private DateTime _targetDate;
+
+    protected override void OnInitialized()
+    {
+        TopBar.OnLeftActionTapped += HandleLeftAction;
+        TopBar.OnRightActionTapped += HandleRightAction;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -246,6 +261,7 @@ else
 
         if (_workout != null && _workout.Items != null)
         {
+            TopBar.SetDetailMode(_workout.Name);
             // 1. Hedef Tarihi Belirle
             if (DateTicks.HasValue)
             {
@@ -435,5 +451,27 @@ else
                 NavManager.NavigateTo("/");
             }
         }
+    }
+
+    private async void HandleLeftAction()
+    {
+        await JSRuntime.InvokeVoidAsync("history.back");
+    }
+
+    private void ToggleTopBarMenu()
+    {
+        _showTopBarMenu = !_showTopBarMenu;
+    }
+
+    private void HandleRightAction()
+    {
+        ToggleTopBarMenu();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        TopBar.OnLeftActionTapped -= HandleLeftAction;
+        TopBar.OnRightActionTapped -= HandleRightAction;
     }
 }

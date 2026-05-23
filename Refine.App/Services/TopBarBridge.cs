@@ -5,6 +5,7 @@ namespace Refine.App.Services;
 public enum TopBarMode
 {
     Home,
+    Standard,
     Detail
 }
 
@@ -20,14 +21,24 @@ public class TopBarBridge
     public event Action? OnLeftActionTapped;
     public event Action? OnRightActionTapped;
 
-    public void SetHomeMode()
+    public TopBarConfig CurrentConfig { get; private set; } = new();
+
+    public void SetHomeMode(string title = "")
     {
-        OnConfigChanged?.Invoke(new TopBarConfig { Mode = TopBarMode.Home });
+        CurrentConfig = new TopBarConfig { Mode = TopBarMode.Home, Title = title };
+        OnConfigChanged?.Invoke(CurrentConfig);
+    }
+
+    public void SetStandardMode(string title)
+    {
+        CurrentConfig = new TopBarConfig { Mode = TopBarMode.Standard, Title = title };
+        OnConfigChanged?.Invoke(CurrentConfig);
     }
 
     public void SetDetailMode(string title)
     {
-        OnConfigChanged?.Invoke(new TopBarConfig { Mode = TopBarMode.Detail, Title = title });
+        CurrentConfig = new TopBarConfig { Mode = TopBarMode.Detail, Title = title };
+        OnConfigChanged?.Invoke(CurrentConfig);
     }
 
     public void LeftTapped() => OnLeftActionTapped?.Invoke();

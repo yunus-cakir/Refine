@@ -17,7 +17,8 @@
             <!-- HOME HEADER (Default) -->
             <Grid x:Name="HomeHeaderGrid">
                 <!-- Custom Switch (Left) -->
-                <Border HorizontalOptions="Start" VerticalOptions="Center" 
+                <Border x:Name="HomeHeaderSwitchBorder"
+                        HorizontalOptions="Start" VerticalOptions="Center" 
                         Stroke="#1Affffff" StrokeThickness="1" 
                         BackgroundColor="#1c1c1e" 
                         StrokeShape="RoundRectangle 16"
@@ -36,7 +37,8 @@
                 </Border>
 
                 <!-- Center Logo Text -->
-                <Label Text="REFINE STUDIO" 
+                <Label x:Name="HomeHeaderLogoText"
+                       Text="REFINE STUDIO" 
                        TextColor="#ccff00" 
                        FontFamily="Space Grotesk"
                        FontAttributes="Bold,Italic" 
@@ -46,7 +48,8 @@
                        CharacterSpacing="1.5" />
 
                 <!-- Profile Photo (Right) -->
-                <Border HorizontalOptions="End" VerticalOptions="Center"
+                <Border x:Name="HomeHeaderProfileBorder"
+                        HorizontalOptions="End" VerticalOptions="Center"
                         Stroke="#1Affffff" StrokeThickness="1"
                         StrokeShape="RoundRectangle 16"
                         HeightRequest="32" WidthRequest="32">
@@ -74,7 +77,18 @@
                 </VerticalStackLayout>
 
                 <!-- Title (Center) -->
-                <Label x:Name="DetailHeaderTitle" Grid.Column="1" Text="WORKOUT NAME" TextColor="#ffffff" FontFamily="Lexend" FontAttributes="Bold" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" LineBreakMode="TailTruncation" MaxLines="1" />
+                <Label x:Name="DetailHeaderTitle" 
+                       Grid.Column="1" 
+                       Text="WORKOUT NAME" 
+                       TextColor="#FFFFFF" 
+                       FontFamily="Space Grotesk" 
+                       FontAttributes="Bold,Italic" 
+                       FontSize="18" 
+                       HorizontalOptions="Center" 
+                       VerticalOptions="Center" 
+                       CharacterSpacing="1.5" 
+                       LineBreakMode="TailTruncation" 
+                       MaxLines="1" />
 
                 <!-- Settings Icon (Right) -->
                 <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="Center">

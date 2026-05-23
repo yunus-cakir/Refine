@@ -18,6 +18,13 @@ public class NavigationBridge
         OnNavigate?.Invoke(uri);
     }
 
+    public event Action<string>? OnLocationChanged;
+
+    public void LocationChanged(string activeUrl)
+    {
+        OnLocationChanged?.Invoke(activeUrl);
+    }
+
     public async Task<bool> RequestHardwareBackAsync()
     {
         if (OnHardwareBackRequested != null)

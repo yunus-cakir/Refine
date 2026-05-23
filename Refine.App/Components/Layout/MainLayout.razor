@@ -2,7 +2,9 @@
 @using Refine.App.Services
 @inject NavigationManager NavManager
 @inject NavigationBridge NavBridge
+@inject TopBarBridge TopBar
 @inject IJSRuntime JS
+@implements IDisposable
 
 <div class="page bg-background text-on-surface">
     <main class="content p-4">
@@ -32,6 +34,25 @@
     {
         NavBridge.OnNavigate += HandleNavigation;
         NavBridge.OnHardwareBackRequested += HandleHardwareBack;
+        NavManager.LocationChanged += OnLocationChanged;
+
+        NotifyLocation(NavManager.Uri);
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        NotifyLocation(e.Location);
+    }
+
+    private void NotifyLocation(string absoluteUri)
+    {
+        var relativeUri = NavManager.ToBaseRelativePath(absoluteUri);
+        var tabKey = "";
+        if (relativeUri.StartsWith("workouts")) tabKey = "workouts";
+        else if (relativeUri.StartsWith("analytics")) tabKey = "analytics";
+        else if (relativeUri.StartsWith("profile") || relativeUri.StartsWith("preferences")) tabKey = "profile";
+
+        NavBridge.LocationChanged(tabKey);
     }
 
     private void HandleNavigation(string uri)
@@ -60,5 +81,6 @@
     {
         NavBridge.OnNavigate -= HandleNavigation;
         NavBridge.OnHardwareBackRequested -= HandleHardwareBack;
+        NavManager.LocationChanged -= OnLocationChanged;
     }
 }

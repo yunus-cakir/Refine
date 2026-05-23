@@ -3,6 +3,19 @@
 @using Refine.App.Services
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+@implements IDisposable
+
+@if (_showTopBarMenu)
+{
+    <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
+    <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
+        <button class="refine-dropdown-item" @onclick="() => { ToggleTopBarMenu(); GoToPrograms(); }">
+            <span class="material-symbols-outlined text-[20px]">list_alt</span>
+            Show All Programs
+        </button>
+    </div>
+}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold m-0">Antrenmanlar</h3>
@@ -64,9 +77,17 @@ else
 @code {
     private WorkoutProgram? _selectedProgram;
     private bool _isLoading = true;
+    private bool _showTopBarMenu = false;
+
+    protected override void OnInitialized()
+    {
+        TopBar.OnLeftActionTapped += HandleLeftAction;
+        TopBar.OnRightActionTapped += HandleRightAction;
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        TopBar.SetDetailMode("My Workouts");
         await LoadData();
     }
 
@@ -80,5 +101,40 @@ else
     private void GoToPrograms()
     {
         NavManager.NavigateTo("/programs");
+    }
+
+    private void HandleLeftAction()
+    {
+        NavManager.NavigateTo("/");
+    }
+
+    private void ToggleTopBarMenu()
+    {
+        _showTopBarMenu = !_showTopBarMenu;
+    }
+
+    private void HandleRightAction()
+    {
+        ToggleTopBarMenu();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        TopBar.OnLeftActionTapped -= HandleLeftAction;
+        TopBar.OnRightActionTapped -= HandleRightAction;
+
+        var nextUri = NavManager.Uri;
+        if (nextUri.Contains("/workouts/detail/") || 
+            nextUri.Contains("/session/active/") || 
+            nextUri.Contains("/session/edit/"))
+        {
+            return;
+        }
+
+        if (TopBar.CurrentConfig.Title == "My Workout")
+        {
+            TopBar.SetHomeMode(string.Empty);
+        }
     }
 }
