@@ -1,0 +1,284 @@
+@page "/analytics/detail/{ExerciseId:int}"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject IJSRuntime JS
+@inject LocalDbService DbService
+@inject AnalyticsService AnalyticsSvc
+@inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+@implements IAsyncDisposable
+
+<div class="analytics-container fade-in">
+    <!-- Filters -->
+    <div class="filters-grid">
+        <div class="filter-group">
+            <label>Exercise</label>
+            <select class="form-select custom-select" @bind="SelectedExerciseId">
+                @if (Exercises != null)
+                {
+                    @foreach (var ex in Exercises)
+                    {
+                        <option value="@ex.Id">@ex.Name</option>
+                    }
+                }
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label>Timeframe</label>
+            <select class="form-select custom-select" @bind="SelectedTimeframe">
+                <option value="7D">Last 7 Days</option>
+                <option value="30D">Last 30 Days</option>
+                <option value="90D">Last 90 Days</option>
+                <option value="All">All Time</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Metric</label>
+            <select class="form-select custom-select" @bind="SelectedMetric">
+                <option value="ProgressiveOverload">Progressive Overload</option>
+                <option value="1RM">Est. 1RM</option>
+                <option value="MaxWeight">Max Weight</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Chart Container -->
+    <div class="chart-card">
+        @if (isLoading)
+        {
+            <div class="skeleton-loader">
+                <div class="skeleton-chart-area pulse"></div>
+            </div>
+        }
+        else if (dataPoints == null || !dataPoints.Any())
+        {
+            <div class="empty-state">
+                <span class="material-symbols-outlined empty-icon">query_stats</span>
+                <p>No data available for the selected filters.</p>
+            </div>
+        }
+        
+        <div class="canvas-wrapper" style="@(isLoading || (dataPoints == null || !dataPoints.Any()) ? "display:none;" : "display:block;")">
+            <canvas @ref="chartCanvas"></canvas>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Exercise> Exercises = new();
+    private List<WorkoutLog> cachedLogs = new();
+    private List<ChartDataPoint> dataPoints = new();
+    
+    private bool isLoading = true;
+    private bool isFirstRenderComplete = false;
+    
+    [Parameter]
+    public int ExerciseId { get; set; }
+    
+    private int _selectedExerciseId;
+    public int SelectedExerciseId
+    {
+        get => _selectedExerciseId;
+        set
+        {
+            if (_selectedExerciseId != value)
+            {
+                _selectedExerciseId = value;
+                _ = HandleExerciseChanged();
+            }
+        }
+    }
+
+    private string _selectedTimeframe = "30D";
+    public string SelectedTimeframe
+    {
+        get => _selectedTimeframe;
+        set
+        {
+            if (_selectedTimeframe != value)
+            {
+                _selectedTimeframe = value;
+                _ = CrunchDataAsync();
+            }
+        }
+    }
+
+    private string _selectedMetric = "ProgressiveOverload";
+    public string SelectedMetric
+    {
+        get => _selectedMetric;
+        set
+        {
+            if (_selectedMetric != value)
+            {
+                _selectedMetric = value;
+                _ = CrunchDataAsync();
+            }
+        }
+    }
+
+    private IJSObjectReference? chartModule;
+    private IJSObjectReference? chartInstance;
+    private ElementReference chartCanvas;
+
+    protected override void OnInitialized()
+    {
+        TopBar.OnLeftActionTapped += HandleLeftAction;
+    }
+
+    private async void HandleLeftAction()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        TopBar.SetDetailMode("Analytics");
+
+        Exercises = await DbService.GetExercisesAsync();
+        Exercises = Exercises.OrderBy(e => e.Name).ToList();
+
+        if (Exercises.Any())
+        {
+            if (ExerciseId > 0 && Exercises.Any(e => e.Id == ExerciseId))
+            {
+                _selectedExerciseId = ExerciseId;
+            }
+            else
+            {
+                _selectedExerciseId = Exercises.First().Id;
+            }
+            
+            // Initialization is handled here without blocking the UI
+            await HandleExerciseChanged();
+        }
+        else
+        {
+            isLoading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isFirstRenderComplete = true;
+            chartModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/chart-interop.js");
+            if (!isLoading && dataPoints.Any())
+            {
+                await RenderOrUpdateChartAsync();
+            }
+        }
+    }
+
+    private async Task HandleExerciseChanged()
+    {
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
+        
+        var selectedExercise = Exercises.FirstOrDefault(e => e.Id == _selectedExerciseId);
+        if (selectedExercise != null)
+        {
+            TopBar.SetDetailMode(selectedExercise.Name);
+        }
+        
+        // Background thread for querying the database and crunching
+        await Task.Run(async () =>
+        {
+            cachedLogs = await DbService.GetLogsForExerciseAsync(_selectedExerciseId);
+            await CrunchDataInternalAsync();
+        });
+
+        isLoading = false;
+        await InvokeAsync(StateHasChanged);
+        
+        if (isFirstRenderComplete)
+        {
+            await RenderOrUpdateChartAsync();
+        }
+    }
+
+    private async Task CrunchDataAsync()
+    {
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
+
+        // Background thread for number crunching (No DB query)
+        await Task.Run(async () =>
+        {
+             await CrunchDataInternalAsync();
+        });
+
+        isLoading = false;
+        await InvokeAsync(StateHasChanged);
+        
+        if (isFirstRenderComplete)
+        {
+            await RenderOrUpdateChartAsync();
+        }
+    }
+
+    private Task CrunchDataInternalAsync()
+    {
+        dataPoints = AnalyticsSvc.ProcessLogs(cachedLogs, SelectedTimeframe, SelectedMetric);
+        return Task.CompletedTask;
+    }
+
+    private async Task RenderOrUpdateChartAsync()
+    {
+        if (chartModule == null || dataPoints == null || !dataPoints.Any())
+            return;
+
+        var labels = dataPoints.Select(d => d.Date.ToString("MMM dd")).ToArray();
+        var data = dataPoints.Select(d => d.Value).ToArray();
+        var datasetLabel = SelectedMetric switch
+        {
+            "MaxWeight" => "Max Weight",
+            "1RM" => "Est. 1RM",
+            "ProgressiveOverload" => "Progressive Overload",
+            _ => "Est. 1RM"
+        };
+
+        var first = dataPoints.FirstOrDefault()?.Value ?? 0;
+        var last = dataPoints.LastOrDefault()?.Value ?? 0;
+        var isPositive = last >= first;
+
+        if (chartInstance == null)
+        {
+            chartInstance = await chartModule.InvokeAsync<IJSObjectReference>("renderLineChart", chartCanvas, labels, data, datasetLabel, isPositive);
+        }
+        else
+        {
+            await chartModule.InvokeVoidAsync("updateChart", chartInstance, labels, data, datasetLabel, isPositive);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        TopBar.OnLeftActionTapped -= HandleLeftAction;
+
+        if (chartModule != null && chartInstance != null)
+        {
+            await chartModule.InvokeVoidAsync("destroyChart", chartInstance);
+        }
+        
+        if (chartModule != null)
+        {
+            await chartModule.DisposeAsync();
+        }
+
+        var nextUri = NavManager.Uri;
+        if (!nextUri.Contains("/workouts/detail/") && 
+            !nextUri.Contains("/session/active/") && 
+            !nextUri.Contains("/session/edit/") &&
+            !nextUri.Contains("/analytics/detail/"))
+        {
+            if (TopBar.CurrentConfig.Mode == TopBarMode.Detail)
+            {
+                TopBar.SetHomeMode(string.Empty);
+            }
+        }
+    }
+}

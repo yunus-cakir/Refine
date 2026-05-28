@@ -1,0 +1,131 @@
+@using Refine.App.Models
+@using Refine.App.Services
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="rf-card" @onclick="HandleClick" @attributes="AdditionalAttributes">
+    <div class="d-flex justify-content-between align-items-center" style="z-index: 10; position: relative;">
+        <div>
+            <h6 class="fw-bold mb-1" style="color: var(--refine-text);">@ExerciseName</h6>
+            <small class="text-muted">@(string.IsNullOrEmpty(Subtitle) ? $"Last Trained: {LastTrained.ToString("MMM dd")}" : Subtitle)</small>
+        </div>
+        <div class="d-flex flex-column align-items-end">
+            @if (ShowValueBadge && DataPoints != null && DataPoints.Any())
+            {
+                <div class="metric-highlight" style="background-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.1)" : "rgba(255, 69, 58, 0.1)"); border-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.2)" : "rgba(255, 69, 58, 0.2)");">
+                    <span class="fw-bold" style="color: @(RateOfChange >= 0 ? "#c3f400" : "#ff453a");">@DataPoints.Last().Value</span>
+                    <small class="text-muted ms-1">@MetricUnitLabel</small>
+                </div>
+            }
+            <span class="badge @(ShowValueBadge ? "mt-2" : "")" style="font-size: 11px; padding: 4px 8px; border-radius: 8px; font-weight: bold; background-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.15)" : "rgba(255, 69, 58, 0.15)"); color: @(RateOfChange >= 0 ? "#c3f400" : "#ff453a");">
+                @(RateOfChange >= 0 ? "+" : "")@(Math.Round(RateOfChange * 100, 1))%
+            </span>
+        </div>
+    </div>
+
+    <div class="sparkline-container" style="position: relative; z-index: 10;">
+        <canvas @ref="_canvasRef"></canvas>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int ExerciseId { get; set; }
+    [Parameter] public string ExerciseName { get; set; } = string.Empty;
+    [Parameter] public DateTime LastTrained { get; set; }
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public List<ChartDataPoint> DataPoints { get; set; } = new();
+    [Parameter] public double RateOfChange { get; set; }
+    [Parameter] public string MetricUnitLabel { get; set; } = "kg";
+    [Parameter] public bool ShowValueBadge { get; set; } = true;
+    [Parameter] public EventCallback<int> OnClick { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private ElementReference _canvasRef;
+    private IJSObjectReference? _chartModule;
+    private IJSObjectReference? _chartInstance;
+    private bool _isRendered = false;
+
+    private async Task HandleClick()
+    {
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync(ExerciseId);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _chartModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/chart-interop.js");
+                await RenderChartAsync();
+                _isRendered = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading chart module: {ex.Message}");
+            }
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_isRendered)
+        {
+            await RenderChartAsync();
+        }
+    }
+
+    private async Task RenderChartAsync()
+    {
+        if (_chartModule != null && DataPoints != null && DataPoints.Count >= 2 && !string.IsNullOrEmpty(_canvasRef.Id))
+        {
+            await DestroyChartAsync();
+            var labels = DataPoints.Select(d => d.Date.ToString("MMM dd")).ToArray();
+            var data = DataPoints.Select(d => d.Value).ToArray();
+
+            try
+            {
+                _chartInstance = await _chartModule.InvokeAsync<IJSObjectReference>("renderSparklineChart", _canvasRef, labels, data, RateOfChange >= 0);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error rendering sparkline: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task DestroyChartAsync()
+    {
+        if (_chartInstance != null && _chartModule != null)
+        {
+            try
+            {
+                await _chartModule.InvokeVoidAsync("destroyChart", _chartInstance);
+            }
+            catch
+            {
+                // Ignore dispose errors
+            }
+            finally
+            {
+                if (_chartInstance != null)
+                {
+                    await _chartInstance.DisposeAsync();
+                    _chartInstance = null;
+                }
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DestroyChartAsync();
+        if (_chartModule != null)
+        {
+            await _chartModule.DisposeAsync();
+        }
+    }
+}

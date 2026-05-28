@@ -1,0 +1,349 @@
+@page "/analytics"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject IJSRuntime JS
+@inject LocalDbService DbService
+@inject AnalyticsService AnalyticsSvc
+@inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+@implements IAsyncDisposable
+
+<div class="analytics-list-container fade-in">
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary-container" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+            </div>
+        </div>
+    }
+    else if (!exerciseViewModels.Any())
+    {
+        <div class="empty-state mt-5">
+            <span class="material-symbols-outlined empty-icon" style="font-size: 48px; opacity: 0.5;">query_stats</span>
+            <p class="text-muted mt-2">No exercise data available.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Filters Section -->
+        <div class="filters-section mb-4">
+            <!-- Metric Selector -->
+            <div class="sorting-selector-container">
+                <label class="sorting-label">Show Performance By</label>
+                <div class="sorting-buttons">
+                    <button class="sorting-btn @(SelectedMetric == "ProgressiveOverload" ? "active" : "")" @onclick='() => ChangeMetric("ProgressiveOverload")'>
+                        <span class="material-symbols-outlined btn-icon">monitoring</span>
+                        <span>Progressive Overload</span>
+                    </button>
+                    <button class="sorting-btn @(SelectedMetric == "1RM" ? "active" : "")" @onclick='() => ChangeMetric("1RM")'>
+                        <span class="material-symbols-outlined btn-icon">insights</span>
+                        <span>Est. 1RM</span>
+                    </button>
+                    <button class="sorting-btn @(SelectedMetric == "MaxWeight" ? "active" : "")" @onclick='() => ChangeMetric("MaxWeight")'>
+                        <span class="material-symbols-outlined btn-icon">fitness_center</span>
+                        <span>Max Weight</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sort Order Selector -->
+            <div class="sorting-selector-container">
+                <label class="sorting-label">Sort By</label>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="sorting-buttons flex-grow-1">
+                        <button class="sorting-btn @(SelectedSort == "Alphabetical" ? "active" : "")" @onclick='() => ChangeSort("Alphabetical")'>
+                            <span class="material-symbols-outlined btn-icon">sort_by_alpha</span>
+                            <span>Alphabetical</span>
+                        </button>
+                        <button class="sorting-btn @(SelectedSort == "ChangeRate" ? "active" : "")" @onclick='() => ChangeSort("ChangeRate")'>
+                            <span class="material-symbols-outlined btn-icon">trending_up</span>
+                            <span>Change Rate</span>
+                        </button>
+                        <button class="sorting-btn @(SelectedSort == "Recent" ? "active" : "")" @onclick='() => ChangeSort("Recent")'>
+                            <span class="material-symbols-outlined btn-icon">schedule</span>
+                            <span>Recent</span>
+                        </button>
+                    </div>
+                    <button class="sort-dir-btn d-flex align-items-center justify-content-center" @onclick="ToggleSortDirection" title="@(IsSortDescending ? "Sort Descending" : "Sort Ascending")">
+                        <span class="material-symbols-outlined" style="font-size: 20px;">
+                            @(IsSortDescending ? "arrow_downward" : "arrow_upward")
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Time Range Selector -->
+            <div class="sorting-selector-container">
+                <label class="sorting-label">Time Range</label>
+                <div class="sorting-buttons">
+                    <button class="sorting-btn @(SelectedTimeframe == "7D" ? "active" : "")" @onclick='() => ChangeTimeframe("7D")'>
+                        <span class="material-symbols-outlined btn-icon">calendar_today</span>
+                        <span>7D</span>
+                    </button>
+                    <button class="sorting-btn @(SelectedTimeframe == "30D" ? "active" : "")" @onclick='() => ChangeTimeframe("30D")'>
+                        <span class="material-symbols-outlined btn-icon">date_range</span>
+                        <span>30D</span>
+                    </button>
+                    <button class="sorting-btn @(SelectedTimeframe == "90D" ? "active" : "")" @onclick='() => ChangeTimeframe("90D")'>
+                        <span class="material-symbols-outlined btn-icon">calendar_month</span>
+                        <span>90D</span>
+                    </button>
+                    <button class="sorting-btn @(SelectedTimeframe == "All" ? "active" : "")" @onclick='() => ChangeTimeframe("All")'>
+                        <span class="material-symbols-outlined btn-icon">all_inclusive</span>
+                        <span>All</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="list-grid">
+            @foreach (var vm in exerciseViewModels)
+            {
+                <ExerciseSparklineChart 
+                    ExerciseId="vm.ExerciseId"
+                    ExerciseName="@vm.ExerciseName"
+                    LastTrained="vm.LastTrained"
+                    DataPoints="vm.DataPoints"
+                    RateOfChange="vm.RateOfChange"
+                    MetricUnitLabel="@(SelectedMetric == "ProgressiveOverload" ? "pts" : "kg")"
+                    ShowValueBadge="@(SelectedMetric != "ProgressiveOverload")"
+                    OnClick="NavigateToDetail" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private string SelectedMetric = "ProgressiveOverload";
+    private string SelectedTimeframe = "30D";
+    private string SelectedSort = "Recent";
+    private bool IsSortDescending = true;
+    private List<WorkoutLog> _allLogs = new();
+    private List<Exercise> _allExercises = new();
+    
+    // Chart state is now managed by ExerciseSparklineChart components
+
+    private class ExerciseViewModel
+    {
+        public int ExerciseId { get; set; }
+        public string ExerciseName { get; set; } = string.Empty;
+        public DateTime LastTrained { get; set; }
+        public DateTime FirstTrainedOnLastDay { get; set; }
+        public List<ChartDataPoint> DataPoints { get; set; } = new();
+        public double RateOfChange { get; set; }
+    }
+
+    private List<ExerciseViewModel> exerciseViewModels = new();
+
+    protected override void OnInitialized()
+    {
+        TopBar.OnLeftActionTapped += HandleLeftAction;
+    }
+
+    private void HandleLeftAction()
+    {
+        NavManager.NavigateTo("/");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        TopBar.SetDetailMode("Analytics");
+        _allLogs = await DbService.GetAllLogsAsync();
+        _allExercises = await DbService.GetExercisesAsync();
+        await CrunchAndSortDataAsync();
+    }
+
+    private async Task CrunchAndSortDataAsync()
+    {
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
+
+        var newViewModels = new List<ExerciseViewModel>();
+
+        await Task.Run(() =>
+        {
+            var recentLogsGrouped = _allLogs
+                .GroupBy(l => l.ExerciseId)
+                .Select(g => new
+                {
+                    ExerciseId = g.Key,
+                    LastTrained = g.Max(l => l.Date),
+                    Logs = g.ToList()
+                })
+                .ToList();
+
+            var viewModels = new List<ExerciseViewModel>();
+
+            foreach (var group in recentLogsGrouped)
+            {
+                var exercise = _allExercises.FirstOrDefault(e => e.Id == group.ExerciseId);
+                if (exercise == null) continue;
+
+                // Process data points for the sparkline chart: SelectedTimeframe
+                var points = AnalyticsSvc.ProcessLogs(group.Logs, SelectedTimeframe, SelectedMetric);
+                if (points.Count < 2 || points.All(p => p.Value <= 0)) continue;
+
+                var first = points.FirstOrDefault()?.Value ?? 0;
+                var last = points.LastOrDefault()?.Value ?? 0;
+                var rateOfChange = first > 0 ? (last - first) / first : 0;
+
+                var lastTrainedDate = group.LastTrained.Date;
+                var firstTrainedOnLastDay = group.Logs
+                    .Where(l => l.Date.Date == lastTrainedDate)
+                    .Select(l => l.Date)
+                    .DefaultIfEmpty(group.LastTrained)
+                    .Min();
+
+                viewModels.Add(new ExerciseViewModel
+                {
+                    ExerciseId = group.ExerciseId,
+                    ExerciseName = exercise.Name,
+                    LastTrained = group.LastTrained,
+                    FirstTrainedOnLastDay = firstTrainedOnLastDay,
+                    DataPoints = points,
+                    RateOfChange = rateOfChange
+                });
+            }
+
+            // Sort by the selected criteria and direction
+            if (SelectedSort == "Alphabetical")
+            {
+                newViewModels = IsSortDescending
+                    ? viewModels.OrderByDescending(vm => vm.ExerciseName).ThenByDescending(vm => vm.LastTrained).ToList()
+                    : viewModels.OrderBy(vm => vm.ExerciseName).ThenByDescending(vm => vm.LastTrained).ToList();
+            }
+            else if (SelectedSort == "ChangeRate")
+            {
+                newViewModels = IsSortDescending
+                    ? viewModels.OrderByDescending(vm => vm.RateOfChange).ThenByDescending(vm => vm.LastTrained).ToList()
+                    : viewModels.OrderBy(vm => vm.RateOfChange).ThenByDescending(vm => vm.LastTrained).ToList();
+            }
+            else // Recent
+            {
+                newViewModels = IsSortDescending
+                    ? viewModels.OrderByDescending(vm => vm.LastTrained.Date).ThenBy(vm => vm.FirstTrainedOnLastDay).ToList()
+                    : viewModels.OrderBy(vm => vm.LastTrained.Date).ThenBy(vm => vm.FirstTrainedOnLastDay).ToList();
+            }
+        });
+
+        exerciseViewModels = newViewModels;
+
+        isLoading = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ChangeMetric(string metric)
+    {
+        if (SelectedMetric == metric) return;
+        SelectedMetric = metric;
+
+        // Immediately signal loading to abort any ongoing chart renders
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
+
+        // Destroy current chart instances to prevent overlap
+        await DestroyAllChartsAsync();
+
+        // Re-crunch and sort data
+        await CrunchAndSortDataAsync();
+    }
+
+    private async Task DestroyAllChartsAsync()
+    {
+        // No-op now since child components manage their own charts
+    }
+
+    private string GetMetricLabel(string metric)
+    {
+        return metric switch
+        {
+            "MaxWeight" => "Max Weight",
+            "1RM" => "Est. 1RM",
+            "ProgressiveOverload" => "Progressive Overload",
+            _ => "Est. 1RM"
+        };
+    }
+
+    private string GetTimeframeLabel(string timeframe)
+    {
+        return timeframe switch
+        {
+            "7D" => "Last 7 Days",
+            "30D" => "Last 30 Days",
+            "90D" => "Last 90 Days",
+            "All" => "All Time",
+            _ => "Last 30 Days"
+        };
+    }
+
+    private async Task ChangeSort(string sort)
+    {
+        if (SelectedSort == sort) return;
+        SelectedSort = sort;
+
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
+
+        await DestroyAllChartsAsync();
+
+        await CrunchAndSortDataAsync();
+    }
+
+    private async Task ChangeTimeframe(string timeframe)
+    {
+        if (SelectedTimeframe == timeframe) return;
+        SelectedTimeframe = timeframe;
+
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
+
+        await DestroyAllChartsAsync();
+
+        await CrunchAndSortDataAsync();
+    }
+
+    private async Task ToggleSortDirection()
+    {
+        IsSortDescending = !IsSortDescending;
+
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
+
+        await DestroyAllChartsAsync();
+
+        await CrunchAndSortDataAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Chart interop is now handled by ExerciseSparklineChart
+    }
+
+    private void NavigateToDetail(int exerciseId)
+    {
+        NavManager.NavigateTo($"/analytics/detail/{exerciseId}");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        TopBar.OnLeftActionTapped -= HandleLeftAction;
+
+        // Charts are disposed by ExerciseSparklineChart
+        await Task.CompletedTask;
+
+        var nextUri = NavManager.Uri;
+        if (!nextUri.Contains("/workouts/detail/") && 
+            !nextUri.Contains("/session/active/") && 
+            !nextUri.Contains("/session/edit/") &&
+            !nextUri.Contains("/analytics/detail/"))
+        {
+            if (TopBar.CurrentConfig.Title == "Analytics")
+            {
+                TopBar.SetHomeMode(string.Empty);
+            }
+        }
+    }
+}

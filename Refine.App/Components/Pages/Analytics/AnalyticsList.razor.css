@@ -1,0 +1,127 @@
+.analytics-list-container {
+    padding: 5px;
+    padding-bottom: 100px;
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.list-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.sorting-selector-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sorting-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--refine-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sorting-buttons {
+    display: flex;
+    background-color: var(--refine-card);
+    border: 1px solid var(--refine-border);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.sorting-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--refine-muted);
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.sorting-btn .btn-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sorting-btn:hover {
+    color: var(--refine-text);
+}
+
+.sorting-btn:hover .btn-icon {
+    transform: scale(1.15) rotate(-3deg);
+}
+
+.sorting-btn.active {
+    background-color: var(--refine-accent, #ccff00);
+    color: #000000;
+    font-weight: 600;
+}
+
+.filters-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 12px;
+}
+
+.sort-dir-btn {
+    background-color: var(--refine-card);
+    border: 1px solid var(--refine-border);
+    border-radius: 12px;
+    color: var(--refine-muted);
+    width: 42px;
+    align-self: stretch;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sort-dir-btn:hover {
+    color: var(--refine-text);
+    border-color: var(--refine-accent, #ccff00);
+}

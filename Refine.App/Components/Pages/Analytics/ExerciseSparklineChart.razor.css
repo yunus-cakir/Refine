@@ -1,0 +1,29 @@
+.rf-card {
+    background: var(--color-surface-container);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+    position: relative;
+    z-index: 10;
+}
+
+.rf-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.sparkline-container {
+    height: 60px;
+    width: 100%;
+    margin-top: 12px;
+}
+
+.metric-highlight {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(204, 255, 0, 0.2);
+}
