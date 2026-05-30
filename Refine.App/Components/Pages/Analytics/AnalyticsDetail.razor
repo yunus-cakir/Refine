@@ -9,38 +9,48 @@
 @implements IAsyncDisposable
 
 <div class="analytics-container fade-in">
-    <!-- Filters -->
-    <div class="filters-grid">
-        <div class="filter-group">
-            <label>Exercise</label>
-            <select class="form-select custom-select" @bind="SelectedExerciseId">
-                @if (Exercises != null)
-                {
-                    @foreach (var ex in Exercises)
-                    {
-                        <option value="@ex.Id">@ex.Name</option>
-                    }
-                }
-            </select>
-        </div>
-        
-        <div class="filter-group">
-            <label>Timeframe</label>
-            <select class="form-select custom-select" @bind="SelectedTimeframe">
-                <option value="7D">Last 7 Days</option>
-                <option value="30D">Last 30 Days</option>
-                <option value="90D">Last 90 Days</option>
-                <option value="All">All Time</option>
-            </select>
+    <!-- Filters Section -->
+    <div class="filters-section mb-4">
+        <!-- Time Range Selector -->
+        <div class="sorting-selector-container">
+            <label class="sorting-label">Time Range</label>
+            <div class="sorting-buttons">
+                <button class="sorting-btn @(SelectedTimeframe == "14D" ? "active" : "")" @onclick='() => ChangeTimeframe("14D")'>
+                    <span class="material-symbols-outlined btn-icon">calendar_today</span>
+                    <span>14D</span>
+                </button>
+                <button class="sorting-btn @(SelectedTimeframe == "30D" ? "active" : "")" @onclick='() => ChangeTimeframe("30D")'>
+                    <span class="material-symbols-outlined btn-icon">date_range</span>
+                    <span>30D</span>
+                </button>
+                <button class="sorting-btn @(SelectedTimeframe == "90D" ? "active" : "")" @onclick='() => ChangeTimeframe("90D")'>
+                    <span class="material-symbols-outlined btn-icon">calendar_month</span>
+                    <span>90D</span>
+                </button>
+                <button class="sorting-btn @(SelectedTimeframe == "All" ? "active" : "")" @onclick='() => ChangeTimeframe("All")'>
+                    <span class="material-symbols-outlined btn-icon">all_inclusive</span>
+                    <span>All</span>
+                </button>
+            </div>
         </div>
 
-        <div class="filter-group">
-            <label>Metric</label>
-            <select class="form-select custom-select" @bind="SelectedMetric">
-                <option value="ProgressiveOverload">Progressive Overload</option>
-                <option value="1RM">Est. 1RM</option>
-                <option value="MaxWeight">Max Weight</option>
-            </select>
+        <!-- Metric Selector -->
+        <div class="sorting-selector-container">
+            <label class="sorting-label">Show Performance By</label>
+            <div class="sorting-buttons">
+                <button class="sorting-btn @(SelectedMetric == "ProgressiveOverload" ? "active" : "")" @onclick='() => ChangeMetric("ProgressiveOverload")'>
+                    <span class="material-symbols-outlined btn-icon">monitoring</span>
+                    <span>Progressive Overload</span>
+                </button>
+                <button class="sorting-btn @(SelectedMetric == "1RM" ? "active" : "")" @onclick='() => ChangeMetric("1RM")'>
+                    <span class="material-symbols-outlined btn-icon">insights</span>
+                    <span>Est. 1RM</span>
+                </button>
+                <button class="sorting-btn @(SelectedMetric == "MaxWeight" ? "active" : "")" @onclick='() => ChangeMetric("MaxWeight")'>
+                    <span class="material-symbols-outlined btn-icon">fitness_center</span>
+                    <span>Max Weight</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -64,10 +74,65 @@
             <canvas @ref="chartCanvas"></canvas>
         </div>
     </div>
+
+    <!-- History Section -->
+    <div class="history-section mt-4">
+        <h5 class="font-headline fw-bold mb-3">History</h5>
+        @if (cachedLogs != null && cachedLogs.Any())
+        {
+            @foreach (var dateGroup in cachedLogs.GroupBy(l => l.Date.Date).OrderByDescending(g => g.Key))
+            {
+                <div class="mb-4">
+                    <div class="small fw-bold text-muted mb-2 ms-1">@dateGroup.Key.ToString("dd MMMM yyyy, dddd")</div>
+                    <div class="refine-card p-3">
+                        <div class="row g-2 mb-2 text-muted small fw-bold text-center border-bottom border-secondary pb-1">
+                            <div class="col-2">SET</div>
+                            <div class="col-3">WEIGHT</div>
+                            <div class="col-3">REPS</div>
+                            <div class="col-2">RIR</div>
+                            <div class="col-2">FORM</div>
+                        </div>
+
+                        @foreach (var log in dateGroup.OrderBy(l => l.SetNumber))
+                        {
+                            <div class="row g-2 mb-2 align-items-center text-center">
+                                <div class="col-2">
+                                    <span class="badge bg-secondary rounded-circle" style="width:24px; height:24px;">@log.SetNumber</span>
+                                </div>
+
+                                <div class="col-3 fw-bold text-white">@(log.Weight.HasValue ? log.Weight : "-")</div>
+                                <div class="col-3 fw-bold text-white">@(log.Reps.HasValue ? log.Reps : "-")</div>
+
+                                <div class="col-2 text-warning">@(log.RIR.HasValue ? log.RIR : "-")</div>
+
+                                <div class="col-2 text-center">
+                                    @if (log.FormRating == 3)
+                                    {
+                                        <i class="bi bi-fire" style="color: #ff0055;"></i>
+                                    }
+                                    else if (log.FormRating == 2)
+                                    {
+                                        <i class="bi bi-emoji-smile-fill text-success"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-emoji-neutral-fill text-warning"></i>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else if (!isLoading)
+        {
+            <div class="text-muted small">No history available for this exercise.</div>
+        }
+    </div>
 </div>
 
 @code {
-    private List<Exercise> Exercises = new();
     private List<WorkoutLog> cachedLogs = new();
     private List<ChartDataPoint> dataPoints = new();
     
@@ -76,20 +141,11 @@
     
     [Parameter]
     public int ExerciseId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "name")]
+    public string? ExerciseName { get; set; }
     
     private int _selectedExerciseId;
-    public int SelectedExerciseId
-    {
-        get => _selectedExerciseId;
-        set
-        {
-            if (_selectedExerciseId != value)
-            {
-                _selectedExerciseId = value;
-                _ = HandleExerciseChanged();
-            }
-        }
-    }
 
     private string _selectedTimeframe = "30D";
     public string SelectedTimeframe
@@ -126,6 +182,10 @@
     protected override void OnInitialized()
     {
         TopBar.OnLeftActionTapped += HandleLeftAction;
+        if (!string.IsNullOrEmpty(ExerciseName))
+        {
+            TopBar.SetDetailMode(ExerciseName);
+        }
     }
 
     private async void HandleLeftAction()
@@ -135,20 +195,19 @@
 
     protected override async Task OnInitializedAsync()
     {
-        TopBar.SetDetailMode("Analytics");
-
-        Exercises = await DbService.GetExercisesAsync();
-        Exercises = Exercises.OrderBy(e => e.Name).ToList();
-
-        if (Exercises.Any())
+        if (string.IsNullOrEmpty(ExerciseName))
         {
-            if (ExerciseId > 0 && Exercises.Any(e => e.Id == ExerciseId))
+            TopBar.SetDetailMode("Analytics");
+        }
+
+        var exercise = await DbService.GetExerciseByIdAsync(ExerciseId);
+
+        if (exercise != null)
+        {
+            _selectedExerciseId = exercise.Id;
+            if (string.IsNullOrEmpty(ExerciseName))
             {
-                _selectedExerciseId = ExerciseId;
-            }
-            else
-            {
-                _selectedExerciseId = Exercises.First().Id;
+                TopBar.SetDetailMode(exercise.Name);
             }
             
             // Initialization is handled here without blocking the UI
@@ -178,12 +237,6 @@
         isLoading = true;
         await InvokeAsync(StateHasChanged);
         
-        var selectedExercise = Exercises.FirstOrDefault(e => e.Id == _selectedExerciseId);
-        if (selectedExercise != null)
-        {
-            TopBar.SetDetailMode(selectedExercise.Name);
-        }
-        
         // Background thread for querying the database and crunching
         await Task.Run(async () =>
         {
@@ -198,6 +251,20 @@
         {
             await RenderOrUpdateChartAsync();
         }
+    }
+
+    private async Task ChangeTimeframe(string timeframe)
+    {
+        if (SelectedTimeframe == timeframe) return;
+        SelectedTimeframe = timeframe;
+        await Task.CompletedTask;
+    }
+
+    private async Task ChangeMetric(string metric)
+    {
+        if (SelectedMetric == metric) return;
+        SelectedMetric = metric;
+        await Task.CompletedTask;
     }
 
     private async Task CrunchDataAsync()

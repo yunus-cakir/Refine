@@ -6,115 +6,163 @@
 @inject TopBarBridge TopBar
 @implements IDisposable
 
-@if (_program == null)
-{
-    <div class="flex justify-center mt-10">
-        <span class="material-symbols-outlined animate-spin text-primary-fixed text-4xl">progress_activity</span>
-    </div>
-}
-else
-{
-    <div class="flex flex-col gap-6 w-full pb-24 md:pb-0">
-        
-        <!-- Header & Info -->
-        <div class="flex flex-col gap-2">
-            <h2 class="font-headline text-3xl font-bold text-primary tracking-tight">@_program.Name</h2>
-            <div class="flex items-center gap-2 text-on-surface-variant font-label text-[12px] uppercase tracking-widest">
-                <span>@_program.Goal</span>
-                <span class="w-1 h-1 rounded-full bg-surface-container-highest"></span>
-                <span>@_program.Level</span>
-            </div>
+<div class="workout-detail-container">
+    @if (_program == null)
+    {
+        <div class="loader-container">
+            <span class="material-symbols-outlined animate-spin" style="color: var(--color-primary-fixed); font-size: 32px;">progress_activity</span>
         </div>
+    }
+    else
+    {
+        <div class="rf-flex-col" style="gap: 24px; padding-bottom: 80px;">
+            <!-- Header & Info -->
+            <div class="rf-flex-col" style="gap: 8px;">
+                <h2 class="font-headline" style="font-size: 32px; font-weight: bold; color: var(--color-primary); margin: 0;">@_program.Name</h2>
+                <div class="rf-flex-row rf-items-center font-label" style="gap: 8px; color: var(--color-on-surface-variant); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">
+                    <span>@_program.Goal</span>
+                    <span style="width: 4px; height: 4px; border-radius: 50%; background-color: var(--color-surface-container-highest);"></span>
+                    <span>@_program.Level</span>
+                </div>
+            </div>
 
-        <!-- Actions -->
-        <div class="flex justify-between items-center bg-[#1c1c1e] p-4 rounded-xl border border-white/5 shadow-md">
-            <div>
-                @if (!_isSelected)
+            <!-- Actions -->
+            <div class="rf-flex-row rf-justify-between rf-items-center" style="background-color: #1c1c1e; padding: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                <div>
+                    @if (!_isSelected)
+                    {
+                        <button class="refine-ghost-btn" style="color: var(--color-primary-fixed);" @onclick="SelectProgram">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">radio_button_unchecked</span> 
+                            SEÇİLİ YAP
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="refine-badge rf-flex-row rf-items-center" style="gap: 4px; width: max-content;">
+                            <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' 1;">check_circle</span> 
+                            SEÇİLİ PROGRAM
+                        </div>
+                    }
+                </div>
+                
+                <a href="@($"/workouts/edit/{Id}/0")" class="refine-icon-btn" style="width: 32px; height: 32px; background-color: rgba(195, 244, 0, 0.1); color: var(--color-primary-fixed); border-color: rgba(195, 244, 0, 0.2);">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                </a>
+            </div>
+
+            <!-- Section Title -->
+            <div class="rf-flex-row rf-items-center rf-justify-between" style="margin-top: 8px;">
+                <h3 class="font-headline" style="font-size: 20px; color: var(--color-primary); font-weight: 600; margin: 0;">Workout Days</h3>
+                <span class="@(_isSelected ? "rf-badge" : "rf-badge-faded")" style="font-size: 10px; padding: 3px 10px;">
+                    @(_program.Workouts?.Count ?? 0) DAYS
+                </span>
+            </div>
+
+            <!-- Workouts List -->
+            <div class="rf-flex-col" style="gap: 16px;">
+                @if(_program.Workouts != null && _program.Workouts.Any())
                 {
-                    <button class="refine-ghost-btn !text-primary-fixed hover:!text-primary" @onclick="SelectProgram">
-                        <span class="material-symbols-outlined text-[18px]">radio_button_unchecked</span> 
-                        SEÇİLİ YAP
-                    </button>
+                    @foreach (var workout in _program.Workouts.OrderBy(w => w.Order))
+                    {
+                        bool isCompleted = _completedWorkouts.ContainsKey(workout.Id) && _completedWorkouts[workout.Id];
+                        bool isSkipped = _isSelected && !isCompleted && _highestCompletedOrder.HasValue && workout.Order < _highestCompletedOrder.Value;
+                        bool isUpNext = _isSelected && workout.Id == _upNextWorkoutId;
+
+                        <article class="rf-card" style="padding: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; @(isSkipped ? "opacity: 0.75;" : "")">
+                            <!-- The left thick border -->
+                            <div class="@(isCompleted ? "rf-card-border-completed" : (isUpNext ? "rf-card-border-up-next" : "rf-card-border-upcoming"))" style="@(isSkipped ? "opacity: 0.5;" : "")"></div>
+                            
+                            <a href="@($"/workouts/detail/{workout.Id}")" style="text-decoration: none; display: block; padding: 16px 20px 16px 24px;">
+                                <div class="rf-flex-row rf-justify-between rf-items-start" style="margin-bottom: 8px;">
+                                    <h3 class="font-headline" style="color: @(isCompleted ? "var(--color-primary-fixed)" : (isUpNext ? "#ffffff" : "var(--color-on-surface-variant)")); font-size: 20px; font-weight: bold; margin: 0; line-height: 1.2; @(isSkipped ? "text-decoration: line-through; opacity: 0.85;" : "")">
+                                        @workout.Name
+                                    </h3>
+                                    
+                                    <div class="rf-flex-row rf-items-center" style="gap: 4px; background-color: var(--color-surface-container); border-radius: 8px; padding: 4px; border: 1px solid rgba(255,255,255,0.05); z-index: 10; margin-top: -2px;" @onclick:stopPropagation="true" @onclick:preventDefault="true">
+                                        <a href="@($"/workouts/edit/{Id}/{workout.Id}")" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: var(--color-on-surface-variant); text-decoration: none; border-radius: 6px;" @onclick:stopPropagation="true">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
+                                        </a>
+                                        <div style="width: 1px; height: 14px; background-color: rgba(255,255,255,0.1);"></div>
+                                        <button style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: var(--color-error); background: transparent; border: none; cursor: pointer; border-radius: 6px;" @onclick="() => DeleteWorkout(workout)" @onclick:stopPropagation="true" @onclick:preventDefault="true">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Tags -->
+                                <div class="rf-flex-row rf-flex-wrap" style="gap: 8px; margin-bottom: 12px;">
+                                    @foreach(var tag in GetTags(workout))
+                                    {
+                                        <span class="@(isCompleted || isUpNext ? "rf-badge" : "rf-badge-faded")" style="font-size: 10px; padding: 3px 10px; @(isUpNext ? "color: #ffffff; border-color: rgba(255, 255, 255, 0.4); background-color: rgba(255, 255, 255, 0.1);" : "") @(isSkipped ? "text-decoration: line-through; opacity: 0.8;" : "")">
+                                            @tag
+                                        </span>
+                                    }
+                                </div>
+
+                                <!-- Divider -->
+                                <div style="height: 1px; background-color: rgba(255, 255, 255, 0.05); margin-bottom: 12px; margin-left: -24px; margin-right: -20px;"></div>
+
+                                <!-- Bottom row -->
+                                <div class="rf-flex-row rf-justify-between rf-items-center">
+                                    <!-- Duration -->
+                                    <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-on-surface-variant); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                                        <span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>
+                                        @((workout.Items?.Sum(i => i.Sets) ?? 0) * 4) MIN
+                                    </div>
+
+                                    <!-- Status -->
+                                    @if(isCompleted)
+                                    {
+                                        <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-primary-fixed); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                                            COMPLETED
+                                            <span class="material-symbols-outlined" style="font-size: 20px; font-variation-settings: 'FILL' 1;">check_circle</span>
+                                        </div>
+                                    }
+                                    else if(isUpNext)
+                                    {
+                                        <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: #ffffff; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                                            UP NEXT
+                                            <span class="material-symbols-outlined" style="font-size: 20px; font-variation-settings: 'FILL' 1;">play_circle</span>
+                                        </div>
+                                    }
+                                    else if(isSkipped)
+                                    {
+                                        <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-on-surface-variant); opacity: 0.8; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                                            SKIPPED
+                                            <span class="material-symbols-outlined" style="font-size: 20px;">cancel</span>
+                                        </div>
+                                    }
+                                    else if(_isSelected)
+                                    {
+                                        <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-on-surface-variant); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                                            UPCOMING
+                                            <span class="material-symbols-outlined" style="font-size: 20px;">radio_button_unchecked</span>
+                                        </div>
+                                    }
+                                </div>
+                            </a>
+                        </article>
+                    }
                 }
                 else
                 {
-                    <div class="refine-badge flex items-center gap-1 w-max">
-                        <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span> 
-                        SEÇİLİ PROGRAM
+                    <div style="text-align: center; padding: 40px 0; background-color: var(--color-surface-container); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.05);">
+                        <span class="material-symbols-outlined" style="font-size: 36px; color: var(--color-on-surface-variant); margin-bottom: 8px; opacity: 0.5;">event_note</span>
+                        <p class="font-body" style="color: var(--color-on-surface-variant); font-size: 14px; margin: 0;">No workout day has been added yet.</p>
                     </div>
                 }
             </div>
-            
-            <a href="@($"/workouts/edit/{Id}/0")" class="refine-icon-btn !w-8 !h-8 bg-primary-fixed/10 !text-primary-fixed !border-primary-fixed/20 hover:!bg-primary-fixed hover:!text-black transition-all">
-                <span class="material-symbols-outlined text-[18px]">add</span>
-            </a>
         </div>
-
-        <!-- Section Title -->
-        <div class="flex items-center justify-between mt-2">
-            <h3 class="font-headline text-xl text-primary font-semibold">Antrenman Günleri</h3>
-            <span class="text-on-surface-variant font-label text-[10px] uppercase tracking-widest bg-surface-container px-2 py-1 rounded-md">
-                @(_program.Workouts?.Count ?? 0) GÜN
-            </span>
-        </div>
-
-        <!-- Workouts List -->
-        <div class="flex flex-col gap-4">
-            @if(_program.Workouts != null && _program.Workouts.Any())
-            {
-                @foreach (var workout in _program.Workouts.OrderBy(w => w.Order))
-                {
-                    <div class="refine-card relative overflow-hidden group !p-0">
-                        <!-- Primary left border accent -->
-                        <div class="absolute top-0 left-0 w-1 h-full bg-primary-fixed"></div>
-                        
-                        <div class="p-5">
-                            <div class="flex justify-between items-start mb-3">
-                                <a href="@($"/workouts/detail/{workout.Id}")" class="flex-grow block text-decoration-none">
-                                    <div class="text-primary-fixed font-label text-[10px] uppercase tracking-widest mb-1">GÜN @workout.Order</div>
-                                    <h3 class="font-title-sm text-lg text-primary font-semibold leading-tight">@workout.Name</h3>
-                                </a>
-                                <div class="flex items-center gap-1 bg-surface-container rounded-lg p-1 border border-white/5">
-                                    <a href="@($"/workouts/edit/{Id}/{workout.Id}")" class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors rounded-md hover:bg-white/5">
-                                        <span class="material-symbols-outlined text-[18px]">edit</span>
-                                    </a>
-                                    <div class="w-px h-4 bg-white/10"></div>
-                                    <button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-error transition-colors rounded-md hover:bg-error/10" @onclick="() => DeleteWorkout(workout)">
-                                        <span class="material-symbols-outlined text-[18px]">delete</span>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- Bottom Stats -->
-                            <div class="flex justify-between items-end mt-4 pt-3 border-t border-white/5">
-                                <div class="flex items-center gap-1.5 text-on-surface-variant font-label text-[11px] tracking-widest uppercase">
-                                    <span class="material-symbols-outlined text-[16px]">fitness_center</span>
-                                    @(workout.Items?.Count ?? 0) HAREKET
-                                </div>
-                                <a href="@($"/workouts/detail/{workout.Id}")" class="text-primary-fixed font-label text-[10px] uppercase tracking-widest flex items-center gap-1 hover:text-primary transition-colors text-decoration-none">
-                                    İNCELE
-                                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <div class="text-center py-10 bg-surface-container rounded-xl border border-white/5 border-dashed">
-                    <span class="material-symbols-outlined text-4xl text-on-surface-variant mb-2 opacity-50">event_note</span>
-                    <p class="font-body text-on-surface-variant text-sm">Henüz antrenman günü eklenmemiş.</p>
-                </div>
-            }
-        </div>
-    </div>
-}
+    }
+</div>
 
 @code {
     [Parameter] public int Id { get; set; }
     private WorkoutProgram? _program;
     private bool _isSelected;
+    private int? _upNextWorkoutId;
+    private int? _highestCompletedOrder;
+    private Dictionary<int, bool> _completedWorkouts = new();
 
     protected override void OnInitialized()
     {
@@ -123,16 +171,64 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        // DÜZELTME: GetByIdAsync -> GetProgramByIdAsync oldu
         _program = await ProgramService.GetProgramByIdAsync(Id);
         
+        _completedWorkouts.Clear();
         if (_program != null)
         {
-            TopBar.SetDetailMode(_program.Name);
+            TopBar.SetDetailMode("Program Detail");
+            
+            if (_program.Workouts != null)
+            {
+                foreach(var w in _program.Workouts)
+                {
+                    _completedWorkouts[w.Id] = await ProgramService.HasLogWithinDaysAsync(w.Id, 9);
+                }
+            }
         }
         
         var selectedProgram = await ProgramService.GetSelectedWorkoutProgramAsync();
         _isSelected = selectedProgram != null && selectedProgram.Id == Id;
+
+        // Calculate Up Next and Highest Completed Order if selected
+        if (_isSelected && _program?.Workouts != null)
+        {
+            var orderedWorkouts = _program.Workouts.OrderBy(w => w.Order).ToList();
+            var completedList = orderedWorkouts.Where(w => _completedWorkouts.TryGetValue(w.Id, out bool comp) && comp).ToList();
+            if (!completedList.Any())
+            {
+                _upNextWorkoutId = orderedWorkouts.FirstOrDefault()?.Id;
+                _highestCompletedOrder = null;
+            }
+            else
+            {
+                _highestCompletedOrder = completedList.Max(w => w.Order);
+                _upNextWorkoutId = orderedWorkouts.FirstOrDefault(w => w.Order > _highestCompletedOrder)?.Id;
+            }
+        }
+        else
+        {
+            _upNextWorkoutId = null;
+            _highestCompletedOrder = null;
+        }
+    }
+
+    private List<string> GetTags(Workout workout)
+    {
+        if (workout?.Items != null)
+        {
+            var targetMuscles = workout.Items
+                .Where(i => !string.IsNullOrWhiteSpace(i.Exercise?.PrimaryMuscleCategory))
+                .Select(i => i.Exercise!.PrimaryMuscleCategory!.ToUpper())
+                .Distinct()
+                .ToList();
+                
+            if (targetMuscles.Any())
+            {
+                return targetMuscles;
+            }
+        }
+        return new List<string> { "GENEL" };
     }
 
     private async Task SelectProgram()

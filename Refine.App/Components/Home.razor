@@ -1,132 +1,187 @@
 @page "/"
 @using Refine.App.Models
 @using Refine.App.Services
-@inject LocalDbService DbService
+@using Refine.App.Components.Pages.Analytics
 @inject TopBarBridge TopBar
+@inject NavigationManager NavManager
+@inject HomeStateService StateService
+@implements IDisposable
 
 <div class="font-body min-h-screen" style="background-color: var(--color-background); color: var(--color-on-surface); min-height: 100vh;">
 
     <main class="rf-flex-col" style="gap: 24px; max-width: 768px; margin: 0 auto;">
-        <!-- Welcome Section -->
-        <section class="rf-flex-col" style="gap: 8px;">
-            <p class="font-label" style="color: var(--color-on-surface-variant); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;">@DateTime.Now.ToString("dddd, MMM dd").ToUpper()</p>
-            <h1 class="font-headline" style="color: var(--color-tertiary); font-size: 28px; font-weight: bold;">Welcome, @(_user?.FirstName ?? "Sporcu")!</h1>
-        </section>
+        @if (!StateService.IsLoaded)
+        {
+            <!-- Skeleton Welcome Section -->
+            <section class="rf-flex-col" style="gap: 8px;">
+                <div class="skeleton-box" style="width: 120px; height: 16px; border-radius: 4px;"></div>
+                <div class="skeleton-box" style="width: 240px; height: 32px; border-radius: 4px;"></div>
+            </section>
 
-        <!-- Main CTA Card: Next Workout -->
-        <section>
-            <div class="rf-card" style="background-color: var(--color-primary-container); color: var(--color-on-primary-fixed); overflow: hidden; position: relative; cursor: pointer; padding: 24px; border: none; box-shadow: 0 0 20px rgba(195,244,0,0.15);">
-                <!-- Abstract grid overlay -->
-                <div style="position: absolute; inset: 0; opacity: 0.1; pointer-events: none; background-image: radial-gradient(circle, #000 1px, transparent 1px); background-size: 20px 20px;"></div>
-                <div class="rf-flex-col" style="position: relative; z-index: 10; gap: 16px;">
-                    <div class="rf-flex-row rf-justify-between rf-items-center">
-                        <span class="font-label" style="background-color: rgba(0,0,0,0.1); padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: bold; letter-spacing: 0.1em; color: var(--color-on-primary-fixed);">UP NEXT</span>
-                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; color: var(--color-on-primary-fixed);">fitness_center</span>
-                    </div>
-                    <div>
-                        <h2 class="font-headline" style="font-size: 32px; font-weight: bold; margin-bottom: 4px; color: var(--color-on-primary-fixed);">Chest & Triceps</h2>
-                        <p class="font-body" style="font-size: 14px; color: var(--color-on-primary-fixed-variant);">~60 Min • High Intensity</p>
-                    </div>
-                    <div class="rf-flex-row rf-justify-between rf-items-center" style="margin-top: 8px;">
-                        <div class="rf-flex-row" style="gap: 8px;">
-                            <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-on-primary-fixed);"></span>
-                            <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
-                            <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
+            <!-- Skeleton Main CTA Card -->
+            <section>
+                <div class="rf-card skeleton-box" style="height: 180px; border: none; box-shadow: none;"></div>
+            </section>
+
+            <!-- Skeleton Bento Grid -->
+            <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+                <div class="rf-card-half skeleton-box" style="height: 140px;"></div>
+                <div class="rf-card-half skeleton-box" style="height: 140px;"></div>
+                <div class="rf-card skeleton-box" style="grid-column: span 2 / span 2; height: 160px; border: none; box-shadow: none;"></div>
+            </section>
+        }
+        else
+        {
+            <!-- Welcome Section -->
+            <section class="rf-flex-col" style="gap: 8px;">
+                <p class="font-label" style="color: var(--color-on-surface-variant); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;">@DateTime.Now.ToString("dddd, MMM dd").ToUpper()</p>
+                <h1 class="font-headline" style="color: var(--color-tertiary); font-size: 28px; font-weight: bold;">Welcome, @(StateService.User?.FirstName ?? "Sporcu")!</h1>
+            </section>
+
+            <!-- Main CTA Card: Next Workout -->
+            @if (StateService.UpNextWorkout != null)
+            {
+                <section>
+                    <div class="rf-card" @onclick="NavigateToWorkoutDetail" style="background-color: var(--color-primary-container); color: var(--color-on-primary-fixed); overflow: hidden; position: relative; cursor: pointer; border: none; box-shadow: none;">
+                        <!-- Abstract grid overlay -->
+                        <div style="position: absolute; inset: 0; opacity: 0.1; pointer-events: none; background-image: radial-gradient(circle, #000 1px, transparent 1px); background-size: 20px 20px;"></div>
+                        <div class="rf-flex-col" style="position: relative; z-index: 10; gap: 16px;">
+                            <div class="rf-flex-row rf-justify-between rf-items-center">
+                                <span class="font-label" style="background-color: rgba(0,0,0,0.1); padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: bold; letter-spacing: 0.1em; color: var(--color-on-primary-fixed);">UP NEXT</span>
+                            </div>
+                            <div>
+                                <h2 class="font-headline" style="font-size: 32px; font-weight: bold; margin-bottom: 4px; color: var(--color-on-primary-fixed);">@StateService.UpNextMuscleGroups</h2>
+                                <p class="font-headline" style="font-size: 14px; color: var(--color-on-primary-fixed-variant); opacity: 0.8; margin-bottom: 8px;">@StateService.UpNextWorkout.Name</p>
+                                <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; font-size: 14px; color: var(--color-on-primary-fixed-variant);">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>
+                                    @StateService.UpNextDuration MIN
+                                </div>
+                            </div>
+                            <div class="rf-flex-row rf-justify-between rf-items-center" style="margin-top: 8px;">
+                                <div class="rf-flex-row" style="gap: 8px;">
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-on-primary-fixed);"></span>
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
+                                </div>
+                                <button class="font-label" @onclick="StartUpNextWorkout" @onclick:stopPropagation="true" style="background-color: var(--color-on-primary-fixed); color: var(--color-primary-container); padding: 8px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                                    START
+                                    <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
+                                </button>
+                            </div>
                         </div>
-                        <button class="font-label" style="background-color: var(--color-on-primary-fixed); color: var(--color-primary-container); padding: 8px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                            BAŞLA
-                            <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
-                        </button>
+                    </div>
+                </section>
+            }
+
+            <!-- Bento Grid: Stats & Analytics -->
+            <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+                <!-- Recovery Metric -->
+                <div class="rf-card-half">
+                    <div class="rf-flex-row rf-items-center" style="gap: 8px; color: var(--color-on-surface-variant);">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">favorite</span>
+                        <span class="font-label" style="font-size: 11px; text-transform: uppercase;">RECOVERY</span>
+                    </div>
+                    <div class="rf-flex-row" style="align-items: baseline; gap: 8px;">
+                        <span class="font-headline" style="font-size: 36px; font-weight: bold; color: var(--color-tertiary);">84</span>
+                        <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">%</span>
+                    </div>
+                    <div style="width: 100%; background-color: var(--color-surface-container-highest); height: 6px; border-radius: 9999px; overflow: hidden; margin-top: auto;">
+                        <div style="background-color: var(--color-primary-container); width: 84%; height: 100%; border-radius: 9999px;"></div>
                     </div>
                 </div>
-            </div>
-        </section>
 
-        <!-- Bento Grid: Stats & Analytics -->
-        <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
-            <!-- Recovery Metric -->
-            <div class="rf-card-half">
-                <div class="rf-flex-row rf-items-center" style="gap: 8px; color: var(--color-on-surface-variant);">
-                    <span class="material-symbols-outlined" style="font-size: 18px;">favorite</span>
-                    <span class="font-label" style="font-size: 11px; text-transform: uppercase;">RECOVERY</span>
-                </div>
-                <div class="rf-flex-row" style="align-items: baseline; gap: 8px;">
-                    <span class="font-headline" style="font-size: 36px; font-weight: bold; color: var(--color-tertiary);">84</span>
-                    <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">%</span>
-                </div>
-                <div style="width: 100%; background-color: var(--color-surface-container-highest); height: 6px; border-radius: 9999px; overflow: hidden; margin-top: auto;">
-                    <div style="background-color: var(--color-primary-container); width: 84%; height: 100%; border-radius: 9999px;"></div>
-                </div>
-            </div>
-
-            <!-- Volume Metric -->
-            <div class="rf-card-half">
-                <div class="rf-flex-row rf-items-center" style="gap: 8px; color: var(--color-on-surface-variant);">
-                    <span class="material-symbols-outlined" style="font-size: 18px;">bolt</span>
-                    <span class="font-label" style="font-size: 11px; text-transform: uppercase;">HFT. HACİM</span>
-                </div>
-                <div class="rf-flex-row" style="align-items: baseline; gap: 8px;">
-                    <span class="font-headline" style="font-size: 36px; font-weight: bold; color: var(--color-tertiary);">14.2</span>
-                    <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">k lbs</span>
-                </div>
-                <p class="font-label" style="font-size: 10px; color: var(--color-primary-container); margin-top: auto; display: flex; align-items: center; gap: 4px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em;">
-                    <span class="material-symbols-outlined" style="font-size: 12px;">trending_up</span> geçen haftaya göre +5%
-                </p>
-            </div>
-
-            <!-- Analytics Chart Mockup -->
-            <div class="rf-card" style="grid-column: span 2 / span 2; display: flex; flex-direction: column; gap: 16px; position: relative; overflow: hidden;">
-                <div class="rf-flex-row rf-justify-between" style="align-items: flex-start; z-index: 10;">
-                    <div>
-                        <h3 class="font-body" style="font-size: 14px; font-weight: 600; color: var(--color-tertiary);">Bench Press</h3>
-                        <p class="font-label" style="font-size: 11px; color: var(--color-on-surface-variant); margin-top: 4px;">PROGRESSIVE OVERLOAD (30 GÜN)</p>
+                <!-- Streak Metric -->
+                <div class="rf-card-half" style="position: relative; overflow: hidden;">
+                    @if (StateService.StreakRatio >= 0.8) {
+                        <div style="position: absolute; inset: 0; opacity: 0.1; background: radial-gradient(circle at top left, #c4f000, transparent 70%); pointer-events: none;"></div>
+                    }
+                    <div class="rf-flex-row rf-items-center" style="gap: 8px; color: @(StateService.StreakRatio >= 0.8 ? "#c4f000" : "var(--color-on-surface-variant)");">
+                        <span class="material-symbols-outlined" style="font-size: 18px; font-variation-settings: 'FILL' @(StateService.StreakRatio >= 0.8 ? 1 : 0);">local_fire_department</span>
+                        <span class="font-label" style="font-size: 11px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.1em;">STREAK</span>
                     </div>
-                    <span class="material-symbols-outlined" style="color: var(--color-primary-container);">monitoring</span>
-                </div>
-                
-                <div style="height: 120px; width: 100%; position: relative; margin-top: 8px; z-index: 10;">
-                    <!-- Faux Grid -->
-                    <div class="rf-flex-col rf-justify-between" style="position: absolute; inset: 0;">
-                        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; height: 0;"></div>
-                        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; height: 0;"></div>
-                        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; height: 0;"></div>
-                        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; height: 0;"></div>
+                    <div class="rf-flex-row" style="align-items: baseline; gap: 8px; z-index: 10; position: relative;">
+                        <span class="font-headline" style="font-size: 36px; font-weight: bold; color: var(--color-on-surface);">@StateService.StreakCompletedDays</span>
+                        <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">/ @StateService.StreakTotalDays days</span>
                     </div>
-                    <!-- Faux SVG Line Chart -->
-                    <svg style="position: absolute; inset: 0; height: 100%; width: 100%;" preserveAspectRatio="none" viewBox="0 0 100 100">
-                        <defs>
-                            <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
-                                <stop offset="0%" stop-color="#ccff00" stop-opacity="0.2"></stop>
-                                <stop offset="100%" stop-color="#ccff00" stop-opacity="0"></stop>
-                            </linearGradient>
-                        </defs>
-                        <path d="M0,80 L20,75 L40,60 L60,65 L80,40 L100,30 L100,100 L0,100 Z" fill="url(#chartFill)"></path>
-                        <path d="M0,80 L20,75 L40,60 L60,65 L80,40 L100,30" fill="none" stroke="#ccff00" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
-                        <circle cx="80" cy="40" fill="#121414" r="4" stroke="#ccff00" stroke-width="2"></circle>
-                        <circle cx="100" cy="30" fill="#ccff00" r="4"></circle>
-                    </svg>
+                    
+                    @if (StateService.StreakRatio >= 0.8)
+                    {
+                        <p class="font-label" style="font-size: 10px; color: #c4f000; margin-top: auto; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; z-index: 10; position: relative;">
+                            CRUSHING IT!
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="font-label" style="font-size: 10px; color: transparent; margin-top: auto; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; z-index: 10; position: relative; user-select: none;">
+                            KEEP GOING
+                        </p>
+                    }
+                    
+                    <div style="width: 100%; background-color: rgba(255,255,255,0.05); height: 6px; border-radius: 9999px; overflow: hidden; margin-top: 4px; z-index: 10; position: relative;">
+                        <div style="background-color: @(StateService.StreakRatio >= 0.8 ? "#c4f000" : "var(--color-primary)"); width: @(Math.Min(StateService.StreakRatio * 100, 100).ToString(System.Globalization.CultureInfo.InvariantCulture))%; height: 100%; border-radius: 9999px;"></div>
+                    </div>
                 </div>
-            </div>
-        </section>
+
+                @if (StateService.TopExercise != null)
+                {
+                    <ExerciseSparklineChart 
+                        style="grid-column: span 2 / span 2;"
+                        ExerciseId="StateService.TopExercise.Id"
+                        ExerciseName="@StateService.TopExercise.Name"
+                        LastTrained="StateService.TopExerciseLastTrained"
+                        DataPoints="StateService.TopExerciseDataPoints"
+                        RateOfChange="StateService.TopExerciseRateOfChange"
+                        Subtitle="Best Progress (30D)"
+                        MetricUnitLabel="pts"
+                        ShowValueBadge="false"
+                        ReverseLayout="true"
+                        OnClick="NavigateToDetail" />
+                }
+            </section>
+        }
     </main>
 </div>
 
 @code {
-    private User? _user;
-    private List<WorkoutProgram>? _programs;
+    private Action _stateHasChangedAction;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         TopBar.SetHomeMode();
         
-        try
+        _stateHasChangedAction = () => InvokeAsync(StateHasChanged);
+        StateService.OnStateChanged += _stateHasChangedAction;
+        
+        // Start background load without awaiting
+        _ = StateService.LoadDataAsync();
+    }
+
+    public void Dispose()
+    {
+        if (_stateHasChangedAction != null)
         {
-            _user = await DbService.GetUserAsync();
-            _programs = await DbService.GetAllProgramsAsync();
+            StateService.OnStateChanged -= _stateHasChangedAction;
         }
-        catch (Exception ex)
+    }
+
+    private void NavigateToDetail(int exerciseId)
+    {
+        NavManager.NavigateTo($"/analytics/detail/{exerciseId}");
+    }
+
+    private void NavigateToWorkoutDetail()
+    {
+        if (StateService.UpNextWorkout != null)
         {
-            Console.WriteLine($"HATA: {ex.Message}");
+            NavManager.NavigateTo($"/workouts/detail/{StateService.UpNextWorkout.Id}");
+        }
+    }
+
+    private void StartUpNextWorkout()
+    {
+        if (StateService.UpNextWorkout != null)
+        {
+            NavManager.NavigateTo($"/session/active/{StateService.UpNextWorkout.Id}");
         }
     }
 }

@@ -28,25 +28,6 @@
     {
         <!-- Filters Section -->
         <div class="filters-section mb-4">
-            <!-- Metric Selector -->
-            <div class="sorting-selector-container">
-                <label class="sorting-label">Show Performance By</label>
-                <div class="sorting-buttons">
-                    <button class="sorting-btn @(SelectedMetric == "ProgressiveOverload" ? "active" : "")" @onclick='() => ChangeMetric("ProgressiveOverload")'>
-                        <span class="material-symbols-outlined btn-icon">monitoring</span>
-                        <span>Progressive Overload</span>
-                    </button>
-                    <button class="sorting-btn @(SelectedMetric == "1RM" ? "active" : "")" @onclick='() => ChangeMetric("1RM")'>
-                        <span class="material-symbols-outlined btn-icon">insights</span>
-                        <span>Est. 1RM</span>
-                    </button>
-                    <button class="sorting-btn @(SelectedMetric == "MaxWeight" ? "active" : "")" @onclick='() => ChangeMetric("MaxWeight")'>
-                        <span class="material-symbols-outlined btn-icon">fitness_center</span>
-                        <span>Max Weight</span>
-                    </button>
-                </div>
-            </div>
-
             <!-- Sort Order Selector -->
             <div class="sorting-selector-container">
                 <label class="sorting-label">Sort By</label>
@@ -77,9 +58,9 @@
             <div class="sorting-selector-container">
                 <label class="sorting-label">Time Range</label>
                 <div class="sorting-buttons">
-                    <button class="sorting-btn @(SelectedTimeframe == "7D" ? "active" : "")" @onclick='() => ChangeTimeframe("7D")'>
+                    <button class="sorting-btn @(SelectedTimeframe == "14D" ? "active" : "")" @onclick='() => ChangeTimeframe("14D")'>
                         <span class="material-symbols-outlined btn-icon">calendar_today</span>
-                        <span>7D</span>
+                        <span>14D</span>
                     </button>
                     <button class="sorting-btn @(SelectedTimeframe == "30D" ? "active" : "")" @onclick='() => ChangeTimeframe("30D")'>
                         <span class="material-symbols-outlined btn-icon">date_range</span>
@@ -92,6 +73,25 @@
                     <button class="sorting-btn @(SelectedTimeframe == "All" ? "active" : "")" @onclick='() => ChangeTimeframe("All")'>
                         <span class="material-symbols-outlined btn-icon">all_inclusive</span>
                         <span>All</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Metric Selector -->
+            <div class="sorting-selector-container">
+                <label class="sorting-label">Show Performance By</label>
+                <div class="sorting-buttons">
+                    <button class="sorting-btn @(SelectedMetric == "ProgressiveOverload" ? "active" : "")" @onclick='() => ChangeMetric("ProgressiveOverload")'>
+                        <span class="material-symbols-outlined btn-icon">monitoring</span>
+                        <span>Progressive Overload</span>
+                    </button>
+                    <button class="sorting-btn @(SelectedMetric == "1RM" ? "active" : "")" @onclick='() => ChangeMetric("1RM")'>
+                        <span class="material-symbols-outlined btn-icon">insights</span>
+                        <span>Est. 1RM</span>
+                    </button>
+                    <button class="sorting-btn @(SelectedMetric == "MaxWeight" ? "active" : "")" @onclick='() => ChangeMetric("MaxWeight")'>
+                        <span class="material-symbols-outlined btn-icon">fitness_center</span>
+                        <span>Max Weight</span>
                     </button>
                 </div>
             </div>
@@ -271,7 +271,7 @@
     {
         return timeframe switch
         {
-            "7D" => "Last 7 Days",
+            "14D" => "Last 14 Days",
             "30D" => "Last 30 Days",
             "90D" => "Last 90 Days",
             "All" => "All Time",

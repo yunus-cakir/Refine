@@ -17,63 +17,126 @@
     </div>
 }
 
-@if (_isLoading)
-{
-    <div class="text-center"><div class="spinner-border text-primary"></div></div>
-}
-else if (_selectedProgram == null)
-{
-    <div class="text-center text-muted mt-5">
-        <i class="bi bi-journal-x fs-1 d-block mb-3"></i>
-        <p>You don't have a selected Workout Program.</p>
-        <button class="btn btn-primary mt-2" @onclick="GoToPrograms">Select Program</button>
-    </div>
-}
-else if (_selectedProgram.Workouts == null || !_selectedProgram.Workouts.Any())
-{
-    <div class="text-center text-muted mt-5">
-        <i class="bi bi-journal-plus fs-1 d-block mb-3"></i>
-        <p>Seçili programda henüz antrenman bulunmuyor.</p>
-    </div>
-}
-else
-{
-    <div class="mb-3">
-        <span class="badge bg-primary">Seçili Program: @_selectedProgram.Name</span>
-    </div>
+<div class="workout-detail-container">
+    @if (_isLoading)
+    {
+        <div class="loader-container">
+            <span class="material-symbols-outlined animate-spin" style="color: var(--color-primary-fixed); font-size: 32px;">progress_activity</span>
+        </div>
+    }
+    else if (_selectedProgram == null)
+    {
+        <div class="rf-flex-col rf-items-center" style="gap: 16px; margin-top: 48px; text-align: center;">
+            <span class="material-symbols-outlined" style="font-size: 48px; color: var(--color-on-surface-variant); opacity: 0.5;">library_add_check</span>
+            <p class="font-body" style="color: var(--color-on-surface-variant);">You don't have a selected Workout Program.</p>
+            <button class="rf-button-inverse" style="margin-top: 8px;" @onclick="GoToPrograms">View Programs</button>
+        </div>
+    }
+    else if (_selectedProgram.Workouts == null || !_selectedProgram.Workouts.Any())
+    {
+        <div class="rf-flex-col rf-items-center" style="gap: 16px; margin-top: 48px; text-align: center; opacity: 0.5;">
+            <span class="material-symbols-outlined" style="font-size: 48px; color: var(--color-on-surface-variant);">event_busy</span>
+            <p class="font-body" style="color: var(--color-on-surface-variant);">There are no workouts in the selected program yet.
+</p>
+        </div>
+    }
+    else
+    {
 
-    <div class="d-flex flex-column gap-3 pb-5">
-        @foreach (var workout in _selectedProgram.Workouts.OrderBy(w => w.Order))
-        {
-            <div class="refine-card p-3">
-                <div class="d-flex align-items-center justify-content-between">
+        <div class="week-selector-container">
+            <div class="week-selector">
+                <button class="week-btn @(_showPreviousWeek ? "active" : "")" @onclick="() => SetWeek(true)">PREVIOUS</button>
+                <button class="week-btn @(_showPreviousWeek ? "" : "active")" @onclick="() => SetWeek(false)">CURRENT</button>
+            </div>
+        </div>
+        <div class="rf-flex-row rf-items-center rf-justify-between" style="margin-bottom: 16px;">
+            <span class="font-label" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-on-surface-variant);">ACTIVE PROGRAM</span>
+            <span class="refine-badge">@_selectedProgram.Name</span>
+        </div>
 
-                    <a href="@($"/workouts/detail/{workout.Id}")" class="text-decoration-none text-white flex-grow-1">
-                        <div class="d-flex align-items-center">
-                            <div class="bg-secondary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-3"
-                                 style="width: 45px; height: 45px;">
-                                <i class="bi bi-lightning-charge-fill text-warning"></i>
+        
+
+        <div class="rf-flex-col" style="gap: 16px; padding-bottom: 80px;">
+            @foreach (var workout in _selectedProgram.Workouts.OrderBy(w => w.Order))
+            {
+                bool isCompleted = _completedWorkouts.ContainsKey(workout.Id) && _completedWorkouts[workout.Id];
+                bool isSkipped = !isCompleted && _highestCompletedOrder.HasValue && workout.Order < _highestCompletedOrder.Value;
+
+                <article class="rf-card" style="padding: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; @(isSkipped ? "opacity: 0.75;" : "")">
+                    <!-- The left thick border -->
+                    <div class="@(isCompleted ? "rf-card-border-completed" : (workout.Id == _upNextWorkoutId ? "rf-card-border-up-next" : "rf-card-border-upcoming"))" style="@(isSkipped ? "opacity: 0.5;" : "")"></div>
+                    
+                    <a href="@($"/workouts/detail/{workout.Id}")" style="text-decoration: none; display: block; padding: 16px 20px 16px 24px;">
+                        <h3 class="font-headline" style="color: @(isCompleted ? "var(--color-primary-fixed)" : (workout.Id == _upNextWorkoutId ? "#ffffff" : "var(--color-on-surface-variant)")); font-size: 20px; font-weight: bold; margin-top: 0; margin-bottom: 8px; @(isSkipped ? "text-decoration: line-through; opacity: 0.85;" : "")">
+                            @workout.Name
+                        </h3>
+
+                        <!-- Tags -->
+                        <div class="rf-flex-row rf-flex-wrap" style="gap: 8px; margin-bottom: 12px;">
+                            @foreach(var tag in GetTags(workout))
+                            {
+                                <span class="@(isCompleted || workout.Id == _upNextWorkoutId ? "rf-badge" : "rf-badge-faded")" style="font-size: 10px; padding: 3px 10px; @(workout.Id == _upNextWorkoutId ? "color: #ffffff; border-color: rgba(255, 255, 255, 0.4); background-color: rgba(255, 255, 255, 0.1);" : "") @(isSkipped ? "text-decoration: line-through; opacity: 0.8;" : "")">
+                                    @tag
+                                </span>
+                            }
+                        </div>
+
+                        <!-- Divider -->
+                        <div style="height: 1px; background-color: rgba(255, 255, 255, 0.05); margin-bottom: 12px; margin-left: -24px; margin-right: -20px;"></div>
+
+                        <!-- Bottom row -->
+                        <div class="rf-flex-row rf-justify-between rf-items-center">
+                            <!-- Duration -->
+                            <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-on-surface-variant); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>
+                                @((workout.Items?.Sum(i => i.Sets) ?? 0) * 4) MIN
                             </div>
 
-                            <div>
-                                <h6 class="fw-bold mb-0">@workout.Name</h6>
-                                <small class="text-muted" style="font-size: 0.8rem;">
-                                    @(workout.Items?.Count ?? 0) Hareket • @(string.IsNullOrEmpty(workout.Description) ? "Program İdmanı" : workout.Description)
-                                </small>
-                            </div>
+                            <!-- Status -->
+                            @if(isCompleted)
+                            {
+                                <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-primary-fixed); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                                    COMPLETED
+                                    <span class="material-symbols-outlined" style="font-size: 20px; font-variation-settings: 'FILL' 1;">check_circle</span>
+                                </div>
+                            }
+                            else if(workout.Id == _upNextWorkoutId)
+                            {
+                                <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: #ffffff; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                                    UP NEXT
+                                    <span class="material-symbols-outlined" style="font-size: 20px; font-variation-settings: 'FILL' 1;">play_circle</span>
+                                </div>
+                            }
+                            else if(isSkipped)
+                            {
+                                <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-on-surface-variant); opacity: 0.8; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                                    SKIPPED
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">cancel</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-on-surface-variant); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                                    UPCOMING
+                                    <span class="material-symbols-outlined" style="font-size: 20px;">radio_button_unchecked</span>
+                                </div>
+                            }
                         </div>
                     </a>
-
-                </div>
-            </div>
-        }
-    </div>
-}
+                </article>
+            }
+        </div>
+    }
+</div>
 
 @code {
     private WorkoutProgram? _selectedProgram;
     private bool _isLoading = true;
     private bool _showTopBarMenu = false;
+    private bool _showPreviousWeek = false;
+    private int? _upNextWorkoutId;
+    private int? _highestCompletedOrder;
+    private Dictionary<int, bool> _completedWorkouts = new();
 
     protected override void OnInitialized()
     {
@@ -91,7 +154,61 @@ else
     {
         _isLoading = true;
         _selectedProgram = await DbService.GetSelectedWorkoutProgramAsync();
+        
+        _completedWorkouts.Clear();
+        if (_selectedProgram?.Workouts != null)
+        {
+            foreach(var w in _selectedProgram.Workouts)
+            {
+                _completedWorkouts[w.Id] = await DbService.HasLogForWeekAsync(w.Id, _showPreviousWeek);
+            }
+
+            // Calculate Up Next
+            var orderedWorkouts = _selectedProgram.Workouts.OrderBy(w => w.Order).ToList();
+            var completedList = orderedWorkouts.Where(w => _completedWorkouts.TryGetValue(w.Id, out bool comp) && comp).ToList();
+            if (!completedList.Any())
+            {
+                _upNextWorkoutId = orderedWorkouts.FirstOrDefault()?.Id;
+                _highestCompletedOrder = null;
+            }
+            else
+            {
+                _highestCompletedOrder = completedList.Max(w => w.Order);
+                _upNextWorkoutId = orderedWorkouts.FirstOrDefault(w => w.Order > _highestCompletedOrder)?.Id;
+            }
+        }
+        else
+        {
+            _upNextWorkoutId = null;
+            _highestCompletedOrder = null;
+        }
+        
         _isLoading = false;
+    }
+
+    private async Task SetWeek(bool previous)
+    {
+        if (_showPreviousWeek == previous) return;
+        _showPreviousWeek = previous;
+        await LoadData();
+    }
+
+    private List<string> GetTags(Workout workout)
+    {
+        if (workout?.Items != null)
+        {
+            var targetMuscles = workout.Items
+                .Where(i => !string.IsNullOrWhiteSpace(i.Exercise?.PrimaryMuscleCategory))
+                .Select(i => i.Exercise!.PrimaryMuscleCategory!.ToUpper())
+                .Distinct()
+                .ToList();
+                
+            if (targetMuscles.Any())
+            {
+                return targetMuscles;
+            }
+        }
+        return new List<string> { "GENEL" };
     }
 
     private void GoToPrograms()

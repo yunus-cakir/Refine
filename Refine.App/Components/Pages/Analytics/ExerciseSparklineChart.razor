@@ -4,22 +4,42 @@
 @implements IAsyncDisposable
 
 <div class="rf-card" @onclick="HandleClick" @attributes="AdditionalAttributes">
-    <div class="d-flex justify-content-between align-items-center" style="z-index: 10; position: relative;">
+    <div class="d-flex justify-content-between align-items-start" style="z-index: 10; position: relative;">
         <div>
-            <h6 class="fw-bold mb-1" style="color: var(--refine-text);">@ExerciseName</h6>
-            <small class="text-muted">@(string.IsNullOrEmpty(Subtitle) ? $"Last Trained: {LastTrained.ToString("MMM dd")}" : Subtitle)</small>
+            @if (ReverseLayout)
+            {
+                <div class="rf-flex-row rf-items-center mb-1" style="gap: 8px; color: var(--color-on-surface-variant);">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">fitness_center</span>
+                    <span class="font-label" style="font-size: 11px; text-transform: uppercase;">@(string.IsNullOrEmpty(Subtitle) ? $"Last Trained: {LastTrained.ToString("MMM dd")}" : Subtitle)</span>
+                </div>
+                <h6 class="fw-bold mb-0" style="color: var(--refine-text);">@ExerciseName</h6>
+            }
+            else
+            {
+                <h6 class="fw-bold mb-1" style="color: var(--refine-text);">@ExerciseName</h6>
+                <small class="text-muted">@(string.IsNullOrEmpty(Subtitle) ? $"Last Trained: {LastTrained.ToString("MMM dd")}" : Subtitle)</small>
+            }
         </div>
         <div class="d-flex flex-column align-items-end">
-            @if (ShowValueBadge && DataPoints != null && DataPoints.Any())
+            @if (ShowValueBadge)
+            {
+                @if (DataPoints != null && DataPoints.Any())
+                {
+                    <div class="metric-highlight" style="background-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.1)" : "rgba(255, 69, 58, 0.1)"); border-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.2)" : "rgba(255, 69, 58, 0.2)");">
+                        <span class="fw-bold" style="color: @(RateOfChange >= 0 ? "#c3f400" : "#ff453a");">@DataPoints.Last().Value</span>
+                        <small class="text-muted ms-1">@MetricUnitLabel</small>
+                    </div>
+                }
+                <span class="badge mt-2" style="font-size: 11px; padding: 4px 8px; border-radius: 8px; font-weight: bold; background-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.15)" : "rgba(255, 69, 58, 0.15)"); color: @(RateOfChange >= 0 ? "#c3f400" : "#ff453a");">
+                    @(RateOfChange >= 0 ? "+" : "")@(Math.Round(RateOfChange * 100, 1))%
+                </span>
+            }
+            else
             {
                 <div class="metric-highlight" style="background-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.1)" : "rgba(255, 69, 58, 0.1)"); border-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.2)" : "rgba(255, 69, 58, 0.2)");">
-                    <span class="fw-bold" style="color: @(RateOfChange >= 0 ? "#c3f400" : "#ff453a");">@DataPoints.Last().Value</span>
-                    <small class="text-muted ms-1">@MetricUnitLabel</small>
+                    <span class="fw-bold" style="color: @(RateOfChange >= 0 ? "#c3f400" : "#ff453a");">@(RateOfChange >= 0 ? "+" : "")@(Math.Round(RateOfChange * 100, 1))%</span>
                 </div>
             }
-            <span class="badge @(ShowValueBadge ? "mt-2" : "")" style="font-size: 11px; padding: 4px 8px; border-radius: 8px; font-weight: bold; background-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.15)" : "rgba(255, 69, 58, 0.15)"); color: @(RateOfChange >= 0 ? "#c3f400" : "#ff453a");">
-                @(RateOfChange >= 0 ? "+" : "")@(Math.Round(RateOfChange * 100, 1))%
-            </span>
         </div>
     </div>
 
@@ -37,6 +57,7 @@
     [Parameter] public double RateOfChange { get; set; }
     [Parameter] public string MetricUnitLabel { get; set; } = "kg";
     [Parameter] public bool ShowValueBadge { get; set; } = true;
+    [Parameter] public bool ReverseLayout { get; set; } = false;
     [Parameter] public EventCallback<int> OnClick { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
 

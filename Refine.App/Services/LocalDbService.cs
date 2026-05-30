@@ -62,7 +62,15 @@ public class LocalDbService
             await SeedDataAsync();
         }
 
-        var mockProgramExists = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "Mock İdman Programı").CountAsync();
+        // Rename existing "Mock İdman Programı" to "W's Upper Lower" if it exists
+        var existingMock = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "Mock İdman Programı").FirstOrDefaultAsync();
+        if (existingMock != null)
+        {
+            existingMock.Name = "W's Upper Lower";
+            await _connection.UpdateAsync(existingMock);
+        }
+
+        var mockProgramExists = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "W's Upper Lower").CountAsync();
         if (mockProgramExists == 0)
         {
             await SeedMockProgramAsync();
@@ -213,7 +221,20 @@ public class LocalDbService
     public async Task SaveWorkoutLogsAsync(List<WorkoutLog> logs)
     {
         await Init();
-        await _connection!.InsertAllAsync(logs);
+        var logsToSave = logs.Where(l => l.Weight.HasValue && l.Reps.HasValue).ToList();
+        if (logsToSave.Any())
+        {
+            await _connection!.InsertAllAsync(logsToSave);
+        }
+    }
+
+    public async Task<List<WorkoutLog>> GetLogsForExerciseAsync(int exerciseId)
+    {
+        await Init();
+        return await _connection!.Table<WorkoutLog>()
+                                .Where(l => l.ExerciseId == exerciseId)
+                                .OrderByDescending(l => l.Date)
+                                .ToListAsync();
     }
 
     public async Task<List<WorkoutLog>> GetLastLogForExerciseAsync(int exerciseId)
@@ -284,6 +305,35 @@ public class LocalDbService
         return count > 0;
     }
 
+    public async Task<bool> HasLogWithinDaysAsync(int workoutId, int days)
+    {
+        await Init();
+        var limitDate = DateTime.Now.Date.AddDays(-days);
+        var count = await _connection!.Table<WorkoutLog>()
+                                     .Where(l => l.WorkoutId == workoutId && l.Date >= limitDate)
+                                     .CountAsync();
+        return count > 0;
+    }
+
+    public async Task<bool> HasLogForWeekAsync(int workoutId, bool previousWeek = false)
+    {
+        await Init();
+        var today = DateTime.Now.Date;
+        int diff = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
+        var startOfWeek = today.AddDays(-diff);
+        
+        if (previousWeek)
+        {
+            startOfWeek = startOfWeek.AddDays(-7);
+        }
+        var endOfWeek = startOfWeek.AddDays(7);
+
+        var count = await _connection!.Table<WorkoutLog>()
+                                     .Where(l => l.WorkoutId == workoutId && l.Date >= startOfWeek && l.Date < endOfWeek)
+                                     .CountAsync();
+        return count > 0;
+    }
+
     // --- DÜZENLEME KAYDI (Edit Mode İçin) ---
     // Hem var olanları günceller, hem yeni eklenenleri kaydeder.
     public async Task UpdateSessionLogsAsync(List<WorkoutLog> logs)
@@ -293,12 +343,25 @@ public class LocalDbService
         {
             foreach (var log in logs)
             {
-                // ID'si 0'dan büyükse veritabanında var demektir -> Güncelle
+                bool isEmpty = !log.Weight.HasValue || !log.Reps.HasValue;
                 if (log.Id != 0)
-                    tran.Update(log);
-                // ID'si 0 ise yeni eklenmiştir -> Ekle
+                {
+                    if (isEmpty)
+                    {
+                        tran.Delete(log);
+                    }
+                    else
+                    {
+                        tran.Update(log);
+                    }
+                }
                 else
-                    tran.Insert(log);
+                {
+                    if (!isEmpty)
+                    {
+                        tran.Insert(log);
+                    }
+                }
             }
         });
     }
@@ -321,6 +384,14 @@ public class LocalDbService
     {
         var user = await GetUserAsync();
         user.SelectedWorkoutProgramId = programId;
+        if (programId > 0)
+        {
+            user.SelectedWorkoutProgram = await GetProgramByIdAsync(programId);
+        }
+        else
+        {
+            user.SelectedWorkoutProgram = null;
+        }
         await UpdateUserAsync(user);
     }
 
@@ -636,7 +707,7 @@ public class LocalDbService
 
         var program = new WorkoutProgram
         {
-            Name = "Mock İdman Programı",
+            Name = "W's Upper Lower",
             Level = "Advanced",
             Goal = "Hipertrofi",
             TargetMuscles = "Tüm Vücut",

@@ -49,7 +49,7 @@
     {
         var relativeUri = NavManager.ToBaseRelativePath(absoluteUri);
         var tabKey = "";
-        if (relativeUri.StartsWith("workouts") || relativeUri.StartsWith("session") || relativeUri.StartsWith("history")) tabKey = "workouts";
+        if (relativeUri.StartsWith("workouts") || relativeUri.StartsWith("session") || relativeUri.StartsWith("history") || relativeUri.StartsWith("programs")) tabKey = "workouts";
         else if (relativeUri.StartsWith("analytics")) tabKey = "analytics";
         else if (relativeUri.StartsWith("profile") || relativeUri.StartsWith("preferences")) tabKey = "profile";
 

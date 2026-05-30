@@ -61,12 +61,10 @@ else
         }
 
         <!-- Main Reels -->
-        <main class="hide-scrollbar" style="flex: 1; overflow-y: auto; scroll-snap-type: y mandatory; position: relative; padding-bottom: env(safe-area-inset-bottom);">
-            @{ var exercisesList = (_workout.Items ?? new List<WorkoutItem>()).OrderBy(i => i.Order).ToList(); }
-            
-            @for (int i = 0; i < exercisesList.Count; i++)
+        <main id="active-session-reels" class="hide-scrollbar" style="flex: 1; overflow-y: auto; scroll-snap-type: y mandatory; position: relative; padding-bottom: env(safe-area-inset-bottom);">
+            @for (int i = 0; i < _exercises.Count; i++)
             {
-                var item = exercisesList[i];
+                var item = _exercises[i];
                 var currentIndex = i; // local copy for closure
                 var currentLogs = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).OrderBy(l => l.SetNumber).ToList();
                 
@@ -183,14 +181,14 @@ else
 
                         <!-- Log Button -->
                         <button class="rf-button-primary"
-                                @onclick="() => LogSet(item.ExerciseId, currentIndex, item.Sets, exercisesList.Count)">
+                                @onclick="() => LogSet(item.ExerciseId, currentIndex, item.Sets, _exercises.Count)">
                             <span class="material-symbols-outlined" style='font-size: 20px; font-variation-settings: "wght" 700;'>done_all</span>
                             LOG SET @currentSet
                         </button>
 
                         <!-- Bottom Links -->
                         <div class="rf-flex-row rf-justify-center" style="gap: 24px; margin-top: 8px; opacity: 0.7; transform: scale(0.9); transform-origin: top;">
-                            <button class="refine-ghost-btn">
+                            <button class="refine-ghost-btn" @onclick="() => OpenHistory(item.ExerciseId, item.Exercise.Name)">
                                 <span class="material-symbols-outlined" style="font-size: 18px;">history</span> HISTORY
                             </button>
                             <button class="refine-ghost-btn">
@@ -200,7 +198,7 @@ else
                     </div>
 
                     <!-- Scroll Hint (Only if not the last set of the last exercise) -->
-                    @if (!(currentIndex == exercisesList.Count - 1 && currentSet == item.Sets))
+                    @if (!(currentIndex == _exercises.Count - 1 && currentSet == item.Sets))
                     {
                         <div class="rf-flex-row rf-justify-center" style="position: absolute; bottom: 24px; left: 0; right: 0; z-index: 10; opacity: 0.5; pointer-events: none; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;">
                             <span class="material-symbols-outlined" style="color: white; font-size: 30px;">keyboard_arrow_down</span>
@@ -243,9 +241,6 @@ else
             </div>
             
             <h3 class="font-headline exit-modal-title">Exit Workout?</h3>
-            <p class="font-body exit-modal-body">
-                You have an ongoing workout. Would you like to save it before leaving the page?
-            </p>
             
             <div class="rf-flex-col" style="gap: 12px;">
                 <!-- Return to Workout (Primary) -->
@@ -281,6 +276,7 @@ else
     public bool IsResuming { get; set; }
 
     private Workout? _workout;
+    private List<WorkoutItem> _exercises = new();
     private List<WorkoutLog> _activeLogs = new();
     private Dictionary<int, List<WorkoutLog>> _historyData = new();
     
@@ -292,6 +288,7 @@ else
     private bool _showExitModal = false;
     private bool _allowNavigation = false;
     private string? _pendingTargetLocation;
+    private bool _hasScrolledToLastPerformed = false;
 
     // İşlem yapılacak hedef tarih (Edit ise geçmiş tarih, Yeni ise şimdiki zaman)
     private DateTime _targetDate;
@@ -309,6 +306,7 @@ else
 
         if (_workout != null && _workout.Items != null)
         {
+            _exercises = _workout.Items.OrderBy(i => i.Order).ToList();
             TopBar.SetDetailMode(_workout.Name);
             // 1. Hedef Tarihi Belirle
             if (DateTicks.HasValue)
@@ -348,7 +346,7 @@ else
                 else
                 {
                     // Yoksa sıfırdan oluştur
-                    foreach (var item in _workout.Items)
+                    foreach (var item in _exercises)
                     {
                         for (int i = 1; i <= item.Sets; i++)
                         {
@@ -367,13 +365,22 @@ else
             }
 
             // Init current sets
-            foreach(var item in _workout.Items)
+            foreach(var item in _exercises)
             {
-                _currentSetIndex[item.ExerciseId] = 1;
+                var logsForExercise = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).OrderBy(l => l.SetNumber).ToList();
+                var firstUncompletedLog = logsForExercise.FirstOrDefault(l => !l.Weight.HasValue || !l.Reps.HasValue);
+                if (firstUncompletedLog != null)
+                {
+                    _currentSetIndex[item.ExerciseId] = firstUncompletedLog.SetNumber;
+                }
+                else
+                {
+                    _currentSetIndex[item.ExerciseId] = item.Sets;
+                }
             }
 
             // 3. Geçmiş Verileri (Ghost Text) Hazırla
-            foreach (var item in _workout.Items)
+            foreach (var item in _exercises)
             {
                 var history = await DbService.GetLastLogForExerciseAsync(item.ExerciseId);
                 if (history.Any())
@@ -382,6 +389,118 @@ else
                 }
             }
         }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_workout != null && !_hasScrolledToLastPerformed)
+        {
+            _hasScrolledToLastPerformed = true;
+            await ScrollToLastPerformedExerciseAsync();
+            await InitScrollTrackingAsync();
+        }
+    }
+
+    private async Task ScrollToLastPerformedExerciseAsync()
+    {
+        if (_exercises == null || !_exercises.Any()) return;
+
+        // Try to get from localStorage first
+        string? savedSlideId = null;
+        try
+        {
+            savedSlideId = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", $"active_session_slide_{WorkoutId}");
+        }
+        catch
+        {
+            // Ignore storage errors
+        }
+
+        if (!string.IsNullOrEmpty(savedSlideId))
+        {
+            await JSRuntime.InvokeVoidAsync("eval", $"var el = document.getElementById('{savedSlideId}'); if (el) el.scrollIntoView({{ behavior: 'auto' }});");
+            return;
+        }
+
+        // Fallback: Check if all exercises are completely performed
+        bool allExercisesCompleted = true;
+        int lastPerformedIndex = -1;
+
+        for (int i = 0; i < _exercises.Count; i++)
+        {
+            var item = _exercises[i];
+            var logsForExercise = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).ToList();
+            bool hasAnyCompletedSet = logsForExercise.Any(l => l.Weight.HasValue && l.Reps.HasValue);
+            bool isFullyCompleted = logsForExercise.Count >= item.Sets && logsForExercise.All(l => l.Weight.HasValue && l.Reps.HasValue);
+
+            if (hasAnyCompletedSet)
+            {
+                lastPerformedIndex = i;
+            }
+
+            if (!isFullyCompleted)
+            {
+                allExercisesCompleted = false;
+            }
+        }
+
+        if (allExercisesCompleted)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", "var el = document.getElementById('finish-slide'); if (el) el.scrollIntoView({ behavior: 'auto' });");
+        }
+        else if (lastPerformedIndex != -1)
+        {
+            int scrollIndex = lastPerformedIndex;
+            var lastPerformedExercise = _exercises[lastPerformedIndex];
+            var logsForLast = _activeLogs.Where(l => l.ExerciseId == lastPerformedExercise.ExerciseId).ToList();
+            bool isLastFullyCompleted = logsForLast.Count >= lastPerformedExercise.Sets && logsForLast.All(l => l.Weight.HasValue && l.Reps.HasValue);
+
+            if (isLastFullyCompleted && lastPerformedIndex < _exercises.Count - 1)
+            {
+                scrollIndex = lastPerformedIndex + 1;
+            }
+
+            await JSRuntime.InvokeVoidAsync("eval", $"var el = document.getElementById('exercise-{scrollIndex}'); if (el) el.scrollIntoView({{ behavior: 'auto' }});");
+        }
+    }
+
+    private async Task InitScrollTrackingAsync()
+    {
+        var script = @"
+            window.initActiveSessionScrollTracking = window.initActiveSessionScrollTracking || function(mainId, workoutId) {
+                var mainEl = document.getElementById(mainId);
+                if (!mainEl) return;
+                
+                if (mainEl._observer) {
+                    mainEl._observer.disconnect();
+                }
+                
+                if (!window.IntersectionObserver) return;
+                
+                var observer = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(entry) {
+                        if (entry.isIntersecting) {
+                            var id = entry.target.id;
+                            if (id) {
+                                localStorage.setItem('active_session_slide_' + workoutId, id);
+                            }
+                        }
+                    });
+                }, {
+                    root: mainEl,
+                    threshold: 0.5
+                });
+                
+                var sections = mainEl.querySelectorAll('.snap-section');
+                sections.forEach(function(section) {
+                    observer.observe(section);
+                });
+                
+                mainEl._observer = observer;
+            };
+            window.initActiveSessionScrollTracking('active-session-reels', " + WorkoutId + ");";
+
+        await JSRuntime.InvokeVoidAsync("eval", script);
     }
 
     private void ToggleMenu(int exerciseId)
@@ -408,6 +527,14 @@ else
     private async Task LogSet(int exerciseId, int currentExerciseIndex, int maxSets, int totalExercises)
     {
         if (!_currentSetIndex.ContainsKey(exerciseId)) return;
+
+        var currentSet = _currentSetIndex[exerciseId];
+        var activeLog = _activeLogs.FirstOrDefault(l => l.ExerciseId == exerciseId && l.SetNumber == currentSet);
+        if (activeLog == null || !activeLog.Weight.HasValue || !activeLog.Reps.HasValue)
+        {
+            await UiHelper.ShowAlert("Missing Info", "Please enter both weight and repetition values before logging this set.", "OK");
+            return;
+        }
 
         if (_currentSetIndex[exerciseId] >= maxSets)
         {
@@ -457,9 +584,9 @@ else
 
     private void CopyAllPreviousData()
     {
-        if (_workout?.Items == null) return;
+        if (_exercises == null || !_exercises.Any()) return;
         
-        foreach (var item in _workout.Items)
+        foreach (var item in _exercises)
         {
             if (!_historyData.ContainsKey(item.ExerciseId)) continue;
 
@@ -490,6 +617,12 @@ else
 
         if (confirm)
         {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", $"active_session_slide_{WorkoutId}");
+            }
+            catch {}
+
             if (DateTicks.HasValue)
             {
                 // Edit Mode: Update (Upsert) işlemi
@@ -588,6 +721,12 @@ else
         _showExitModal = false;
         _allowNavigation = true;
 
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", $"active_session_slide_{WorkoutId}");
+        }
+        catch {}
+
         if (!string.IsNullOrEmpty(_pendingTargetLocation))
         {
             NavManager.NavigateTo(_pendingTargetLocation);
@@ -609,6 +748,15 @@ else
         await Task.Delay(3000);
         _showToast = false;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OpenHistory(int exerciseId, string exerciseName)
+    {
+        // Save current progress as draft so we don't lose entered values when we return
+        await DbService.UpdateSessionLogsAsync(_activeLogs);
+        
+        _allowNavigation = true;
+        NavManager.NavigateTo($"/analytics/detail/{exerciseId}?name={Uri.EscapeDataString(exerciseName)}");
     }
 
     public void Dispose()

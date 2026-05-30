@@ -6,61 +6,62 @@
 @inject TopBarBridge TopBar
 @implements IDisposable
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold m-0">Programs</h3>
-    <a href="/programs/edit/0" class="btn btn-primary rounded-pill px-3 fw-bold">
-        <i class="bi bi-plus-lg me-1"></i> Yeni
-    </a>
-</div>
-
-@if (_programs == null)
-{
-    <div class="text-center mt-5"><div class="spinner-border text-primary"></div></div>
-}
-else if (_programs.Count == 0)
-{
-    <div class="text-center text-muted mt-5">
-        <p>Henüz kayıtlı bir program yok.</p>
+<div class="workout-detail-container">
+    <div class="rf-flex-row rf-justify-between rf-items-center" style="margin-bottom: 24px;">
+        <a href="/programs/edit/0" class="rf-button-inverse" style="padding: 8px 16px; border-radius: 9999px; font-size: 12px; display: flex; align-items: center; gap: 8px; text-decoration: none;">
+            <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+            NEW
+        </a>
     </div>
-}
-else
-{
-    <div class="row g-3 pb-5">
-        @foreach (var program in _programs)
-        {
-            <div class="col-12">
-                <div class="refine-card position-relative overflow-hidden">
 
-                    <button class="btn btn-dark btn-sm position-absolute top-0 end-0 m-2 text-danger border-0 bg-opacity-50"
-                            style="z-index: 20; width: 36px; height: 36px; border-radius: 10px;"
+    @if (_programs == null)
+    {
+        <div class="loader-container">
+            <span class="material-symbols-outlined animate-spin" style="color: var(--color-primary-fixed); font-size: 32px;">progress_activity</span>
+        </div>
+    }
+    else if (_programs.Count == 0)
+    {
+        <div class="rf-flex-col rf-items-center" style="gap: 16px; margin-top: 48px; text-align: center; opacity: 0.5;">
+            <span class="material-symbols-outlined" style="font-size: 48px; color: var(--color-on-surface-variant);">event_note</span>
+            <p class="font-body" style="color: var(--color-on-surface-variant);">Henüz kayıtlı bir program yok.</p>
+        </div>
+    }
+    else
+    {
+        <div class="rf-flex-col" style="gap: 16px; padding-bottom: 80px;">
+            @foreach (var program in _programs)
+            {
+                <div class="refine-card" style="position: relative; overflow: hidden; padding: 0;">
+                    <!-- Highlight border -->
+                    <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: var(--color-primary-fixed);"></div>
+
+                    <button class="refine-icon-btn"
+                            style="position: absolute; top: 16px; right: 16px; z-index: 20; width: 32px; height: 32px; border-color: transparent;"
                             @onclick="() => DeleteProgram(program)"
                             @onclick:stopPropagation="true">
-                        <i class="bi bi-trash-fill"></i>
+                        <span class="material-symbols-outlined" style="font-size: 18px; color: var(--color-error);">delete</span>
                     </button>
 
-                    <NavLink class="text-decoration-none text-white d-block p-3" href="@($"/programs/{program.Id}")">
+                    <NavLink href="@($"/programs/{program.Id}")" style="display: block; padding: 20px 20px 20px 24px; text-decoration: none;">
+                        <div style="padding-right: 40px;">
+                            <h5 class="font-headline" style="color: var(--color-primary); font-size: 20px; font-weight: bold; margin-bottom: 8px;">@program.Name</h5>
 
-                        <div class="pe-5">
-                            <h5 class="fw-bold mb-2">@program.Name</h5>
-
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge badge-pill">
-                                    @program.Level
-                                </span>
+                            <div class="rf-flex-row rf-items-center" style="gap: 8px; margin-bottom: 16px;">
+                                <span class="refine-badge">@program.Level.ToUpper()</span>
                             </div>
                         </div>
 
-                        <div class="mt-3 text-muted small">
-                            <i class="bi bi-trophy-fill me-1 text-secondary"></i> @program.Goal
+                        <div class="rf-flex-row rf-items-center font-label" style="gap: 8px; font-size: 11px; color: var(--color-on-surface-variant); text-transform: uppercase; letter-spacing: 0.1em; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px; margin-top: 4px;">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">emoji_events</span>
+                            @program.Goal
                         </div>
-
                     </NavLink>
-
                 </div>
-            </div>
-        }
-    </div>
-}
+            }
+        </div>
+    }
+</div>
 
 @code {
     private List<WorkoutProgram>? _programs;

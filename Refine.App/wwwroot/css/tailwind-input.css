@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
 
+:root {
+    --refine-card: #1a1b1d;
+    --refine-card-border: rgba(255, 255, 255, 0.05);
+    --refine-border: rgba(255, 255, 255, 0.05);
+}
+
 @source "../../**/*.razor";
 
 @theme {
@@ -162,11 +168,12 @@
 }
 
 .refine-card {
-    background-color: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: #1a1b1d;
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     padding: 20px;
-    border-radius: 0.75rem;
+    border-radius: 1rem;
 }
 
 .neon-glow-btn {

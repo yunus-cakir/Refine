@@ -24,7 +24,7 @@
                 <div class="col-6">
                     <div class="measurement-card-top">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="card-label-top font-label">BOY</span>
+                            <span class="card-label-top font-label">HEIGHT</span>
                             <span class="material-symbols-outlined label-icon-top">height</span>
                         </div>
                         <div class="input-wrapper">
@@ -38,7 +38,7 @@
                 <div class="col-6">
                     <div class="measurement-card-top">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="card-label-top font-label">KILO</span>
+                            <span class="card-label-top font-label">WEIGHT</span>
                             <span class="material-symbols-outlined label-icon-top">scale</span>
                         </div>
                         <div class="input-wrapper">
@@ -63,7 +63,7 @@
                         <div class="row-icon-container">
                             <span class="material-symbols-outlined row-icon">line_weight</span>
                         </div>
-                        <span class="row-title font-body text-white">Boyun çevresi</span>
+                        <span class="row-title font-body text-white">Neck</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
                         <input type="number" step="any" class="body-input" placeholder="@(_ghostNeck?.ToString() ?? "---")" @bind="_inputNeck" />
@@ -77,7 +77,7 @@
                         <div class="row-icon-container">
                             <span class="material-symbols-outlined row-icon">sports_gymnastics</span>
                         </div>
-                        <span class="row-title font-body text-white">Omuz çevresi</span>
+                        <span class="row-title font-body text-white">Shoulders</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
                         <input type="number" step="any" class="body-input" placeholder="@(_ghostShoulder?.ToString() ?? "---")" @bind="_inputShoulder" />
@@ -91,7 +91,7 @@
                         <div class="row-icon-container">
                             <span class="material-symbols-outlined row-icon">accessibility</span>
                         </div>
-                        <span class="row-title font-body text-white">Bel çevresi</span>
+                        <span class="row-title font-body text-white">Waist</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
                         <input type="number" step="any" class="body-input" placeholder="@(_ghostWaist?.ToString() ?? "---")" @bind="_inputWaist" />
@@ -105,7 +105,7 @@
                         <div class="row-icon-container">
                             <span class="material-symbols-outlined row-icon">boy</span>
                         </div>
-                        <span class="row-title font-body text-white">Kalça çevresi</span>
+                        <span class="row-title font-body text-white">Hips</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
                         <input type="number" step="any" class="body-input" placeholder="@(_ghostHip?.ToString() ?? "---")" @bind="_inputHip" />
@@ -117,8 +117,8 @@
             <!-- Save Button -->
             <div class="mt-4 px-1">
                 <button class="refine-glow-btn w-100 py-3 rounded-pill fw-bold" @onclick="SaveMeasurements">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">save</span>
-                    KAYDET
+                    <span class="material-symbols-outlined" style="font-size: 20px;">check</span>
+                    SAVE
                 </button>
             </div>
         </div>
