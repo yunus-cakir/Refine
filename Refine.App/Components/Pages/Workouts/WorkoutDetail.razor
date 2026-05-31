@@ -121,6 +121,7 @@ else
 
 @code {
     [Parameter] public int Id { get; set; }
+    [SupplyParameterFromQuery] public int? Cycle { get; set; }
     private Workout? _workout;
 
     private decimal TotalCnsLoad => _workout?.Items?.Sum(i => CalculateItemCnsLoad(i)) ?? 0;
@@ -215,18 +216,21 @@ else
     // YENİ METOT: Başlatma Mantığı
     private async Task StartWorkout()
     {
-        // Bugün için kayıt var mı kontrol et (LocalDbService'e eklediğin metod)
-        bool exists = await ProgramService.HasLogForTodayAsync(Id);
+        // Bugün için belirtilen cycle'da kayıt var mı kontrol et
+        bool exists = await ProgramService.HasLogForTodayAsync(Id, Cycle);
+
+        string cycleQuery = Cycle.HasValue ? $"&cycle={Cycle.Value}" : "";
+        string baseQuery = Cycle.HasValue ? $"?cycle={Cycle.Value}" : "";
 
         if (exists)
         {
             // Varsa: "resuming=true" parametresiyle git
-            NavManager.NavigateTo($"/session/active/{Id}?resuming=true");
+            NavManager.NavigateTo($"/session/active/{Id}?resuming=true{cycleQuery}");
         }
         else
         {
             // Yoksa: Normal git
-            NavManager.NavigateTo($"/session/active/{Id}");
+            NavManager.NavigateTo($"/session/active/{Id}{baseQuery}");
         }
     }
 }

@@ -306,16 +306,21 @@ public class LocalDbService
     }
 
     // --- KONTROL ---
-    public async Task<bool> HasLogForTodayAsync(int workoutId)
+    public async Task<bool> HasLogForTodayAsync(int workoutId, int? cycle = null)
     {
         await Init();
         var today = DateTime.Now.Date;
-        var tomorrow = today.AddDays(1);
+        var maxDate = today.AddDays(1).AddTicks(-1);
 
-        // Bugünün tarih aralığında bu workoutId ile girilmiş herhangi bir log var mı?
-        var count = await _connection!.Table<WorkoutLog>()
-                                     .Where(l => l.WorkoutId == workoutId && l.Date >= today && l.Date < tomorrow)
-                                     .CountAsync();
+        var query = _connection!.Table<WorkoutLog>()
+                                .Where(l => l.WorkoutId == workoutId && l.Date >= today && l.Date <= maxDate);
+        
+        if (cycle.HasValue)
+        {
+            query = query.Where(l => l.Cycle == cycle.Value);
+        }
+
+        var count = await query.CountAsync();
         return count > 0;
     }
 
@@ -344,6 +349,15 @@ public class LocalDbService
 
         var count = await _connection!.Table<WorkoutLog>()
                                      .Where(l => l.WorkoutId == workoutId && l.Date >= startOfWeek && l.Date < endOfWeek && l.IsCompleted)
+                                     .CountAsync();
+        return count > 0;
+    }
+
+    public async Task<bool> HasLogForCycleAsync(int workoutId, int cycle)
+    {
+        await Init();
+        var count = await _connection!.Table<WorkoutLog>()
+                                     .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle && l.IsCompleted)
                                      .CountAsync();
         return count > 0;
     }
@@ -390,7 +404,29 @@ public class LocalDbService
         var user = await GetUserAsync();
         if (user.SelectedWorkoutProgramId.HasValue && user.SelectedWorkoutProgramId.Value > 0)
         {
-            return await GetProgramByIdAsync(user.SelectedWorkoutProgramId.Value);
+            var program = await GetProgramByIdAsync(user.SelectedWorkoutProgramId.Value);
+            if (program != null && user.WorkoutSettings?.CycleLength == "Weekly")
+            {
+                var now = DateTime.Now;
+                var lastUpdate = program.LastCycleUpdateDate;
+                var weekStart = user.AppSettings?.WeekStartDay ?? DayOfWeek.Monday;
+
+                int diff = (7 + (now.DayOfWeek - weekStart)) % 7;
+                DateTime currentWeekStart = now.Date.AddDays(-diff);
+
+                int lastDiff = (7 + (lastUpdate.DayOfWeek - weekStart)) % 7;
+                DateTime lastWeekStart = lastUpdate.Date.AddDays(-lastDiff);
+
+                int weeksPassed = (int)Math.Round((currentWeekStart - lastWeekStart).TotalDays / 7.0);
+                if (weeksPassed > 0)
+                {
+                    program.Cycle += weeksPassed;
+                    program.LastCycleUpdateDate = now;
+                    await Init();
+                    await _connection!.UpdateAsync(program);
+                }
+            }
+            return program;
         }
         return null;
     }
@@ -733,7 +769,9 @@ public class LocalDbService
             Level = "Advanced",
             Goal = "Hipertrofi",
             TargetMuscles = "Tüm Vücut",
-            Environment = "Spor Salonu"
+            Environment = "Spor Salonu",
+            Cycle = 14,
+            LastCycleUpdateDate = DateTime.Now
         };
         await _connection.InsertAsync(program);
 
@@ -849,7 +887,8 @@ public class LocalDbService
                             FormRating = r.Next(3, 6),
                             Note = "",
                             IsCompleted = true,
-                            IsSaved = true
+                            IsSaved = true,
+                            Cycle = (dayIndex / 7) + 1
                         });
                     }
                 }

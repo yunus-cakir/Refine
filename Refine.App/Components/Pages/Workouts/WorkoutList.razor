@@ -57,7 +57,18 @@
         
 
         <div class="rf-flex-col" style="gap: 16px; padding-bottom: 80px;">
-            @foreach (var workout in _selectedProgram.Workouts.OrderBy(w => w.Order))
+            @{ int targetCycle = _showPreviousWeek ? (_selectedProgram.Cycle - 1) : _selectedProgram.Cycle; }
+            
+            @if (targetCycle < 1)
+            {
+                <div class="rf-flex-col rf-items-center" style="gap: 16px; margin-top: 24px; text-align: center;">
+                    <span class="material-symbols-outlined" style="font-size: 48px; color: var(--color-on-surface-variant); opacity: 0.5;">directions_run</span>
+                    <p class="font-body" style="color: var(--color-on-surface-variant);">You just started, keep going!</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var workout in _selectedProgram.Workouts.OrderBy(w => w.Order))
             {
                 bool isCompleted = _completedWorkouts.ContainsKey(workout.Id) && _completedWorkouts[workout.Id];
                 bool isSkipped = !isCompleted && (_showPreviousWeek || (_highestCompletedOrder.HasValue && workout.Order < _highestCompletedOrder.Value));
@@ -66,7 +77,7 @@
                     <!-- The left thick border -->
                     <div class="@(isCompleted ? "rf-card-border-completed" : (workout.Id == _upNextWorkoutId ? "rf-card-border-up-next" : "rf-card-border-upcoming"))" style="@(isSkipped ? "opacity: 0.5;" : "")"></div>
                     
-                    <a href="@($"/workouts/detail/{workout.Id}")" style="text-decoration: none; display: block; padding: 16px 20px 16px 24px;">
+                    <a href="@($"/workouts/detail/{workout.Id}?cycle={targetCycle}")" style="text-decoration: none; display: block; padding: 16px 20px 16px 24px;">
                         <h3 class="font-headline" style="color: @(isCompleted ? "var(--color-primary-fixed)" : (workout.Id == _upNextWorkoutId ? "#ffffff" : "var(--color-on-surface-variant)")); font-size: 20px; font-weight: bold; margin-top: 0; margin-bottom: 8px; @(isSkipped ? "text-decoration: line-through; opacity: 0.85;" : "")">
                             @workout.Name
                         </h3>
@@ -125,6 +136,7 @@
                     </a>
                 </article>
             }
+            }
         </div>
     }
 </div>
@@ -158,9 +170,11 @@
         _completedWorkouts.Clear();
         if (_selectedProgram?.Workouts != null)
         {
+            int targetCycle = _showPreviousWeek ? (_selectedProgram.Cycle - 1) : _selectedProgram.Cycle;
+            
             foreach(var w in _selectedProgram.Workouts)
             {
-                _completedWorkouts[w.Id] = await DbService.HasLogForWeekAsync(w.Id, _showPreviousWeek);
+                _completedWorkouts[w.Id] = await DbService.HasLogForCycleAsync(w.Id, targetCycle);
             }
 
             // Calculate Up Next

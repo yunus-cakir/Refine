@@ -10,6 +10,7 @@ public class AppSettings
     public string Language { get; set; } = "tr";
     public string UnitSystem { get; set; } = "metric";
     public string Theme { get; set; } = "system";
+    public DayOfWeek WeekStartDay { get; set; } = DayOfWeek.Monday;
 }
 
 public class WorkoutSettings
@@ -18,6 +19,7 @@ public class WorkoutSettings
     public int PreferredRIR { get; set; } = 2;
     public bool AutoCopyPreviousSetData { get; set; } = true;
     public decimal CnsThreshold { get; set; } = 150m;
+    public string CycleLength { get; set; } = "Weekly";
 }
 
 public class User

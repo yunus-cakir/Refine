@@ -79,7 +79,7 @@ else
                 // Fallback (shouldn't happen with proper init)
                 if(activeLog == null) 
                 {
-                    activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, WorkoutId = WorkoutId, SetNumber = currentSet, Date = _targetDate, FormRating = 3, IsCompleted = false, IsSaved = false };
+                    activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, WorkoutId = WorkoutId, SetNumber = currentSet, Date = _targetDate, FormRating = 3, IsCompleted = false, IsSaved = false, Cycle = Cycle ?? _currentProgramCycle };
                     _activeLogs.Add(activeLog);
                     currentLogs.Add(activeLog);
                 }
@@ -275,7 +275,11 @@ else
     [SupplyParameterFromQuery(Name = "resuming")]
     public bool IsResuming { get; set; }
 
+    [SupplyParameterFromQuery]
+    public int? Cycle { get; set; }
+
     private Workout? _workout;
+    private int _currentProgramCycle = 1;
     private List<WorkoutItem> _exercises = new();
     private List<WorkoutLog> _activeLogs = new();
     private Dictionary<int, List<WorkoutLog>> _historyData = new();
@@ -306,6 +310,12 @@ else
 
         if (_workout != null && _workout.Items != null)
         {
+            var program = await DbService.GetProgramByIdAsync(_workout.WorkoutProgramId);
+            if (program != null)
+            {
+                _currentProgramCycle = program.Cycle;
+            }
+
             _exercises = _workout.Items.OrderBy(i => i.Order).ToList();
             TopBar.SetDetailMode(_workout.Name);
             // 1. Hedef Tarihi Belirle
@@ -337,6 +347,16 @@ else
                 if (existingLogs.Any())
                 {
                     _activeLogs = existingLogs.OrderBy(l => l.SetNumber).ToList();
+                    
+                    int activeCycle = Cycle ?? _currentProgramCycle;
+                    foreach(var log in _activeLogs)
+                    {
+                        if (log.Cycle <= 0 || log.Cycle != activeCycle)
+                        {
+                            log.Cycle = activeCycle;
+                        }
+                    }
+
                     if (IsResuming)
                     {
                         _showToast = true;
@@ -358,7 +378,8 @@ else
                                 Date = _targetDate, // Sabitlenen tarihi kullan
                                 FormRating = 3,
                                 IsCompleted = false,
-                                IsSaved = false
+                                IsSaved = false,
+                                Cycle = Cycle ?? _currentProgramCycle
                             });
                         }
                     }
@@ -573,7 +594,8 @@ else
                     Date = _targetDate,
                     FormRating = 3,
                     IsCompleted = false,
-                    IsSaved = false
+                    IsSaved = false,
+                    Cycle = Cycle ?? _currentProgramCycle
                 });
             }
         }
@@ -645,8 +667,8 @@ else
             }
             else
             {
-                // Active Mode: Insert işlemi
-                await DbService.SaveWorkoutLogsAsync(_activeLogs);
+                // Active Mode: Insert/Update işlemi
+                await DbService.UpdateSessionLogsAsync(_activeLogs);
                 await StateService.LoadDataAsync(showSkeleton: false);
                 NavManager.NavigateTo("/");
             }
