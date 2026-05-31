@@ -10,6 +10,7 @@
 @inject IJSRuntime JSRuntime
 @inject TopBarBridge TopBar
 @inject NavigationBridge NavBridge
+@inject HomeStateService StateService
 @implements IDisposable
 
 <NavigationLock OnBeforeInternalNavigation="HandleInternalNavigation" ConfirmExternalNavigation="false" />
@@ -639,12 +640,14 @@ else
             {
                 // Edit Mode: Update (Upsert) işlemi
                 await DbService.UpdateSessionLogsAsync(_activeLogs);
+                await StateService.LoadDataAsync(showSkeleton: false);
                 NavManager.NavigateTo($"/history/detail/{WorkoutId}/{DateTicks}");
             }
             else
             {
                 // Active Mode: Insert işlemi
                 await DbService.SaveWorkoutLogsAsync(_activeLogs);
+                await StateService.LoadDataAsync(showSkeleton: false);
                 NavManager.NavigateTo("/");
             }
         }
@@ -708,6 +711,7 @@ else
         {
             // Edit Mode: Update (Upsert) logs
             await DbService.UpdateSessionLogsAsync(_activeLogs);
+            await StateService.LoadDataAsync(showSkeleton: false);
             
             if (!string.IsNullOrEmpty(_pendingTargetLocation))
             {
@@ -722,6 +726,7 @@ else
         {
             // Active Mode: Save/Insert logs
             await DbService.SaveWorkoutLogsAsync(_activeLogs);
+            await StateService.LoadDataAsync(showSkeleton: false);
             
             if (!string.IsNullOrEmpty(_pendingTargetLocation))
             {

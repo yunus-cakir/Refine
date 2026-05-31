@@ -37,7 +37,6 @@ namespace Refine.App.Services
 
         public event Action? OnStateChanged;
 
-        private bool _isLoadingData = false;
 
         public HomeStateService(LocalDbService dbService, AnalyticsService analyticsService)
         {
@@ -49,7 +48,7 @@ namespace Refine.App.Services
 
         private void HandleDatabaseChanged()
         {
-            _ = LoadDataAsync();
+            _ = LoadDataAsync(showSkeleton: false);
         }
 
         public void Dispose()
@@ -57,12 +56,22 @@ namespace Refine.App.Services
             _dbService.OnDatabaseChanged -= HandleDatabaseChanged;
         }
 
-        public async Task LoadDataAsync(bool forceRefresh = false)
-        {
-            if (_isLoadingData) return;
-            _isLoadingData = true;
+        private Task? _loadTask;
 
-            try
+        public Task LoadDataAsync(bool showSkeleton = false)
+        {
+            if (_loadTask != null && !_loadTask.IsCompleted)
+            {
+                return _loadTask;
+            }
+
+            _loadTask = LoadDataInternalAsync(showSkeleton);
+            return _loadTask;
+        }
+
+        private async Task LoadDataInternalAsync(bool showSkeleton)
+        {
+            if (showSkeleton)
             {
                 IsUserLoaded = false;
                 IsProgramsLoaded = false;
@@ -70,15 +79,20 @@ namespace Refine.App.Services
                 IsStreakLoaded = false;
                 IsUpNextLoaded = false;
                 NotifyStateChanged();
-
-                _ = LoadUserAsync();
-                _ = LoadProgramsAsync();
-                _ = LoadUpNextWorkoutAsync();
-                _ = LoadAnalyticsAsync();
             }
-            finally
+
+            try
             {
-                _isLoadingData = false;
+                await Task.WhenAll(
+                    LoadUserAsync(),
+                    LoadProgramsAsync(),
+                    LoadUpNextWorkoutAsync(),
+                    LoadAnalyticsAsync()
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"HATA LoadDataInternalAsync: {ex.Message}");
             }
         }
 

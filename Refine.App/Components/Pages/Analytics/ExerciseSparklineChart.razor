@@ -91,11 +91,25 @@
         }
     }
 
+    private int _lastExerciseId = -1;
+    private int _lastDataPointCount = -1;
+    private double _lastRateOfChange = double.NaN;
+
     protected override async Task OnParametersSetAsync()
     {
         if (_isRendered)
         {
-            await RenderChartAsync();
+            bool hasChanged = _lastExerciseId != ExerciseId || 
+                              _lastDataPointCount != (DataPoints?.Count ?? 0) ||
+                              _lastRateOfChange != RateOfChange;
+
+            if (hasChanged)
+            {
+                _lastExerciseId = ExerciseId;
+                _lastDataPointCount = DataPoints?.Count ?? 0;
+                _lastRateOfChange = RateOfChange;
+                await RenderChartAsync();
+            }
         }
     }
 
