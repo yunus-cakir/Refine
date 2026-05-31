@@ -53,9 +53,13 @@ else
         {
             <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
             <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
-                <button class="refine-dropdown-item-primary" @onclick="() => { ToggleTopBarMenu(); _ = FinishWorkout(); }">
+                <button class="refine-dropdown-item-primary" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);" @onclick="() => { ToggleTopBarMenu(); _ = FinishWorkout(); }">
                     <span class="material-symbols-outlined text-[20px]">task_alt</span>
                     @(DateTicks.HasValue ? "Update Session" : "Finish Workout")
+                </button>
+                <button class="refine-dropdown-item" style="border-bottom: none;" @onclick="() => { ToggleTopBarMenu(); CopyAllPreviousData(); }">
+                    <span class="material-symbols-outlined text-[20px]">content_copy</span>
+                    Copy All Previous Data
                 </button>
             </div>
         }
@@ -74,7 +78,7 @@ else
                 // Fallback (shouldn't happen with proper init)
                 if(activeLog == null) 
                 {
-                    activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, WorkoutId = WorkoutId, SetNumber = currentSet, Date = _targetDate, FormRating = 3 };
+                    activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, WorkoutId = WorkoutId, SetNumber = currentSet, Date = _targetDate, FormRating = 3, IsCompleted = false, IsSaved = false };
                     _activeLogs.Add(activeLog);
                     currentLogs.Add(activeLog);
                 }
@@ -104,31 +108,26 @@ else
                             </div>
 
                             <!-- Slide Menu -->
-                            <div style="position: relative;">
-                                <button class="refine-icon-btn" @onclick="() => ToggleMenu(item.ExerciseId)">
-                                    <span class="material-symbols-outlined">more_vert</span>
-                                </button>
+                            @if (currentSet > 1)
+                            {
+                                <div style="position: relative;">
+                                    <button class="refine-icon-btn" @onclick="() => ToggleMenu(item.ExerciseId)">
+                                        <span class="material-symbols-outlined">more_vert</span>
+                                    </button>
 
-                                @if (_openMenuId == item.ExerciseId)
-                                {
-                                    <div style="position: fixed; inset: 0; z-index: 40;" @onclick="CloseMenu"></div>
-                                    <div class="rf-dropdown">
-                                        @if (currentSet > 1)
-                                        {
-                                            <button class="refine-dropdown-item" 
+                                    @if (_openMenuId == item.ExerciseId)
+                                    {
+                                        <div style="position: fixed; inset: 0; z-index: 40;" @onclick="CloseMenu"></div>
+                                        <div class="rf-dropdown">
+                                            <button class="refine-dropdown-item" style="border-bottom: none;"
                                                     @onclick="() => { CloseMenu(); ReturnToPreviousSet(item.ExerciseId); }">
                                                 <span class="material-symbols-outlined text-[20px]">undo</span>
                                                 Önceki Sete Dön
                                             </button>
-                                        }
-                                        <button class="refine-dropdown-item" 
-                                                @onclick="() => { CloseMenu(); CopyAllPreviousData(); }">
-                                            <span class="material-symbols-outlined text-[20px]">content_copy</span>
-                                            Copy All Previous Data
-                                        </button>
-                                    </div>
-                                }
-                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
                         </div>
                     </div>
 
@@ -357,7 +356,8 @@ else
                                 SetNumber = i,
                                 Date = _targetDate, // Sabitlenen tarihi kullan
                                 FormRating = 3,
-                                // Nullable değerler otomatik null gelir
+                                IsCompleted = false,
+                                IsSaved = false
                             });
                         }
                     }
@@ -536,6 +536,9 @@ else
             return;
         }
 
+        // Save current progress as draft to database but do not change the IsCompleted and IsSaved values
+        await DbService.UpdateSessionLogsAsync(_activeLogs);
+
         if (_currentSetIndex[exerciseId] >= maxSets)
         {
             // We reached the max sets for this exercise.
@@ -567,7 +570,9 @@ else
                     WorkoutId = WorkoutId,
                     SetNumber = _currentSetIndex[exerciseId],
                     Date = _targetDate,
-                    FormRating = 3
+                    FormRating = 3,
+                    IsCompleted = false,
+                    IsSaved = false
                 });
             }
         }
@@ -612,16 +617,23 @@ else
         string title = DateTicks.HasValue ? "Güncelle" : "Bitir";
         string msg = DateTicks.HasValue ? "Değişiklikler kaydedilsin mi?" : "Antrenman kaydedilsin mi?";
 
-        // AGENTS.md kuralına göre doğrudan UiHelper.ShowConfirm kullanıyoruz.
+        // AGENTS.md kuralına göre doğrudan UiHelper.ShowConfirm kullanuyoruz.
         bool confirm = await UiHelper.ShowConfirm(title, msg, "Evet", "Hayır");
 
         if (confirm)
         {
+            _allowNavigation = true;
             try
             {
                 await JSRuntime.InvokeVoidAsync("localStorage.removeItem", $"active_session_slide_{WorkoutId}");
             }
             catch {}
+
+            foreach (var log in _activeLogs)
+            {
+                log.IsCompleted = true;
+                log.IsSaved = true;
+            }
 
             if (DateTicks.HasValue)
             {
@@ -685,6 +697,12 @@ else
     {
         _showExitModal = false;
         _allowNavigation = true;
+
+        foreach (var log in _activeLogs)
+        {
+            log.IsSaved = true;
+            log.IsCompleted = false;
+        }
 
         if (DateTicks.HasValue)
         {

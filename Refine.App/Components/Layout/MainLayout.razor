@@ -7,7 +7,7 @@
 @implements IDisposable
 
 <div class="page bg-background text-on-surface">
-    <main class="content">
+    <main class="@(IsFullScreen() ? "content-fullscreen" : "content")">
         @Body
     </main>
 </div>
@@ -28,6 +28,13 @@
         margin: 0 auto; /* Ortala */
         padding: 16px;
     }
+
+    .content-fullscreen {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0;
+    }
 </style>
 
 @code {
@@ -43,6 +50,14 @@
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
         NotifyLocation(e.Location);
+        StateHasChanged();
+    }
+
+    private bool IsFullScreen()
+    {
+        var relativeUri = NavManager.ToBaseRelativePath(NavManager.Uri);
+        return relativeUri.StartsWith("session/active", StringComparison.OrdinalIgnoreCase) ||
+               relativeUri.StartsWith("session/edit", StringComparison.OrdinalIgnoreCase);
     }
 
     private void NotifyLocation(string absoluteUri)

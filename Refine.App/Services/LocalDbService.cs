@@ -8,6 +8,9 @@ public class LocalDbService
 {
     private SQLiteAsyncConnection? _connection;
 
+    public event Action? OnDatabaseChanged;
+    private void NotifyDatabaseChanged() => OnDatabaseChanged?.Invoke();
+
     // Veritabanı bağlantısını başlat
     private async Task Init()
     {
@@ -115,6 +118,7 @@ public class LocalDbService
     {
         await Init();
         await _connection!.UpdateWithChildrenAsync(user);
+        NotifyDatabaseChanged();
     }
 
     // --------------------------------------------
@@ -133,6 +137,7 @@ public class LocalDbService
             // Sadece flat property'yi güncelliyoruz, blob ve ilişkileri değil
             await _connection.UpdateAsync(user); 
         }
+        NotifyDatabaseChanged();
     }
 
     // --------------------------------------------
@@ -152,12 +157,15 @@ public class LocalDbService
             await _connection!.UpdateAsync(exercise);
         else
             await _connection!.InsertAsync(exercise);
+            
+        NotifyDatabaseChanged();
     }
 
     public async Task DeleteExerciseAsync(Exercise exercise)
     {
         await Init();
         await _connection!.DeleteAsync(exercise);
+        NotifyDatabaseChanged();
     }
 
     public async Task<List<Exercise>> GetExercisesAsync()
@@ -183,6 +191,8 @@ public class LocalDbService
             await _connection!.UpdateWithChildrenAsync(workout);
         else
             await _connection!.InsertWithChildrenAsync(workout, recursive: true);
+            
+        NotifyDatabaseChanged();
     }
 
     public async Task DeleteWorkoutAsync(int workoutId)
@@ -191,6 +201,8 @@ public class LocalDbService
         var workout = await GetWorkoutByIdAsync(workoutId);
         if (workout != null)
             await _connection!.DeleteAsync(workout, recursive: true);
+            
+        NotifyDatabaseChanged();
     }
 
     // --------------------------------------------
@@ -226,13 +238,14 @@ public class LocalDbService
         {
             await _connection!.InsertAllAsync(logsToSave);
         }
+        NotifyDatabaseChanged();
     }
 
     public async Task<List<WorkoutLog>> GetLogsForExerciseAsync(int exerciseId)
     {
         await Init();
         return await _connection!.Table<WorkoutLog>()
-                                .Where(l => l.ExerciseId == exerciseId)
+                                .Where(l => l.ExerciseId == exerciseId && l.IsSaved)
                                 .OrderByDescending(l => l.Date)
                                 .ToListAsync();
     }
@@ -243,7 +256,7 @@ public class LocalDbService
 
         // 1. Bu harekete ait EN SON girilen kaydı (muhtemelen son set) bul
         var lastLog = await _connection!.Table<WorkoutLog>()
-                                        .Where(l => l.ExerciseId == exerciseId)
+                                        .Where(l => l.ExerciseId == exerciseId && l.IsSaved)
                                         .OrderByDescending(l => l.Date)
                                         .FirstOrDefaultAsync();
 
@@ -271,6 +284,7 @@ public class LocalDbService
     {
         await Init();
         return await _connection!.Table<WorkoutLog>()
+                                .Where(l => l.IsSaved)
                                 .OrderByDescending(l => l.Date)
                                 .ToListAsync();
     }
@@ -310,7 +324,7 @@ public class LocalDbService
         await Init();
         var limitDate = DateTime.Now.Date.AddDays(-days);
         var count = await _connection!.Table<WorkoutLog>()
-                                     .Where(l => l.WorkoutId == workoutId && l.Date >= limitDate)
+                                     .Where(l => l.WorkoutId == workoutId && l.Date >= limitDate && l.IsCompleted)
                                      .CountAsync();
         return count > 0;
     }
@@ -329,7 +343,7 @@ public class LocalDbService
         var endOfWeek = startOfWeek.AddDays(7);
 
         var count = await _connection!.Table<WorkoutLog>()
-                                     .Where(l => l.WorkoutId == workoutId && l.Date >= startOfWeek && l.Date < endOfWeek)
+                                     .Where(l => l.WorkoutId == workoutId && l.Date >= startOfWeek && l.Date < endOfWeek && l.IsCompleted)
                                      .CountAsync();
         return count > 0;
     }
@@ -364,6 +378,7 @@ public class LocalDbService
                 }
             }
         });
+        NotifyDatabaseChanged();
     }
 
     // --------------------------------------------
@@ -393,6 +408,8 @@ public class LocalDbService
             user.SelectedWorkoutProgram = null;
         }
         await UpdateUserAsync(user);
+        // Note: UpdateUserAsync already calls NotifyDatabaseChanged, but calling it again won't hurt, 
+        // however we will just rely on UpdateUserAsync's notification.
     }
 
     public async Task<int> SaveWorkoutProgramAsync(WorkoutProgram program)
@@ -401,11 +418,13 @@ public class LocalDbService
         if (program.Id != 0)
         {
             await _connection!.UpdateWithChildrenAsync(program);
+            NotifyDatabaseChanged();
             return program.Id;
         }
         else
         {
             await _connection!.InsertWithChildrenAsync(program, recursive: true);
+            NotifyDatabaseChanged();
             return program.Id;
         }
     }
@@ -442,6 +461,7 @@ public class LocalDbService
             }
         }
         await _connection!.InsertWithChildrenAsync(newWorkout, recursive: true);
+        NotifyDatabaseChanged();
     }
 
     public async Task UpdateWorkoutOrdersAsync(List<Workout> workouts)
@@ -454,6 +474,7 @@ public class LocalDbService
                 tran.Update(workout);
             }
         });
+        NotifyDatabaseChanged();
     }
 
     public async Task<List<WorkoutProgram>> GetAllProgramsAsync()
@@ -496,6 +517,7 @@ public class LocalDbService
         {
             await _connection!.DeleteAsync(program, recursive: true);
         }
+        NotifyDatabaseChanged();
     }
 
     private async Task SeedDataAsync()
@@ -825,7 +847,9 @@ public class LocalDbService
                             Reps = GetProgressiveReps(dayIndex, r.Next(8, 12)),
                             RIR = 0, // Tükeniş
                             FormRating = r.Next(3, 6),
-                            Note = ""
+                            Note = "",
+                            IsCompleted = true,
+                            IsSaved = true
                         });
                     }
                 }

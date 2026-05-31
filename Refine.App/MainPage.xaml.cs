@@ -21,6 +21,9 @@ public partial class MainPage : ContentPage
         UpdateActiveTab("");
 
         SetInitialShadows();
+
+        // Trigger top bar render immediately
+        HandleTopBarConfigChanged(_topBarBridge.CurrentConfig);
     }
 
     private void SetInitialShadows()

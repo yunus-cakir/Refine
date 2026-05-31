@@ -60,7 +60,7 @@
             @foreach (var workout in _selectedProgram.Workouts.OrderBy(w => w.Order))
             {
                 bool isCompleted = _completedWorkouts.ContainsKey(workout.Id) && _completedWorkouts[workout.Id];
-                bool isSkipped = !isCompleted && _highestCompletedOrder.HasValue && workout.Order < _highestCompletedOrder.Value;
+                bool isSkipped = !isCompleted && (_showPreviousWeek || (_highestCompletedOrder.HasValue && workout.Order < _highestCompletedOrder.Value));
 
                 <article class="rf-card" style="padding: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; @(isSkipped ? "opacity: 0.75;" : "")">
                     <!-- The left thick border -->
@@ -166,15 +166,23 @@
             // Calculate Up Next
             var orderedWorkouts = _selectedProgram.Workouts.OrderBy(w => w.Order).ToList();
             var completedList = orderedWorkouts.Where(w => _completedWorkouts.TryGetValue(w.Id, out bool comp) && comp).ToList();
-            if (!completedList.Any())
+            if (_showPreviousWeek)
             {
-                _upNextWorkoutId = orderedWorkouts.FirstOrDefault()?.Id;
+                _upNextWorkoutId = null;
                 _highestCompletedOrder = null;
             }
             else
             {
-                _highestCompletedOrder = completedList.Max(w => w.Order);
-                _upNextWorkoutId = orderedWorkouts.FirstOrDefault(w => w.Order > _highestCompletedOrder)?.Id;
+                if (!completedList.Any())
+                {
+                    _upNextWorkoutId = orderedWorkouts.FirstOrDefault()?.Id;
+                    _highestCompletedOrder = null;
+                }
+                else
+                {
+                    _highestCompletedOrder = completedList.Max(w => w.Order);
+                    _upNextWorkoutId = orderedWorkouts.FirstOrDefault(w => w.Order > _highestCompletedOrder)?.Id;
+                }
             }
         }
         else

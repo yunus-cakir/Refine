@@ -1,0 +1,68 @@
+@using Refine.App.Models
+
+<div class="rf-card" @onclick="HandleClick" style="background-color: var(--color-primary-container); color: var(--color-on-primary-fixed); overflow: hidden; position: relative; cursor: @(IsLoading ? "default" : "pointer"); border: none; box-shadow: none;">
+    <!-- Abstract grid overlay -->
+    <div style="position: absolute; inset: 0; opacity: 0.1; pointer-events: none; background-image: radial-gradient(circle, #000 1px, transparent 1px); background-size: 20px 20px;"></div>
+    
+    <div class="rf-flex-col" style="position: relative; z-index: 10; gap: 16px;">
+        <div class="rf-flex-row rf-justify-between rf-items-center">
+            <span class="font-label" style="background-color: rgba(0,0,0,0.1); padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: bold; letter-spacing: 0.1em; color: var(--color-on-primary-fixed);">UP NEXT</span>
+        </div>
+        
+        @if (IsLoading)
+        {
+            <div>
+                <div style="width: 70%; height: 38px; background-color: rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 4px;"></div>
+                <div style="width: 40%; height: 22px; background-color: rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 8px;"></div>
+                <div style="width: 25%; height: 20px; background-color: rgba(0,0,0,0.1); border-radius: 4px;"></div>
+            </div>
+            <div class="rf-flex-row rf-justify-between rf-items-center" style="margin-top: 8px;">
+                <div class="rf-flex-row" style="gap: 8px;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(0,0,0,0.1);"></span>
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(0,0,0,0.1);"></span>
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(0,0,0,0.1);"></span>
+                </div>
+                <div style="width: 100px; height: 36px; background-color: rgba(0,0,0,0.1); border-radius: 8px;"></div>
+            </div>
+        }
+        else if (Workout != null)
+        {
+            <div>
+                <h2 class="font-headline" style="font-size: 32px; font-weight: bold; margin-bottom: 4px; color: var(--color-on-primary-fixed);">@MuscleGroups</h2>
+                <p class="font-headline" style="font-size: 18px; color: var(--color-on-primary-fixed-variant); font-weight: 800; opacity: 0.9; margin-bottom: 8px;">@Workout.Name</p>
+                <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; font-size: 14px; color: var(--color-on-primary-fixed-variant);">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>
+                    @Duration MIN
+                </div>
+            </div>
+            <div class="rf-flex-row rf-justify-between rf-items-center" style="margin-top: 8px;">
+                <div class="rf-flex-row" style="gap: 8px;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-on-primary-fixed);"></span>
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
+                </div>
+                <button class="font-label" @onclick="OnStartClick" @onclick:stopPropagation="true" style="background-color: var(--color-on-primary-fixed); color: var(--color-primary-container); padding: 8px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    START
+                    <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public Workout Workout { get; set; }
+    [Parameter] public string MuscleGroups { get; set; }
+    [Parameter] public int Duration { get; set; }
+    [Parameter] public EventCallback OnCardClick { get; set; }
+    [Parameter] public EventCallback OnStartClick { get; set; }
+
+    private async Task HandleClick()
+    {
+        if (!IsLoading && OnCardClick.HasDelegate)
+        {
+            await OnCardClick.InvokeAsync();
+        }
+    }
+}

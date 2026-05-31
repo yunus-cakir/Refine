@@ -9,136 +9,67 @@
 
 <div class="font-body min-h-screen" style="background-color: var(--color-background); color: var(--color-on-surface); min-height: 100vh;">
 
-    <main class="rf-flex-col" style="gap: 24px; max-width: 768px; margin: 0 auto;">
-        @if (!StateService.IsLoaded)
-        {
-            <!-- Skeleton Welcome Section -->
-            <section class="rf-flex-col" style="gap: 8px;">
+    <main class="rf-flex-col" style="gap: 16px; max-width: 768px; margin: 0 auto;">
+        <!-- Welcome Section -->
+        <section class="rf-flex-col" style="gap: 8px;">
+            @if (!StateService.IsUserLoaded)
+            {
                 <div class="skeleton-box" style="width: 120px; height: 16px; border-radius: 4px;"></div>
                 <div class="skeleton-box" style="width: 240px; height: 32px; border-radius: 4px;"></div>
-            </section>
-
-            <!-- Skeleton Main CTA Card -->
-            <section>
-                <div class="rf-card skeleton-box" style="height: 180px; border: none; box-shadow: none;"></div>
-            </section>
-
-            <!-- Skeleton Bento Grid -->
-            <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
-                <div class="rf-card-half skeleton-box" style="height: 140px;"></div>
-                <div class="rf-card-half skeleton-box" style="height: 140px;"></div>
-                <div class="rf-card skeleton-box" style="grid-column: span 2 / span 2; height: 160px; border: none; box-shadow: none;"></div>
-            </section>
-        }
-        else
-        {
-            <!-- Welcome Section -->
-            <section class="rf-flex-col" style="gap: 8px;">
+            }
+            else
+            {
                 <p class="font-label" style="color: var(--color-on-surface-variant); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;">@DateTime.Now.ToString("dddd, MMM dd").ToUpper()</p>
                 <h1 class="font-headline" style="color: var(--color-tertiary); font-size: 28px; font-weight: bold;">Welcome, @(StateService.User?.FirstName ?? "Sporcu")!</h1>
-            </section>
-
-            <!-- Main CTA Card: Next Workout -->
-            @if (StateService.UpNextWorkout != null)
-            {
-                <section>
-                    <div class="rf-card" @onclick="NavigateToWorkoutDetail" style="background-color: var(--color-primary-container); color: var(--color-on-primary-fixed); overflow: hidden; position: relative; cursor: pointer; border: none; box-shadow: none;">
-                        <!-- Abstract grid overlay -->
-                        <div style="position: absolute; inset: 0; opacity: 0.1; pointer-events: none; background-image: radial-gradient(circle, #000 1px, transparent 1px); background-size: 20px 20px;"></div>
-                        <div class="rf-flex-col" style="position: relative; z-index: 10; gap: 16px;">
-                            <div class="rf-flex-row rf-justify-between rf-items-center">
-                                <span class="font-label" style="background-color: rgba(0,0,0,0.1); padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: bold; letter-spacing: 0.1em; color: var(--color-on-primary-fixed);">UP NEXT</span>
-                            </div>
-                            <div>
-                                <h2 class="font-headline" style="font-size: 32px; font-weight: bold; margin-bottom: 4px; color: var(--color-on-primary-fixed);">@StateService.UpNextMuscleGroups</h2>
-                                <p class="font-headline" style="font-size: 14px; color: var(--color-on-primary-fixed-variant); opacity: 0.8; margin-bottom: 8px;">@StateService.UpNextWorkout.Name</p>
-                                <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; font-size: 14px; color: var(--color-on-primary-fixed-variant);">
-                                    <span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>
-                                    @StateService.UpNextDuration MIN
-                                </div>
-                            </div>
-                            <div class="rf-flex-row rf-justify-between rf-items-center" style="margin-top: 8px;">
-                                <div class="rf-flex-row" style="gap: 8px;">
-                                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-on-primary-fixed);"></span>
-                                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
-                                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
-                                </div>
-                                <button class="font-label" @onclick="StartUpNextWorkout" @onclick:stopPropagation="true" style="background-color: var(--color-on-primary-fixed); color: var(--color-primary-container); padding: 8px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                                    START
-                                    <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
             }
+        </section>
 
-            <!-- Bento Grid: Stats & Analytics -->
-            <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
-                <!-- Recovery Metric -->
-                <div class="rf-card-half">
-                    <div class="rf-flex-row rf-items-center" style="gap: 8px; color: var(--color-on-surface-variant);">
-                        <span class="material-symbols-outlined" style="font-size: 18px;">favorite</span>
-                        <span class="font-label" style="font-size: 11px; text-transform: uppercase;">RECOVERY</span>
-                    </div>
-                    <div class="rf-flex-row" style="align-items: baseline; gap: 8px;">
-                        <span class="font-headline" style="font-size: 36px; font-weight: bold; color: var(--color-tertiary);">84</span>
-                        <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">%</span>
-                    </div>
-                    <div style="width: 100%; background-color: var(--color-surface-container-highest); height: 6px; border-radius: 9999px; overflow: hidden; margin-top: auto;">
-                        <div style="background-color: var(--color-primary-container); width: 84%; height: 100%; border-radius: 9999px;"></div>
-                    </div>
-                </div>
+        <!-- Main CTA Card: Next Workout -->
+        <section>
+            @if (!StateService.IsUpNextLoaded || StateService.UpNextWorkout != null)
+            {
+                <UpNextCard 
+                    IsLoading="!StateService.IsUpNextLoaded"
+                    Workout="StateService.UpNextWorkout"
+                    MuscleGroups="@StateService.UpNextMuscleGroups"
+                    Duration="StateService.UpNextDuration"
+                    OnCardClick="NavigateToWorkoutDetail"
+                    OnStartClick="StartUpNextWorkout" />
+            }
+        </section>
 
-                <!-- Streak Metric -->
-                <div class="rf-card-half" style="position: relative; overflow: hidden;">
-                    @if (StateService.StreakRatio >= 0.8) {
-                        <div style="position: absolute; inset: 0; opacity: 0.1; background: radial-gradient(circle at top left, #c4f000, transparent 70%); pointer-events: none;"></div>
-                    }
-                    <div class="rf-flex-row rf-items-center" style="gap: 8px; color: @(StateService.StreakRatio >= 0.8 ? "#c4f000" : "var(--color-on-surface-variant)");">
-                        <span class="material-symbols-outlined" style="font-size: 18px; font-variation-settings: 'FILL' @(StateService.StreakRatio >= 0.8 ? 1 : 0);">local_fire_department</span>
-                        <span class="font-label" style="font-size: 11px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.1em;">STREAK</span>
-                    </div>
-                    <div class="rf-flex-row" style="align-items: baseline; gap: 8px; z-index: 10; position: relative;">
-                        <span class="font-headline" style="font-size: 36px; font-weight: bold; color: var(--color-on-surface);">@StateService.StreakCompletedDays</span>
-                        <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">/ @StateService.StreakTotalDays days</span>
-                    </div>
-                    
-                    @if (StateService.StreakRatio >= 0.8)
-                    {
-                        <p class="font-label" style="font-size: 10px; color: #c4f000; margin-top: auto; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; z-index: 10; position: relative;">
-                            CRUSHING IT!
-                        </p>
-                    }
-                    else
-                    {
-                        <p class="font-label" style="font-size: 10px; color: transparent; margin-top: auto; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; z-index: 10; position: relative; user-select: none;">
-                            KEEP GOING
-                        </p>
-                    }
-                    
-                    <div style="width: 100%; background-color: rgba(255,255,255,0.05); height: 6px; border-radius: 9999px; overflow: hidden; margin-top: 4px; z-index: 10; position: relative;">
-                        <div style="background-color: @(StateService.StreakRatio >= 0.8 ? "#c4f000" : "var(--color-primary)"); width: @(Math.Min(StateService.StreakRatio * 100, 100).ToString(System.Globalization.CultureInfo.InvariantCulture))%; height: 100%; border-radius: 9999px;"></div>
-                    </div>
-                </div>
+        <!-- Bento Grid: Stats & Analytics -->
+        <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+            <!-- Recovery Metric -->
+            <RecoveryCard IsLoading="!StateService.IsStreakLoaded" Value="84" />
 
-                @if (StateService.TopExercise != null)
-                {
-                    <ExerciseSparklineChart 
-                        style="grid-column: span 2 / span 2;"
-                        ExerciseId="StateService.TopExercise.Id"
-                        ExerciseName="@StateService.TopExercise.Name"
-                        LastTrained="StateService.TopExerciseLastTrained"
-                        DataPoints="StateService.TopExerciseDataPoints"
-                        RateOfChange="StateService.TopExerciseRateOfChange"
-                        Subtitle="Best Progress (30D)"
-                        MetricUnitLabel="pts"
-                        ShowValueBadge="false"
-                        ReverseLayout="true"
-                        OnClick="NavigateToDetail" />
-                }
-            </section>
-        }
+            <!-- Streak Metric -->
+            <StreakCard 
+                IsLoading="!StateService.IsStreakLoaded"
+                CompletedDays="StateService.StreakCompletedDays"
+                TotalDays="StateService.StreakTotalDays"
+                Ratio="StateService.StreakRatio" />
+
+            @if (!StateService.IsTopExerciseLoaded)
+            {
+                <div class="rf-card skeleton-box" style="grid-column: span 2 / span 2; height: 160px; border: none; box-shadow: none;"></div>
+            }
+            else if (StateService.TopExercise != null)
+            {
+                <ExerciseSparklineChart 
+                    style="grid-column: span 2 / span 2;"
+                    ExerciseId="StateService.TopExercise.Id"
+                    ExerciseName="@StateService.TopExercise.Name"
+                    LastTrained="StateService.TopExerciseLastTrained"
+                    DataPoints="StateService.TopExerciseDataPoints"
+                    RateOfChange="StateService.TopExerciseRateOfChange"
+                    Subtitle="Best Progress (30D)"
+                    MetricUnitLabel="pts"
+                    ShowValueBadge="false"
+                    ReverseLayout="true"
+                    OnClick="NavigateToDetail" />
+            }
+        </section>
     </main>
 </div>
 

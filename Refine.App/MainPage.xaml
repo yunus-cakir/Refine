@@ -50,13 +50,19 @@
                 <!-- Profile Photo (Right) -->
                 <Border x:Name="HomeHeaderProfileBorder"
                         HorizontalOptions="End" VerticalOptions="Center"
-                        Stroke="#1Affffff" StrokeThickness="1"
+                        StrokeThickness="0"
                         StrokeShape="RoundRectangle 16"
+                        BackgroundColor="#c3f400"
                         HeightRequest="32" WidthRequest="32">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnProfileTapped" />
                     </Border.GestureRecognizers>
-                    <Image Source="https://i.pravatar.cc/150?img=33" Aspect="AspectFill" />
+                    <Label Text="{x:Static local:IconPaths.Profile_Filled}"
+                           FontFamily="MaterialFilled"
+                           FontSize="20"
+                           TextColor="#0d0d0d"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
                 </Border>
             </Grid>
 

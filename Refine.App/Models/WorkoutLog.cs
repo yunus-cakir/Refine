@@ -1,4 +1,4 @@
-﻿using SQLite;
+using SQLite;
 
 namespace Refine.App.Models;
 
@@ -26,4 +26,7 @@ public class WorkoutLog
     public int FormRating { get; set; }
 
     public string? Note { get; set; }
+
+    public bool IsCompleted { get; set; } = false;
+    public bool IsSaved { get; set; } = false;
 }
