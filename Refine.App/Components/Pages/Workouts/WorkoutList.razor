@@ -45,8 +45,12 @@
 
         <div class="week-selector-container">
             <div class="week-selector">
-                <button class="week-btn @(_showPreviousWeek ? "active" : "")" @onclick="() => SetWeek(true)">PREVIOUS</button>
-                <button class="week-btn @(_showPreviousWeek ? "" : "active")" @onclick="() => SetWeek(false)">CURRENT</button>
+                <button class="week-btn @(_selectedTab == 0 ? "active" : "")" @onclick="() => SetTab(0)">PREVIOUS</button>
+                <button class="week-btn @(_selectedTab == 1 ? "active" : "")" @onclick="() => SetTab(1)">CURRENT</button>
+                @if (_showNextButton)
+                {
+                    <button class="week-btn @(_selectedTab == 2 ? "active" : "")" @onclick="() => SetTab(2)">NEXT</button>
+                }
             </div>
         </div>
         <div class="rf-flex-row rf-items-center rf-justify-between" style="margin-bottom: 16px;">
@@ -57,7 +61,7 @@
         
 
         <div class="rf-flex-col" style="gap: 16px; padding-bottom: 80px;">
-            @{ int targetCycle = _showPreviousWeek ? (_selectedProgram.Cycle - 1) : _selectedProgram.Cycle; }
+            @{ int targetCycle = _selectedTab == 0 ? (_selectedProgram.Cycle - 1) : (_selectedTab == 2 ? (_selectedProgram.Cycle + 1) : _selectedProgram.Cycle); }
             
             @if (targetCycle < 1)
             {
@@ -71,7 +75,7 @@
                 @foreach (var workout in _selectedProgram.Workouts.OrderBy(w => w.Order))
             {
                 bool isCompleted = _completedWorkouts.ContainsKey(workout.Id) && _completedWorkouts[workout.Id];
-                bool isSkipped = !isCompleted && (_showPreviousWeek || (_highestCompletedOrder.HasValue && workout.Order < _highestCompletedOrder.Value));
+                bool isSkipped = !isCompleted && (_selectedTab == 0 || (_selectedTab == 1 && _highestCompletedOrder.HasValue && workout.Order < _highestCompletedOrder.Value));
 
                 <article class="rf-card" style="padding: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; @(isSkipped ? "opacity: 0.75;" : "")">
                     <!-- The left thick border -->
@@ -113,8 +117,8 @@
                             }
                             else if(workout.Id == _upNextWorkoutId)
                             {
-                                <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: #ffffff; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
-                                    UP NEXT
+                                <div @onclick="() => StartWorkoutSession(workout.Id, targetCycle)" @onclick:stopPropagation="true" class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: #ffffff; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;">
+                                    @(_isUpNextSaved ? "CONTINUE" : "UP NEXT")
                                     <span class="material-symbols-outlined" style="font-size: 20px; font-variation-settings: 'FILL' 1;">play_circle</span>
                                 </div>
                             }
@@ -145,10 +149,12 @@
     private WorkoutProgram? _selectedProgram;
     private bool _isLoading = true;
     private bool _showTopBarMenu = false;
-    private bool _showPreviousWeek = false;
+    private int _selectedTab = 1; // 0 = PREVIOUS, 1 = CURRENT, 2 = NEXT
+    private bool _showNextButton = false;
     private int? _upNextWorkoutId;
     private int? _highestCompletedOrder;
     private Dictionary<int, bool> _completedWorkouts = new();
+    private bool _isUpNextSaved = false;
 
     protected override void OnInitialized()
     {
@@ -170,7 +176,20 @@
         _completedWorkouts.Clear();
         if (_selectedProgram?.Workouts != null)
         {
-            int targetCycle = _showPreviousWeek ? (_selectedProgram.Cycle - 1) : _selectedProgram.Cycle;
+            var orderedWorkouts = _selectedProgram.Workouts.OrderBy(w => w.Order).ToList();
+            var lastWorkout = orderedWorkouts.LastOrDefault();
+            _showNextButton = false;
+            if (lastWorkout != null)
+            {
+                _showNextButton = await DbService.HasLogForCycleAsync(lastWorkout.Id, _selectedProgram.Cycle);
+            }
+
+            if (!_showNextButton && _selectedTab == 2)
+            {
+                _selectedTab = 1;
+            }
+
+            int targetCycle = _selectedTab == 0 ? (_selectedProgram.Cycle - 1) : (_selectedTab == 2 ? (_selectedProgram.Cycle + 1) : _selectedProgram.Cycle);
             
             foreach(var w in _selectedProgram.Workouts)
             {
@@ -178,12 +197,12 @@
             }
 
             // Calculate Up Next
-            var orderedWorkouts = _selectedProgram.Workouts.OrderBy(w => w.Order).ToList();
             var completedList = orderedWorkouts.Where(w => _completedWorkouts.TryGetValue(w.Id, out bool comp) && comp).ToList();
-            if (_showPreviousWeek)
+            if (_selectedTab == 0)
             {
                 _upNextWorkoutId = null;
                 _highestCompletedOrder = null;
+                _isUpNextSaved = false;
             }
             else
             {
@@ -197,22 +216,45 @@
                     _highestCompletedOrder = completedList.Max(w => w.Order);
                     _upNextWorkoutId = orderedWorkouts.FirstOrDefault(w => w.Order > _highestCompletedOrder)?.Id;
                 }
+
+                if (_upNextWorkoutId.HasValue)
+                {
+                    _isUpNextSaved = await DbService.HasSavedLogForCycleAsync(_upNextWorkoutId.Value, targetCycle);
+                }
+                else
+                {
+                    _isUpNextSaved = false;
+                }
             }
         }
         else
         {
             _upNextWorkoutId = null;
             _highestCompletedOrder = null;
+            _isUpNextSaved = false;
         }
         
         _isLoading = false;
     }
 
-    private async Task SetWeek(bool previous)
+    private async Task SetTab(int tabIndex)
     {
-        if (_showPreviousWeek == previous) return;
-        _showPreviousWeek = previous;
+        if (_selectedTab == tabIndex) return;
+        _selectedTab = tabIndex;
         await LoadData();
+    }
+
+    private async Task StartWorkoutSession(int workoutId, int targetCycle)
+    {
+        bool exists = await DbService.HasLogForTodayAsync(workoutId, targetCycle);
+        if (exists || (workoutId == _upNextWorkoutId && _isUpNextSaved))
+        {
+            NavManager.NavigateTo($"/session/active/{workoutId}?resuming=true&cycle={targetCycle}");
+        }
+        else
+        {
+            NavManager.NavigateTo($"/session/active/{workoutId}?cycle={targetCycle}");
+        }
     }
 
     private List<string> GetTags(Workout workout)

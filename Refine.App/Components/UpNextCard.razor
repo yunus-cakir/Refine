@@ -42,7 +42,7 @@
                     <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
                 </div>
                 <button class="font-label" @onclick="OnStartClick" @onclick:stopPropagation="true" style="background-color: var(--color-on-primary-fixed); color: var(--color-primary-container); padding: 8px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                    START
+                    @(IsSaved ? "CONTINUE" : "START")
                     <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
                 </button>
             </div>
@@ -55,6 +55,7 @@
     [Parameter] public Workout Workout { get; set; }
     [Parameter] public string MuscleGroups { get; set; }
     [Parameter] public int Duration { get; set; }
+    [Parameter] public bool IsSaved { get; set; }
     [Parameter] public EventCallback OnCardClick { get; set; }
     [Parameter] public EventCallback OnStartClick { get; set; }
 

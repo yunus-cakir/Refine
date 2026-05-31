@@ -362,6 +362,15 @@ public class LocalDbService
         return count > 0;
     }
 
+    public async Task<bool> HasSavedLogForCycleAsync(int workoutId, int cycle)
+    {
+        await Init();
+        var count = await _connection!.Table<WorkoutLog>()
+                                     .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle && l.IsSaved && !l.IsCompleted)
+                                     .CountAsync();
+        return count > 0;
+    }
+
     // --- DÜZENLEME KAYDI (Edit Mode İçin) ---
     // Hem var olanları günceller, hem yeni eklenenleri kaydeder.
     public async Task UpdateSessionLogsAsync(List<WorkoutLog> logs)

@@ -34,6 +34,8 @@ namespace Refine.App.Services
         public Workout? UpNextWorkout { get; private set; }
         public int UpNextDuration { get; private set; } = 0;
         public string UpNextMuscleGroups { get; private set; } = "";
+        public bool UpNextIsSaved { get; private set; } = false;
+        public int UpNextCycle { get; private set; } = 1;
 
         public event Action? OnStateChanged;
 
@@ -241,7 +243,7 @@ namespace Refine.App.Services
                     
                     foreach(var w in orderedWorkouts)
                     {
-                        completedWorkouts[w.Id] = await _dbService.HasLogForWeekAsync(w.Id, false);
+                        completedWorkouts[w.Id] = await _dbService.HasLogForCycleAsync(w.Id, program.Cycle);
                     }
                     
                     var completedList = orderedWorkouts.Where(w => completedWorkouts.TryGetValue(w.Id, out bool comp) && comp).ToList();
@@ -260,6 +262,9 @@ namespace Refine.App.Services
                             UpNextWorkout = orderedWorkouts.FirstOrDefault();
                         }
                     }
+
+                    UpNextCycle = program.Cycle;
+                    UpNextIsSaved = false;
 
                     if (UpNextWorkout != null && UpNextWorkout.Items != null)
                     {
@@ -281,6 +286,8 @@ namespace Refine.App.Services
                         {
                             UpNextMuscleGroups = "Full Body";
                         }
+                        
+                        UpNextIsSaved = await _dbService.HasSavedLogForCycleAsync(UpNextWorkout.Id, program.Cycle);
                     }
                 }
             }

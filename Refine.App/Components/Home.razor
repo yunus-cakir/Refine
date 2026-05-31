@@ -33,6 +33,7 @@
                     Workout="StateService.UpNextWorkout"
                     MuscleGroups="@StateService.UpNextMuscleGroups"
                     Duration="StateService.UpNextDuration"
+                    IsSaved="StateService.UpNextIsSaved"
                     OnCardClick="NavigateToWorkoutDetail"
                     OnStartClick="StartUpNextWorkout" />
             }
@@ -104,7 +105,7 @@
     {
         if (StateService.UpNextWorkout != null)
         {
-            NavManager.NavigateTo($"/workouts/detail/{StateService.UpNextWorkout.Id}");
+            NavManager.NavigateTo($"/workouts/detail/{StateService.UpNextWorkout.Id}?cycle={StateService.UpNextCycle}");
         }
     }
 
@@ -112,7 +113,7 @@
     {
         if (StateService.UpNextWorkout != null)
         {
-            NavManager.NavigateTo($"/session/active/{StateService.UpNextWorkout.Id}");
+            NavManager.NavigateTo($"/session/active/{StateService.UpNextWorkout.Id}?cycle={StateService.UpNextCycle}");
         }
     }
 }
