@@ -371,6 +371,32 @@ public class LocalDbService
         return count > 0;
     }
 
+    public async Task DeleteWorkoutLogAsync(int workoutId, int cycle)
+    {
+        await Init();
+        var logs = await _connection!.Table<WorkoutLog>()
+                                     .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle)
+                                     .ToListAsync();
+        if (logs.Any())
+        {
+            foreach (var log in logs)
+            {
+                await _connection.DeleteAsync(log);
+            }
+            NotifyDatabaseChanged();
+        }
+    }
+
+    public async Task<DateTime?> GetWorkoutLogDateAsync(int workoutId, int cycle)
+    {
+        await Init();
+        var log = await _connection!.Table<WorkoutLog>()
+                                    .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle)
+                                    .OrderByDescending(l => l.Date)
+                                    .FirstOrDefaultAsync();
+        return log?.Date;
+    }
+
     // --- DÜZENLEME KAYDI (Edit Mode İçin) ---
     // Hem var olanları günceller, hem yeni eklenenleri kaydeder.
     public async Task UpdateSessionLogsAsync(List<WorkoutLog> logs)
