@@ -1,5 +1,3 @@
-using System;
-
 namespace Refine.App.Services;
 
 public enum TopBarMode
@@ -53,5 +51,6 @@ public class TopBarBridge
             OnDefaultBackRequested?.Invoke();
         }
     }
+
     public void RightTapped() => OnRightActionTapped?.Invoke();
 }

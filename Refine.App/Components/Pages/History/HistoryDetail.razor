@@ -7,64 +7,89 @@
 @inject IJSRuntime JS
 @implements IDisposable
 
-@if (_showTopBarMenu)
-{
-    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999; background: transparent;" @onclick="ToggleTopBarMenu"></div>
-    <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
-        <button class="refine-dropdown-item" @onclick="() => { ToggleTopBarMenu(); EditWorkoutLog(); }">
-            <span class="material-symbols-outlined" style="font-size: 20px;">edit</span>
-            Düzenle
-        </button>
-    </div>
-}
-
-<div class="mb-4">
-    <div class="text-muted font-label" style="font-size: 13px; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;">
-        @_sessionDate.ToString("dd MMMM yyyy, dddd")
-    </div>
-</div>
-
-<div class="refine-card p-3 mb-4">
-    @{
-        var percentage = CnsThreshold > 0 ? Math.Min((TotalActualCnsLoad / CnsThreshold) * 100, 100) : 0;
-        var dynamicColor = Refine.App.Services.CnsHelper.GetCnsColor(percentage);
-    }
-    <div class="d-flex justify-content-between align-items-center mb-1">
-        <span class="small fw-bold text-muted">Gerçekleşen CNS Yükü</span>
-        <span class="small fw-bold" style="color: @dynamicColor;">
-            %@percentage.ToString("0")
-        </span>
-    </div>
-    <div class="progress" style="height: 6px; background-color: #1a1a1a;">
-        <div class="progress-bar" role="progressbar" style="width: @percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%; background-color: @dynamicColor;"></div>
-    </div>
-    @if (TotalActualCnsLoad >= CnsThreshold)
-    {
-        <div class="mt-2 small d-flex align-items-center gap-1" style="color: @dynamicColor;">
-            <i class="bi bi-exclamation-triangle-fill"></i> Antrenman güvenli yorgunluk sınırını aşmış görünüyor.
-        </div>
-    }
-</div>
-
 @if (_logsGrouped == null)
 {
-    <div class="text-center"><div class="spinner-border text-primary"></div></div>
+    <div class="loader-container">
+        <div class="spinner-border" style="color: var(--color-primary-container);"></div>
+    </div>
 }
 else
 {
-    <div class="d-flex flex-column gap-3 pb-5">
+    @if (_showTopBarMenu)
+    {
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999; background: transparent;" @onclick="ToggleTopBarMenu"></div>
+        <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
+            <button class="refine-dropdown-item" @onclick="() => { ToggleTopBarMenu(); EditWorkoutLog(); }">
+                <span class="material-symbols-outlined" style="font-size: 20px;">edit</span>
+                Düzenle
+            </button>
+        </div>
+    }
+
+    <div class="mb-4">
+        <h3 class="font-headline" style="font-size: 20px; font-weight: bold; margin-top: 0; margin-bottom: 4px;">
+            @_workoutName
+        </h3>
+        <div class="text-muted font-label" style="font-size: 13px; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;">
+            @_sessionDate.ToString("dd MMMM yyyy, dddd")
+        </div>
+        @if (_targetMuscles != null)
+        {
+            <div class="d-flex flex-wrap gap-1 mt-2">
+                @if (_targetMuscles.Any())
+                {
+                    @foreach (var muscle in _targetMuscles)
+                    {
+                        <span class="refine-badge">@muscle</span>
+                    }
+                }
+                else
+                {
+                    <span class="refine-badge">GENEL</span>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="rf-card mb-4">
+        @{
+            var percentage = CnsThreshold > 0 ? Math.Min((TotalActualCnsLoad / CnsThreshold) * 100, 100) : 0;
+            var dynamicColor = Refine.App.Services.CnsHelper.GetCnsColor(percentage);
+        }
+        <div class="rf-flex-col" style="gap: 8px;">
+            <div class="rf-flex-row rf-justify-between rf-items-center">
+                <div class="rf-flex-row rf-items-center" style="gap: 8px; align-self: flex-start; margin-top: 4px;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">neurology</span>
+                    <span class="font-label" style="font-size: 13px; text-transform: uppercase;">CNS Load</span>
+                </div>
+                <div class="rf-flex-row" style="align-items: baseline; gap: 4px;">
+                    <span class="font-headline" style="font-size: 28px; font-weight: bold; color: @dynamicColor;">@percentage.ToString("0")</span>
+                    <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">%</span>
+                </div>
+            </div>
+            <div style="width: 100%; background-color: var(--color-surface-container-highest); height: 6px; border-radius: 9999px; overflow: hidden; margin-top: auto;">
+                <div style="background-color: @dynamicColor; width: @(percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%; height: 100%; border-radius: 9999px;"></div>
+            </div>
+            @if (TotalActualCnsLoad >= CnsThreshold)
+            {
+                <div class="mt-2 small d-flex align-items-center gap-1" style="color: @dynamicColor;">
+                    <i class="bi bi-exclamation-triangle-fill"></i> The workout appears to have exceeded the safe fatigue threshold.
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="history-section mt-4 pb-5">
+        <h5 class="font-headline fw-bold mb-3">Exercises</h5>
         @foreach (var exerciseGroup in _logsGrouped)
         {
-            <div class="refine-card p-0 overflow-hidden">
-                <div class="p-3 border-bottom border-secondary bg-secondary bg-opacity-10">
-                    <h6 class="fw-bold m-0 text-primary">@exerciseGroup.ExerciseName</h6>
-                </div>
-
-                <div class="p-3">
+            <div class="mb-4">
+                <div class="small fw-bold text-muted mb-2 ms-1">@exerciseGroup.ExerciseName</div>
+                <div class="refine-card p-3">
                     <div class="row g-2 mb-2 text-muted small fw-bold text-center border-bottom border-secondary pb-1">
                         <div class="col-2">SET</div>
-                        <div class="col-3">KG</div>
-                        <div class="col-3">TEKRAR</div>
+                        <div class="col-3">WEIGHT</div>
+                        <div class="col-3">REPS</div>
                         <div class="col-2">RIR</div>
                         <div class="col-2">FORM</div>
                     </div>
@@ -73,13 +98,13 @@ else
                     {
                         <div class="row g-2 mb-2 align-items-center text-center">
                             <div class="col-2">
-                                <span class="badge bg-secondary rounded-circle" style="width:24px; height:24px;">@log.SetNumber</span>
+                                <span class="badge bg-secondary rounded-circle" style="width:24px; height:24px; display: inline-flex; align-items: center; justify-content: center;">@log.SetNumber</span>
                             </div>
 
-                            <div class="col-3 fw-bold text-white">@(log.Weight.HasValue? log.Weight: "-")</div>
-                            <div class="col-3 fw-bold text-white">@(log.Reps.HasValue? log.Reps: "-")</div>
+                            <div class="col-3 fw-bold text-white">@(log.Weight.HasValue ? log.Weight : "-")</div>
+                            <div class="col-3 fw-bold text-white">@(log.Reps.HasValue ? log.Reps : "-")</div>
 
-                            <div class="col-2 text-warning">@(log.RIR.HasValue? log.RIR: "-")</div>
+                            <div class="col-2 text-warning">@(log.RIR.HasValue ? log.RIR : "-")</div>
 
                             <div class="col-2 text-center">
                                 @if (log.FormRating == 3)
@@ -109,6 +134,7 @@ else
 
     private DateTime _sessionDate;
     private string _workoutName = "";
+    private List<string> _targetMuscles = new();
 
     private bool _showTopBarMenu = false;
 
@@ -145,8 +171,8 @@ else
     private decimal CnsThreshold = 150m;
     private int PreferredRIR = 2;
 
-    private decimal TotalActualCnsLoad => _logsGrouped?.Sum(g => 
-        g.Logs.Sum(l => 
+    private decimal TotalActualCnsLoad => _logsGrouped?.Sum(g =>
+        g.Logs.Sum(l =>
             CalculateLogCnsLoad(l, g.BaseCnsScore)
         )
     ) ?? 0;
@@ -177,7 +203,7 @@ else
         // 1. Antrenman ismini bul
         var workout = await DbService.GetWorkoutByIdAsync(WorkoutId);
         _workoutName = workout?.Name ?? "Silinmiş Antrenman";
-        TopBar.SetDetailMode(_workoutName);
+        TopBar.SetDetailMode(_sessionDate.ToString("d MMMM yyyy"));
 
         // 2. O güne ait logları çek
         var logs = await DbService.GetSessionLogsAsync(WorkoutId, _sessionDate);
@@ -186,21 +212,29 @@ else
         var allExercises = await DbService.GetExercisesAsync();
 
         _logsGrouped = logs.GroupBy(l => l.ExerciseId)
-                           .Select(g => 
-                           {
-                               var ex = allExercises.FirstOrDefault(e => e.Id == g.Key);
-                               return new ExerciseHistoryGroup
-                               {
-                                   ExerciseName = ex?.Name ?? "Bilinmeyen Hareket",
-                                   BaseCnsScore = ex?.CnsFatigueScore ?? 0m,
-                                   Logs = g.OrderBy(l => l.SetNumber).ToList()
-                               };
-                           })
-                           .ToList();
+            .Select(g =>
+            {
+                var ex = allExercises.FirstOrDefault(e => e.Id == g.Key);
+                return new ExerciseHistoryGroup
+                {
+                    ExerciseName = ex?.Name ?? "Bilinmeyen Hareket",
+                    BaseCnsScore = ex?.CnsFatigueScore ?? 0m,
+                    Logs = g.OrderBy(l => l.SetNumber).ToList()
+                };
+            })
+            .ToList();
+
+        _targetMuscles = logs
+            .Select(l => allExercises.FirstOrDefault(e => e.Id == l.ExerciseId))
+            .Where(ex => ex != null && !string.IsNullOrWhiteSpace(ex.PrimaryMuscleCategory))
+            .Select(ex => ex!.PrimaryMuscleCategory!.ToUpper())
+            .Distinct()
+            .ToList();
     }
 
     public void Dispose()
     {
         TopBar.OnRightActionTapped -= HandleRightAction;
     }
+
 }
