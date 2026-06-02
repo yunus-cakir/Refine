@@ -5,7 +5,6 @@
 @inject NavigationManager NavManager
 @inject TopBarBridge TopBar
 @inject IJSRuntime JS
-@implements IDisposable
 
 
 <EditForm Model="@_workout" OnValidSubmit="SaveWorkout">
@@ -164,10 +163,7 @@
         return baseScore * item.Sets * repMultiplier * rirMultiplier;
     }
 
-    protected override void OnInitialized()
-    {
-        TopBar.OnLeftActionTapped += HandleLeftAction;
-    }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -196,15 +192,7 @@
         TopBar.SetDetailMode(WorkoutId == 0 ? "Yeni Antrenman Günü" : "Antrenmanı Düzenle");
     }
 
-    private async void HandleLeftAction()
-    {
-        await GoBack();
-    }
 
-    public void Dispose()
-    {
-        TopBar.OnLeftActionTapped -= HandleLeftAction;
-    }
 
     // YENİ EKLEME (Listenin sonuna)
     private void AddExerciseToList()

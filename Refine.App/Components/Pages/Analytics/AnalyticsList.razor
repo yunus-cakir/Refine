@@ -330,20 +330,6 @@
     public async ValueTask DisposeAsync()
     {
         TopBar.OnLeftActionTapped -= HandleLeftAction;
-
-        // Charts are disposed by ExerciseSparklineChart
         await Task.CompletedTask;
-
-        var nextUri = NavManager.Uri;
-        if (!nextUri.Contains("/workouts/detail/") && 
-            !nextUri.Contains("/session/active/") && 
-            !nextUri.Contains("/session/edit/") &&
-            !nextUri.Contains("/analytics/detail/"))
-        {
-            if (TopBar.CurrentConfig.Title == "Analytics")
-            {
-                TopBar.SetHomeMode(string.Empty);
-            }
-        }
     }
 }

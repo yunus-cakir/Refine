@@ -4,7 +4,7 @@
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
 @inject TopBarBridge TopBar
-@implements IDisposable
+@inject IJSRuntime JS
 
 @if (_sessions == null)
 {
@@ -22,27 +22,39 @@ else
     <div class="d-flex flex-column gap-3 pb-5">
         @foreach (var session in _sessions)
         {
-            <div class="refine-card p-3" @onclick="() => GoToDetail(session)">
-                <div class="d-flex justify-content-between align-items-center">
+            <article class="rf-card rf-card-bordered" style="cursor: pointer;" @onclick="() => GoToDetail(session)">
+                <div class="rf-card-border-completed"></div>
 
-                    <div class="d-flex align-items-center">
-                        <div class="bg-secondary bg-opacity-25 rounded-3 d-flex flex-column align-items-center justify-content-center me-3 px-2 py-1"
-                             style="min-width: 55px;">
-                            <span class="fw-bold fs-5">@session.Date.Day</span>
-                            <small class="text-uppercase" style="font-size: 0.7rem;">@session.Date.ToString("MMM")</small>
+                <div class="rf-card-bordered-content">
+                    <!-- Header: Small Date in top-left -->
+                    <header class="font-label" style="font-size: 11px; color: var(--color-on-surface-variant); margin-bottom: 6px; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;">
+                        @session.Date.ToString("dd MMM yyyy")
+                    </header>
+
+                    <!-- Workout Name -->
+                    <h3 class="font-headline" style="color: var(--color-primary-fixed); font-size: 20px; font-weight: bold; margin-top: 0; margin-bottom: 8px;">
+                        @session.WorkoutName
+                    </h3>
+
+                    <!-- Divider -->
+                    <div style="height: 1px; background-color: rgba(255, 255, 255, 0.05); margin-top: 8px; margin-bottom: 12px; margin-left: -24px; margin-right: -20px;"></div>
+
+                    <!-- Bottom row -->
+                    <div class="rf-flex-row rf-justify-between rf-items-center">
+                        <!-- Stats -->
+                        <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-on-surface-variant); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">fitness_center</span>
+                            @session.TotalExercises EXERCISES • @session.TotalSets SETS
                         </div>
 
-                        <div>
-                            <h6 class="fw-bold mb-1">@session.WorkoutName</h6>
-                            <small class="text-muted">
-                                @session.TotalSets Set • @session.TotalExercises Hareket
-                            </small>
+                        <!-- Status -->
+                        <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-primary-fixed); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+                            COMPLETED
+                            <span class="material-symbols-outlined" style="font-size: 20px; font-variation-settings: 'FILL' 1;">check_circle</span>
                         </div>
                     </div>
-
-                    <i class="bi bi-chevron-right text-muted"></i>
                 </div>
-            </div>
+            </article>
         }
     </div>
 }
@@ -59,6 +71,8 @@ else
     }
 
     private List<SessionViewModel>? _sessions;
+
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -101,19 +115,5 @@ else
         NavManager.NavigateTo($"/history/detail/{session.WorkoutId}/{session.Date.Ticks}");
     }
 
-    public void Dispose()
-    {
-        var nextUri = NavManager.Uri;
-        if (nextUri.Contains("/workouts/detail/") || 
-            nextUri.Contains("/session/active/") || 
-            nextUri.Contains("/session/edit/"))
-        {
-            return;
-        }
 
-        if (TopBar.CurrentConfig.Title == "Analytics")
-        {
-            TopBar.SetHomeMode(string.Empty);
-        }
-    }
 }

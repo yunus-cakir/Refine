@@ -3,21 +3,25 @@
 @using Refine.App.Services
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+@inject IJSRuntime JS
+@implements IDisposable
 
-<div class="mb-4 sticky-top py-3 d-flex justify-content-between align-items-start"
-     style="background-color: var(--refine-bg); z-index: 100;">
-
-    <div>
-        <a href="/history" class="btn btn-link text-muted p-0 text-decoration-none mb-2">
-            <i class="bi bi-arrow-left"></i> Geçmişe Dön
-        </a>
-        <h4 class="fw-bold m-0">@_workoutName</h4>
-        <small class="text-muted">@_sessionDate.ToString("dd MMMM yyyy, dddd")</small>
+@if (_showTopBarMenu)
+{
+    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999; background: transparent;" @onclick="ToggleTopBarMenu"></div>
+    <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
+        <button class="refine-dropdown-item" @onclick="() => { ToggleTopBarMenu(); EditWorkoutLog(); }">
+            <span class="material-symbols-outlined" style="font-size: 20px;">edit</span>
+            Düzenle
+        </button>
     </div>
+}
 
-    <a href="@($"/session/edit/{WorkoutId}/{DateTicks}")" class="btn btn-dark btn-sm border-secondary text-white mt-3">
-        <i class="bi bi-pencil-fill me-1"></i> Düzenle
-    </a>
+<div class="mb-4">
+    <div class="text-muted font-label" style="font-size: 13px; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;">
+        @_sessionDate.ToString("dd MMMM yyyy, dddd")
+    </div>
 </div>
 
 <div class="refine-card p-3 mb-4">
@@ -106,6 +110,29 @@ else
     private DateTime _sessionDate;
     private string _workoutName = "";
 
+    private bool _showTopBarMenu = false;
+
+    private void ToggleTopBarMenu()
+    {
+        _showTopBarMenu = !_showTopBarMenu;
+    }
+
+    private void EditWorkoutLog()
+    {
+        NavManager.NavigateTo($"/session/edit/{WorkoutId}/{DateTicks}");
+    }
+
+    protected override void OnInitialized()
+    {
+        TopBar.OnRightActionTapped += HandleRightAction;
+    }
+
+    private void HandleRightAction()
+    {
+        ToggleTopBarMenu();
+        InvokeAsync(StateHasChanged);
+    }
+
     // Egzersiz bazlı gruplama için yardımcı sınıf
     private class ExerciseHistoryGroup
     {
@@ -150,6 +177,7 @@ else
         // 1. Antrenman ismini bul
         var workout = await DbService.GetWorkoutByIdAsync(WorkoutId);
         _workoutName = workout?.Name ?? "Silinmiş Antrenman";
+        TopBar.SetDetailMode(_workoutName);
 
         // 2. O güne ait logları çek
         var logs = await DbService.GetSessionLogsAsync(WorkoutId, _sessionDate);
@@ -169,5 +197,10 @@ else
                                };
                            })
                            .ToList();
+    }
+
+    public void Dispose()
+    {
+        TopBar.OnRightActionTapped -= HandleRightAction;
     }
 }

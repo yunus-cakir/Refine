@@ -82,6 +82,8 @@
     bottom: 0;
     width: 6px;
     background-color: #c3f400;
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
 }
 
 .rf-card-border-upcoming {
@@ -91,6 +93,8 @@
     bottom: 0;
     width: 6px;
     background-color: var(--color-surface-container-highest);
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
 }
 
 .rf-card-border-up-next {
@@ -100,6 +104,8 @@
     bottom: 0;
     width: 6px;
     background-color: #ffffff;
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
 }
 
 /* Cards */
@@ -112,6 +118,23 @@
     padding: 16px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.rf-card-bordered {
+    padding: 0 !important;
+    position: relative;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+}
+
+.rf-card-bordered-content {
+    padding: 16px 20px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
 }
 
 .refine-card:hover,

@@ -20,6 +20,7 @@ public class TopBarBridge
     public event Action<TopBarConfig>? OnConfigChanged;
     public event Action? OnLeftActionTapped;
     public event Action? OnRightActionTapped;
+    public event Action? OnDefaultBackRequested;
 
     public TopBarConfig CurrentConfig { get; private set; } = new();
 
@@ -41,6 +42,16 @@ public class TopBarBridge
         OnConfigChanged?.Invoke(CurrentConfig);
     }
 
-    public void LeftTapped() => OnLeftActionTapped?.Invoke();
+    public void LeftTapped()
+    {
+        if (OnLeftActionTapped != null)
+        {
+            OnLeftActionTapped.Invoke();
+        }
+        else
+        {
+            OnDefaultBackRequested?.Invoke();
+        }
+    }
     public void RightTapped() => OnRightActionTapped?.Invoke();
 }

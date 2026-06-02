@@ -150,7 +150,6 @@ else
 
     protected override void OnInitialized()
     {
-        TopBar.OnLeftActionTapped += HandleLeftAction;
         TopBar.OnRightActionTapped += HandleRightAction;
     }
 
@@ -181,10 +180,7 @@ else
         }
     }
 
-    private async void HandleLeftAction()
-    {
-        await JS.InvokeVoidAsync("history.back");
-    }
+
 
     private bool _showTopBarMenu = false;
 
@@ -209,7 +205,6 @@ else
 
     public void Dispose()
     {
-        TopBar.OnLeftActionTapped -= HandleLeftAction;
         TopBar.OnRightActionTapped -= HandleRightAction;
     }
 

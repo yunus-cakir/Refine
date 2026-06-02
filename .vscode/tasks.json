@@ -1,0 +1,29 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Blazor Watch Android",
+            "type": "shell",
+            "command": "dotnet watch --project Refine.App/Refine.App.csproj build -t:Run -f net9.0-android --no-launch-profile /p:AndroidSdkDirectory='C:\\Program Files (x86)\\Android\\android-sdk' /p:AdbTarget='-s emulator-5554'",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "DOTNET_HOST_PATH": "C:\\Program Files\\dotnet\\dotnet.exe"
+                }
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            }
+        }
+    ]
+}

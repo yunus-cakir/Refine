@@ -181,16 +181,10 @@
 
     protected override void OnInitialized()
     {
-        TopBar.OnLeftActionTapped += HandleLeftAction;
         if (!string.IsNullOrEmpty(ExerciseName))
         {
             TopBar.SetDetailMode(ExerciseName);
         }
-    }
-
-    private async void HandleLeftAction()
-    {
-        await JS.InvokeVoidAsync("history.back");
     }
 
     protected override async Task OnInitializedAsync()
@@ -324,8 +318,6 @@
 
     public async ValueTask DisposeAsync()
     {
-        TopBar.OnLeftActionTapped -= HandleLeftAction;
-
         if (chartModule != null && chartInstance != null)
         {
             await chartModule.InvokeVoidAsync("destroyChart", chartInstance);
@@ -334,18 +326,6 @@
         if (chartModule != null)
         {
             await chartModule.DisposeAsync();
-        }
-
-        var nextUri = NavManager.Uri;
-        if (!nextUri.Contains("/workouts/detail/") && 
-            !nextUri.Contains("/session/active/") && 
-            !nextUri.Contains("/session/edit/") &&
-            !nextUri.Contains("/analytics/detail/"))
-        {
-            if (TopBar.CurrentConfig.Mode == TopBarMode.Detail)
-            {
-                TopBar.SetHomeMode(string.Empty);
-            }
         }
     }
 }

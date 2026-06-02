@@ -43,6 +43,7 @@
         NavBridge.OnNavigate += HandleNavigation;
         NavBridge.OnHardwareBackRequested += HandleHardwareBack;
         NavManager.LocationChanged += OnLocationChanged;
+        TopBar.OnDefaultBackRequested += HandleDefaultBack;
 
         NotifyLocation(NavManager.Uri);
     }
@@ -69,12 +70,25 @@
         else if (relativeUri.StartsWith("profile") || relativeUri.StartsWith("preferences")) tabKey = "profile";
 
         NavBridge.LocationChanged(tabKey);
+
+        if (relativeUri.StartsWith("profile/edit", StringComparison.OrdinalIgnoreCase) ||
+            relativeUri.StartsWith("profile/workout-settings", StringComparison.OrdinalIgnoreCase) ||
+            relativeUri.StartsWith("profile/nutrition-settings", StringComparison.OrdinalIgnoreCase) ||
+            relativeUri.StartsWith("profile/app-settings", StringComparison.OrdinalIgnoreCase))
+        {
+            TopBar.SetHomeMode(string.Empty);
+        }
     }
 
     private void HandleNavigation(string uri)
     {
         NavManager.NavigateTo(uri);
         StateHasChanged();
+    }
+
+    private async void HandleDefaultBack()
+    {
+        await JS.InvokeVoidAsync("history.back");
     }
 
     private async Task<bool> HandleHardwareBack()
@@ -98,5 +112,6 @@
         NavBridge.OnNavigate -= HandleNavigation;
         NavBridge.OnHardwareBackRequested -= HandleHardwareBack;
         NavManager.LocationChanged -= OnLocationChanged;
+        TopBar.OnDefaultBackRequested -= HandleDefaultBack;
     }
 }

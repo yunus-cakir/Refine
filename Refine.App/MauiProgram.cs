@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Refine.App.Services; // Servislerin olduğu namespace
+using DotNet.Meteor.HotReload.Plugin;
 
 namespace Refine.App;
 
@@ -25,6 +26,7 @@ public static class MauiProgram
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
         builder.Logging.AddDebug();
+        builder.EnableHotReload();
 #endif
 
         // Veritabanı Servisi

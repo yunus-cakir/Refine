@@ -82,7 +82,7 @@
                 bool isCompleted = _completedWorkouts.ContainsKey(workout.Id) && _completedWorkouts[workout.Id];
                 bool isSkipped = !isCompleted && (_selectedTab == 0 || (_selectedTab == 1 && _highestCompletedOrder.HasValue && workout.Order < _highestCompletedOrder.Value));
 
-                <article class="rf-card" style="padding: 0; position: relative; overflow: visible; display: flex; flex-direction: column; z-index: @(_activeCardMenuId == workout.Id ? "45" : "1"); @(isSkipped ? "opacity: 0.75;" : "")">
+                <article class="rf-card rf-card-bordered" style="z-index: @(_activeCardMenuId == workout.Id ? "45" : "1"); @(isSkipped ? "opacity: 0.75;" : "")">
                     <!-- The left thick border -->
                     <div class="@(isCompleted ? "rf-card-border-completed" : (workout.Id == _upNextWorkoutId ? "rf-card-border-up-next" : "rf-card-border-upcoming"))" style="@(isSkipped ? "opacity: 0.5;" : "")"></div>
                     
@@ -110,7 +110,7 @@
                         }
                     }
 
-                    <a href="@($"/workouts/detail/{workout.Id}?cycle={targetCycle}")" style="text-decoration: none; display: block; padding: 16px 20px 16px 24px;">
+                    <a href="@($"/workouts/detail/{workout.Id}?cycle={targetCycle}")" class="rf-card-bordered-content">
                         <h3 class="font-headline" style="color: @(isCompleted ? "var(--color-primary-fixed)" : (workout.Id == _upNextWorkoutId ? "#ffffff" : "var(--color-on-surface-variant)")); font-size: 20px; font-weight: bold; margin-top: 0; margin-bottom: 8px; padding-right: 24px; @(isSkipped ? "text-decoration: line-through; opacity: 0.85;" : "")">
                             @workout.Name
                         </h3>
@@ -383,18 +383,5 @@
     {
         TopBar.OnLeftActionTapped -= HandleLeftAction;
         TopBar.OnRightActionTapped -= HandleRightAction;
-
-        var nextUri = NavManager.Uri;
-        if (nextUri.Contains("/workouts/detail/") || 
-            nextUri.Contains("/session/active/") || 
-            nextUri.Contains("/session/edit/"))
-        {
-            return;
-        }
-
-        if (TopBar.CurrentConfig.Title == "My Workout")
-        {
-            TopBar.SetHomeMode(string.Empty);
-        }
     }
 }

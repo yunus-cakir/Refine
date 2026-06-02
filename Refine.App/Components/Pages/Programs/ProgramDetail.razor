@@ -68,11 +68,11 @@
                         bool isSkipped = _isSelected && !isCompleted && _highestCompletedOrder.HasValue && workout.Order < _highestCompletedOrder.Value;
                         bool isUpNext = _isSelected && workout.Id == _upNextWorkoutId;
 
-                        <article class="rf-card" style="padding: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; @(isSkipped ? "opacity: 0.75;" : "")">
+                        <article class="rf-card rf-card-bordered" style="@(isSkipped ? "opacity: 0.75;" : "")">
                             <!-- The left thick border -->
                             <div class="@(isCompleted ? "rf-card-border-completed" : (isUpNext ? "rf-card-border-up-next" : "rf-card-border-upcoming"))" style="@(isSkipped ? "opacity: 0.5;" : "")"></div>
                             
-                            <a href="@($"/workouts/detail/{workout.Id}")" style="text-decoration: none; display: block; padding: 16px 20px 16px 24px;">
+                            <a href="@($"/workouts/detail/{workout.Id}")" class="rf-card-bordered-content">
                                 <div class="rf-flex-row rf-justify-between rf-items-start" style="margin-bottom: 8px;">
                                     <h3 class="font-headline" style="color: @(isCompleted ? "var(--color-primary-fixed)" : (isUpNext ? "#ffffff" : "var(--color-on-surface-variant)")); font-size: 20px; font-weight: bold; margin: 0; line-height: 1.2; @(isSkipped ? "text-decoration: line-through; opacity: 0.85;" : "")">
                                         @workout.Name
