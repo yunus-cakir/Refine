@@ -66,8 +66,8 @@
                 </Border>
             </Grid>
 
-            <!-- DETAIL HEADER (Hidden by default) -->
-            <Grid x:Name="DetailHeaderGrid" IsVisible="False">
+            <!-- LEGACY DETAIL HEADER (Hidden for reference) -->
+            <Grid x:Name="LegacyDetailHeaderGrid" IsVisible="False">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -83,7 +83,7 @@
                 </VerticalStackLayout>
 
                 <!-- Title (Center) -->
-                <Label x:Name="DetailHeaderTitle" 
+                <Label x:Name="LegacyDetailHeaderTitle" 
                        Grid.Column="1" 
                        Text="WORKOUT NAME" 
                        TextColor="#FFFFFF" 
@@ -103,6 +103,63 @@
                     </VerticalStackLayout.GestureRecognizers>
                     <Label Text="{x:Static local:IconPaths.MoreVert}" FontFamily="MaterialOutlined" FontSize="24" TextColor="#ffffff" />
                 </VerticalStackLayout>
+            </Grid>
+
+            <!-- NEW DETAIL HEADER (Nutrition Settings style) -->
+            <Grid x:Name="DetailHeaderGrid" IsVisible="False" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12" Padding="0,5">
+                
+                <!-- Circular Back Button -->
+                <Border Grid.Column="0" 
+                        VerticalOptions="Center" 
+                        WidthRequest="40" 
+                        HeightRequest="40" 
+                        Stroke="#0DFFFFFF" 
+                        StrokeThickness="1" 
+                        StrokeShape="RoundRectangle 20" 
+                        BackgroundColor="#121312">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnTopBarLeftTapped" />
+                    </Border.GestureRecognizers>
+                    <Label Text="{x:Static local:IconPaths.ArrowBack}" 
+                           FontFamily="MaterialOutlined" 
+                           FontSize="20" 
+                           TextColor="#ffffff" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center" />
+                </Border>
+
+                <!-- Title (Center-aligned) -->
+                <Label x:Name="DetailHeaderTitle" 
+                       Grid.Column="1" 
+                       Text="WORKOUT NAME" 
+                       TextColor="#FFFFFF" 
+                       FontFamily="Inter" 
+                       FontAttributes="Bold" 
+                       FontSize="20" 
+                       HorizontalOptions="Center" 
+                       VerticalOptions="Center"
+                       LineBreakMode="TailTruncation" 
+                       MaxLines="1" />
+
+                <!-- Circular Settings Icon (Right) -->
+                <Border Grid.Column="2" 
+                        VerticalOptions="Center" 
+                        WidthRequest="40" 
+                        HeightRequest="40" 
+                        Stroke="#0DFFFFFF" 
+                        StrokeThickness="1" 
+                        StrokeShape="RoundRectangle 20" 
+                        BackgroundColor="#121312">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnTopBarRightTapped" />
+                    </Border.GestureRecognizers>
+                    <Label Text="{x:Static local:IconPaths.MoreVert}" 
+                           FontFamily="MaterialOutlined" 
+                           FontSize="20" 
+                           TextColor="#ffffff" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center" />
+                </Border>
             </Grid>
         </Grid>
 
