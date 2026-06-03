@@ -7,6 +7,8 @@ namespace Refine.App.Services;
 public class LocalDbService
 {
     private SQLiteAsyncConnection? _connection;
+    private readonly SemaphoreSlim _initLock = new SemaphoreSlim(1, 1);
+    private bool _isInitialized = false;
 
     public event Action? OnDatabaseChanged;
     private void NotifyDatabaseChanged() => OnDatabaseChanged?.Invoke();
@@ -14,10 +16,16 @@ public class LocalDbService
     // Veritabanı bağlantısını başlat
     private async Task Init()
     {
-        if (_connection is not null)
+        if (_isInitialized && _connection is not null)
             return;
 
-        _connection = new SQLiteAsyncConnection(DbConstants.DatabasePath, DbConstants.Flags);
+        await _initLock.WaitAsync();
+        try
+        {
+            if (_isInitialized && _connection is not null)
+                return;
+
+            _connection = new SQLiteAsyncConnection(DbConstants.DatabasePath, DbConstants.Flags);
 
         await _connection.CreateTableAsync<MuscleGroup>();
         await _connection.CreateTableAsync<ExerciseMuscleMap>();
@@ -35,18 +43,19 @@ public class LocalDbService
         {
             var newUser = new User
             {
-                FirstName = "Sporcu",
+                FirstName = "John",
                 LastName = "",
                 Height = 175,
                 Weight = 75,
-                Gender = "Erkek",
+                Gender = "Male",
                 TargetDailyCalories = 2500,
                 MetabolismType = "normal",
-                AppSettings = new AppSettings { Language = "tr", UnitSystem = "metric", Theme = "dark" },
-                WorkoutSettings = new WorkoutSettings { PreferredReps = 10, PreferredRIR = 2, AutoCopyPreviousSetData = true }
+                AppSettings = new AppSettings { Language = "en", UnitSystem = "metric", Theme = "dark" },
+                WorkoutSettings = new WorkoutSettings
+                    { PreferredReps = 10, PreferredRIR = 2, AutoCopyPreviousSetData = true }
             };
             await _connection.InsertWithChildrenAsync(newUser);
-            
+
             var initialLog = new BiometricLog
             {
                 UserId = newUser.Id,
@@ -66,17 +75,26 @@ public class LocalDbService
         }
 
         // Rename existing "Mock İdman Programı" to "W's Upper Lower" if it exists
-        var existingMock = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "Mock İdman Programı").FirstOrDefaultAsync();
+        var existingMock = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "Mock İdman Programı")
+            .FirstOrDefaultAsync();
         if (existingMock != null)
         {
             existingMock.Name = "W's Upper Lower";
             await _connection.UpdateAsync(existingMock);
         }
 
-        var mockProgramExists = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "W's Upper Lower").CountAsync();
+        var mockProgramExists =
+            await _connection.Table<WorkoutProgram>().Where(p => p.Name == "W's Upper Lower").CountAsync();
         if (mockProgramExists == 0)
         {
             await SeedMockProgramAsync();
+        }
+
+            _isInitialized = true;
+        }
+        finally
+        {
+            _initLock.Release();
         }
     }
 
@@ -97,12 +115,14 @@ public class LocalDbService
             bool needsUpdate = false;
             if (user.AppSettings == null)
             {
-                user.AppSettings = new AppSettings { Language = "tr", UnitSystem = "metric", Theme = "dark" };
+                user.AppSettings = new AppSettings { Language = "en", UnitSystem = "metric", Theme = "dark" };
                 needsUpdate = true;
             }
+
             if (user.WorkoutSettings == null)
             {
-                user.WorkoutSettings = new WorkoutSettings { PreferredReps = 10, PreferredRIR = 2, AutoCopyPreviousSetData = true };
+                user.WorkoutSettings = new WorkoutSettings
+                    { PreferredReps = 10, PreferredRIR = 2, AutoCopyPreviousSetData = true };
                 needsUpdate = true;
             }
 
@@ -111,6 +131,7 @@ public class LocalDbService
                 await _connection.UpdateWithChildrenAsync(user);
             }
         }
+
         return user;
     }
 
@@ -129,14 +150,15 @@ public class LocalDbService
     {
         await Init();
         await _connection!.InsertAsync(log);
-        
+
         var user = await GetUserAsync();
         if (user != null && log.Weight.HasValue)
         {
             user.Weight = log.Weight.Value;
             // Sadece flat property'yi güncelliyoruz, blob ve ilişkileri değil
-            await _connection.UpdateAsync(user); 
+            await _connection.UpdateAsync(user);
         }
+
         NotifyDatabaseChanged();
     }
 
@@ -157,7 +179,7 @@ public class LocalDbService
             await _connection!.UpdateAsync(exercise);
         else
             await _connection!.InsertAsync(exercise);
-            
+
         NotifyDatabaseChanged();
     }
 
@@ -176,6 +198,7 @@ public class LocalDbService
         {
             await _connection.GetChildrenAsync(ex, recursive: true);
         }
+
         return exercises;
     }
 
@@ -191,7 +214,7 @@ public class LocalDbService
             await _connection!.UpdateWithChildrenAsync(workout);
         else
             await _connection!.InsertWithChildrenAsync(workout, recursive: true);
-            
+
         NotifyDatabaseChanged();
     }
 
@@ -201,7 +224,7 @@ public class LocalDbService
         var workout = await GetWorkoutByIdAsync(workoutId);
         if (workout != null)
             await _connection!.DeleteAsync(workout, recursive: true);
-            
+
         NotifyDatabaseChanged();
     }
 
@@ -214,9 +237,9 @@ public class LocalDbService
         await Init();
 
         var workouts = await _connection!.Table<Workout>()
-                                        .Where(w => w.WorkoutProgramId == 0)
-                                        .OrderByDescending(w => w.Id)
-                                        .ToListAsync();
+            .Where(w => w.WorkoutProgramId == 0)
+            .OrderByDescending(w => w.Id)
+            .ToListAsync();
 
         foreach (var w in workouts)
         {
@@ -238,6 +261,7 @@ public class LocalDbService
         {
             await _connection!.InsertAllAsync(logsToSave);
         }
+
         NotifyDatabaseChanged();
     }
 
@@ -245,9 +269,9 @@ public class LocalDbService
     {
         await Init();
         return await _connection!.Table<WorkoutLog>()
-                                .Where(l => l.ExerciseId == exerciseId && l.IsSaved)
-                                .OrderByDescending(l => l.Date)
-                                .ToListAsync();
+            .Where(l => l.ExerciseId == exerciseId && l.IsSaved)
+            .OrderByDescending(l => l.Date)
+            .ToListAsync();
     }
 
     public async Task<List<WorkoutLog>> GetLastLogForExerciseAsync(int exerciseId)
@@ -256,9 +280,9 @@ public class LocalDbService
 
         // 1. Bu harekete ait EN SON girilen kaydı (muhtemelen son set) bul
         var lastLog = await _connection!.Table<WorkoutLog>()
-                                        .Where(l => l.ExerciseId == exerciseId && l.IsSaved)
-                                        .OrderByDescending(l => l.Date)
-                                        .FirstOrDefaultAsync();
+            .Where(l => l.ExerciseId == exerciseId && l.IsSaved)
+            .OrderByDescending(l => l.Date)
+            .FirstOrDefaultAsync();
 
         if (lastLog == null) return new List<WorkoutLog>();
 
@@ -270,11 +294,11 @@ public class LocalDbService
         var maxDate = lastLog.Date.AddMinutes(1);
 
         return await _connection.Table<WorkoutLog>()
-                                .Where(l => l.ExerciseId == exerciseId
-                                         && l.Date >= minDate
-                                         && l.Date <= maxDate)
-                                .OrderBy(l => l.SetNumber)
-                                .ToListAsync();
+            .Where(l => l.ExerciseId == exerciseId
+                        && l.Date >= minDate
+                        && l.Date <= maxDate)
+            .OrderBy(l => l.SetNumber)
+            .ToListAsync();
     }
 
     // LOG HISTORY
@@ -284,9 +308,9 @@ public class LocalDbService
     {
         await Init();
         return await _connection!.Table<WorkoutLog>()
-                                .Where(l => l.IsSaved)
-                                .OrderByDescending(l => l.Date)
-                                .ToListAsync();
+            .Where(l => l.IsSaved)
+            .OrderByDescending(l => l.Date)
+            .ToListAsync();
     }
 
     // Belirli bir tarih ve antrenman ID'sine göre logları getir (Detay sayfası için)
@@ -301,8 +325,8 @@ public class LocalDbService
         var endDate = date.Date.AddDays(1).AddTicks(-1);
 
         return await _connection!.Table<WorkoutLog>()
-                                .Where(l => l.WorkoutId == workoutId && l.Date >= startDate && l.Date <= endDate)
-                                .ToListAsync();
+            .Where(l => l.WorkoutId == workoutId && l.Date >= startDate && l.Date <= endDate)
+            .ToListAsync();
     }
 
     // --- KONTROL ---
@@ -313,8 +337,8 @@ public class LocalDbService
         var maxDate = today.AddDays(1).AddTicks(-1);
 
         var query = _connection!.Table<WorkoutLog>()
-                                .Where(l => l.WorkoutId == workoutId && l.Date >= today && l.Date <= maxDate);
-        
+            .Where(l => l.WorkoutId == workoutId && l.Date >= today && l.Date <= maxDate);
+
         if (cycle.HasValue)
         {
             query = query.Where(l => l.Cycle == cycle.Value);
@@ -329,8 +353,8 @@ public class LocalDbService
         await Init();
         var limitDate = DateTime.Now.Date.AddDays(-days);
         var count = await _connection!.Table<WorkoutLog>()
-                                     .Where(l => l.WorkoutId == workoutId && l.Date >= limitDate && l.IsCompleted)
-                                     .CountAsync();
+            .Where(l => l.WorkoutId == workoutId && l.Date >= limitDate && l.IsCompleted)
+            .CountAsync();
         return count > 0;
     }
 
@@ -340,16 +364,17 @@ public class LocalDbService
         var today = DateTime.Now.Date;
         int diff = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
         var startOfWeek = today.AddDays(-diff);
-        
+
         if (previousWeek)
         {
             startOfWeek = startOfWeek.AddDays(-7);
         }
+
         var endOfWeek = startOfWeek.AddDays(7);
 
         var count = await _connection!.Table<WorkoutLog>()
-                                     .Where(l => l.WorkoutId == workoutId && l.Date >= startOfWeek && l.Date < endOfWeek && l.IsCompleted)
-                                     .CountAsync();
+            .Where(l => l.WorkoutId == workoutId && l.Date >= startOfWeek && l.Date < endOfWeek && l.IsCompleted)
+            .CountAsync();
         return count > 0;
     }
 
@@ -357,8 +382,8 @@ public class LocalDbService
     {
         await Init();
         var count = await _connection!.Table<WorkoutLog>()
-                                     .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle && l.IsCompleted)
-                                     .CountAsync();
+            .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle && l.IsCompleted)
+            .CountAsync();
         return count > 0;
     }
 
@@ -366,8 +391,8 @@ public class LocalDbService
     {
         await Init();
         var count = await _connection!.Table<WorkoutLog>()
-                                     .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle && l.IsSaved && !l.IsCompleted)
-                                     .CountAsync();
+            .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle && l.IsSaved && !l.IsCompleted)
+            .CountAsync();
         return count > 0;
     }
 
@@ -375,14 +400,15 @@ public class LocalDbService
     {
         await Init();
         var logs = await _connection!.Table<WorkoutLog>()
-                                     .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle)
-                                     .ToListAsync();
+            .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle)
+            .ToListAsync();
         if (logs.Any())
         {
             foreach (var log in logs)
             {
                 await _connection.DeleteAsync(log);
             }
+
             NotifyDatabaseChanged();
         }
     }
@@ -391,9 +417,9 @@ public class LocalDbService
     {
         await Init();
         var log = await _connection!.Table<WorkoutLog>()
-                                    .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle)
-                                    .OrderByDescending(l => l.Date)
-                                    .FirstOrDefaultAsync();
+            .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle)
+            .OrderByDescending(l => l.Date)
+            .FirstOrDefaultAsync();
         return log?.Date;
     }
 
@@ -461,8 +487,10 @@ public class LocalDbService
                     await _connection!.UpdateAsync(program);
                 }
             }
+
             return program;
         }
+
         return null;
     }
 
@@ -478,6 +506,7 @@ public class LocalDbService
         {
             user.SelectedWorkoutProgram = null;
         }
+
         await UpdateUserAsync(user);
         // Note: UpdateUserAsync already calls NotifyDatabaseChanged, but calling it again won't hurt, 
         // however we will just rely on UpdateUserAsync's notification.
@@ -507,7 +536,8 @@ public class LocalDbService
         var sourceWorkout = await GetWorkoutByIdAsync(sourceWorkoutId);
         if (sourceWorkout == null) return;
 
-        var existingCount = await _connection!.Table<Workout>().Where(w => w.WorkoutProgramId == targetProgramId).CountAsync();
+        var existingCount = await _connection!.Table<Workout>().Where(w => w.WorkoutProgramId == targetProgramId)
+            .CountAsync();
 
         var newWorkout = new Workout
         {
@@ -531,6 +561,7 @@ public class LocalDbService
                 });
             }
         }
+
         await _connection!.InsertWithChildrenAsync(newWorkout, recursive: true);
         NotifyDatabaseChanged();
     }
@@ -588,6 +619,7 @@ public class LocalDbService
         {
             await _connection!.DeleteAsync(program, recursive: true);
         }
+
         NotifyDatabaseChanged();
     }
 
@@ -617,17 +649,61 @@ public class LocalDbService
         // --- 2. EGZERSİZLERİ OLUŞTUR ---
         var exercises = new List<Exercise>
         {
-            new Exercise { Name = "Bench Press", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "bench_press.png", CnsFatigueScore = 6.5m },
-            new Exercise { Name = "Squat", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "squat.png", CnsFatigueScore = 8.5m },
-            new Exercise { Name = "Deadlift", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "deadlift.png", CnsFatigueScore = 9.5m },
-            new Exercise { Name = "Overhead Press", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "ohp.png", CnsFatigueScore = 7.0m },
-            new Exercise { Name = "Pull Up", Difficulty = "Intermediate", Equipment = "Bodyweight", ImageUrl = "pullup.png", CnsFatigueScore = 6.0m },
-            new Exercise { Name = "Barbell Row", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "barbell_row.png", CnsFatigueScore = 7.5m },
-            new Exercise { Name = "Dumbbell Curl", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "curl.png", CnsFatigueScore = 3.0m },
-            new Exercise { Name = "Triceps Pushdown", Difficulty = "Beginner", Equipment = "Machine", ImageUrl = "pushdown.png", CnsFatigueScore = 3.0m },
-            new Exercise { Name = "Lunges", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "lunges.png", CnsFatigueScore = 6.0m },
-            new Exercise { Name = "Plank", Difficulty = "Beginner", Equipment = "Bodyweight", ImageUrl = "plank.png", CnsFatigueScore = 4.0m },
-            new Exercise { Name = "Lateral Raise", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "lateral_raise.png", CnsFatigueScore = 3.5m }
+            new Exercise
+            {
+                Name = "Bench Press", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "bench_press.png",
+                CnsFatigueScore = 6.5m
+            },
+            new Exercise
+            {
+                Name = "Squat", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "squat.png",
+                CnsFatigueScore = 8.5m
+            },
+            new Exercise
+            {
+                Name = "Deadlift", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "deadlift.png",
+                CnsFatigueScore = 9.5m
+            },
+            new Exercise
+            {
+                Name = "Overhead Press", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "ohp.png",
+                CnsFatigueScore = 7.0m
+            },
+            new Exercise
+            {
+                Name = "Pull Up", Difficulty = "Intermediate", Equipment = "Bodyweight", ImageUrl = "pullup.png",
+                CnsFatigueScore = 6.0m
+            },
+            new Exercise
+            {
+                Name = "Barbell Row", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "barbell_row.png",
+                CnsFatigueScore = 7.5m
+            },
+            new Exercise
+            {
+                Name = "Dumbbell Curl", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "curl.png",
+                CnsFatigueScore = 3.0m
+            },
+            new Exercise
+            {
+                Name = "Triceps Pushdown", Difficulty = "Beginner", Equipment = "Machine", ImageUrl = "pushdown.png",
+                CnsFatigueScore = 3.0m
+            },
+            new Exercise
+            {
+                Name = "Lunges", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "lunges.png",
+                CnsFatigueScore = 6.0m
+            },
+            new Exercise
+            {
+                Name = "Plank", Difficulty = "Beginner", Equipment = "Bodyweight", ImageUrl = "plank.png",
+                CnsFatigueScore = 4.0m
+            },
+            new Exercise
+            {
+                Name = "Lateral Raise", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "lateral_raise.png",
+                CnsFatigueScore = 3.5m
+            }
         };
 
         // Toplu ekle
@@ -642,71 +718,120 @@ public class LocalDbService
         // --- 3. MAPPING (ÇOKA ÇOK) OLUŞTUR ---
         var mappings = new List<ExerciseMuscleMap>
         {
-            new ExerciseMuscleMap { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Pectoralis Major"), ImpactMultiplier = 1.0 },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Front Delt"), ImpactMultiplier = 0.5 },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Triceps"), ImpactMultiplier = 0.5 },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Pectoralis Major"),
+                ImpactMultiplier = 1.0
+            },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Front Delt"), ImpactMultiplier = 0.5 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Triceps"), ImpactMultiplier = 0.5 },
 
-            new ExerciseMuscleMap { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0 },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.7 },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.4 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.7 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.4 },
 
-            new ExerciseMuscleMap { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 1.0 },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.8 },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.6 },
-            
-            new ExerciseMuscleMap { ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Front Delt"), ImpactMultiplier = 1.0 },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Triceps"), ImpactMultiplier = 0.6 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.8 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.6 },
 
-            new ExerciseMuscleMap { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0 },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5 },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Front Delt"), ImpactMultiplier = 1.0
+            },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Triceps"), ImpactMultiplier = 0.6 },
 
-            new ExerciseMuscleMap { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Rhomboids"), ImpactMultiplier = 1.0 },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.8 },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5 },
 
-            new ExerciseMuscleMap { ExerciseId = GetExId("Dumbbell Curl"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 1.0 },
-            
-            new ExerciseMuscleMap { ExerciseId = GetExId("Triceps Pushdown"), MuscleGroupId = GetMusId("Triceps"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Rhomboids"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.8 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5 },
 
-            new ExerciseMuscleMap { ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0 },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.6 },
-            
-            new ExerciseMuscleMap { ExerciseId = GetExId("Plank"), MuscleGroupId = GetMusId("Abs"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Dumbbell Curl"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 1.0 },
 
-            new ExerciseMuscleMap { ExerciseId = GetExId("Lateral Raise"), MuscleGroupId = GetMusId("Side Delt"), ImpactMultiplier = 1.0 }
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Triceps Pushdown"), MuscleGroupId = GetMusId("Triceps"), ImpactMultiplier = 1.0
+            },
+
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0 },
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.6 },
+
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Plank"), MuscleGroupId = GetMusId("Abs"), ImpactMultiplier = 1.0 },
+
+            new ExerciseMuscleMap
+                { ExerciseId = GetExId("Lateral Raise"), MuscleGroupId = GetMusId("Side Delt"), ImpactMultiplier = 1.0 }
         };
         await _connection.InsertAllAsync(mappings);
 
 
-        // --- 2. PROGRAM 1: BAŞLANGIÇ ---
+        // --- 2. PROGRAM 1: START STRONG ---
         var program1 = new WorkoutProgram
         {
             Name = "Start Strong",
             Level = "Beginner",
-            Goal = "Temel Kuvvet",
-            TargetMuscles = "Tüm Vücut",
-            Environment = "Spor Salonu"
+            Goal = "Foundation Strength",
+            TargetMuscles = "Full Body",
+            Environment = "Gym"
         };
         await _connection.InsertAsync(program1);
 
-        // Program 1 - Gün A
-        var p1_w1 = new Workout { WorkoutProgramId = program1.Id, Name = "Full Body A", Order = 1, Description = "Temel itiş ve bacak odaklı." };
+        // Program 1 - Day A
+        var p1_w1 = new Workout
+        {
+            WorkoutProgramId = program1.Id, Name = "Full Body A", Order = 1, Description = "Basic push and leg focused."
+        };
         await _connection.InsertAsync(p1_w1);
-        await _connection.InsertAllAsync(new[] {
-            new WorkoutItem { WorkoutId = p1_w1.Id, ExerciseId = GetExId("Squat"), Sets = 3, RepsRange = "8-10", Order = 1 },
-            new WorkoutItem { WorkoutId = p1_w1.Id, ExerciseId = GetExId("Bench Press"), Sets = 3, RepsRange = "8-12", Order = 2 },
-            new WorkoutItem { WorkoutId = p1_w1.Id, ExerciseId = GetExId("Barbell Row"), Sets = 3, RepsRange = "10-12", Order = 3 }, // Artık ID'si 0 dönmeyecek!
-             new WorkoutItem { WorkoutId = p1_w1.Id, ExerciseId = GetExId("Dumbbell Curl"), Sets = 3, RepsRange = "12-15", Order = 4 }
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+                { WorkoutId = p1_w1.Id, ExerciseId = GetExId("Squat"), Sets = 3, RepsRange = "8-10", Order = 1 },
+            new WorkoutItem
+                { WorkoutId = p1_w1.Id, ExerciseId = GetExId("Bench Press"), Sets = 3, RepsRange = "8-12", Order = 2 },
+            new WorkoutItem
+            {
+                WorkoutId = p1_w1.Id, ExerciseId = GetExId("Barbell Row"), Sets = 3, RepsRange = "10-12", Order = 3
+            }, // Artık ID'si 0 dönmeyecek!
+            new WorkoutItem
+            {
+                WorkoutId = p1_w1.Id, ExerciseId = GetExId("Dumbbell Curl"), Sets = 3, RepsRange = "12-15", Order = 4
+            }
         });
 
-        // Program 1 - Gün B
-        var p1_w2 = new Workout { WorkoutProgramId = program1.Id, Name = "Full Body B", Order = 2, Description = "Çekiş ve omuz odaklı." };
+        // Program 1 - Day B
+        var p1_w2 = new Workout
+            { WorkoutProgramId = program1.Id, Name = "Full Body B", Order = 2, Description = "Pull and shoulder focused." };
         await _connection.InsertAsync(p1_w2);
-        await _connection.InsertAllAsync(new[] {
-            new WorkoutItem { WorkoutId = p1_w2.Id, ExerciseId = GetExId("Deadlift"), Sets = 3, RepsRange = "5", Order = 1 },
-            new WorkoutItem { WorkoutId = p1_w2.Id, ExerciseId = GetExId("Overhead Press"), Sets = 3, RepsRange = "8-10", Order = 2 },
-            new WorkoutItem { WorkoutId = p1_w2.Id, ExerciseId = GetExId("Pull Up"), Sets = 3, RepsRange = "Max", Order = 3 },
-            new WorkoutItem { WorkoutId = p1_w2.Id, ExerciseId = GetExId("Plank"), Sets = 3, RepsRange = "45sn", Order = 4 }
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+                { WorkoutId = p1_w2.Id, ExerciseId = GetExId("Deadlift"), Sets = 3, RepsRange = "5", Order = 1 },
+            new WorkoutItem
+            {
+                WorkoutId = p1_w2.Id, ExerciseId = GetExId("Overhead Press"), Sets = 3, RepsRange = "8-10", Order = 2
+            },
+            new WorkoutItem
+                { WorkoutId = p1_w2.Id, ExerciseId = GetExId("Pull Up"), Sets = 3, RepsRange = "Max", Order = 3 },
+            new WorkoutItem
+                { WorkoutId = p1_w2.Id, ExerciseId = GetExId("Plank"), Sets = 3, RepsRange = "45s", Order = 4 }
         });
 
 
@@ -715,38 +840,65 @@ public class LocalDbService
         {
             Name = "Classic PPL",
             Level = "Intermediate",
-            Goal = "Hipertrofi (Kas Kütlesi)",
-            TargetMuscles = "Bölgesel",
-            Environment = "Spor Salonu"
+            Goal = "Hypertrophy (Muscle Mass)",
+            TargetMuscles = "Split",
+            Environment = "Gym"
         };
         await _connection.InsertAsync(program2);
 
         // Push Day
-        var p2_push = new Workout { WorkoutProgramId = program2.Id, Name = "Push (İtiş)", Order = 1, Description = "Göğüs, Omuz, Arka Kol" };
+        var p2_push = new Workout
+            { WorkoutProgramId = program2.Id, Name = "Push", Order = 1, Description = "Chest, Shoulders, Triceps" };
         await _connection.InsertAsync(p2_push);
-        await _connection.InsertAllAsync(new[] {
-            new WorkoutItem { WorkoutId = p2_push.Id, ExerciseId = GetExId("Bench Press"), Sets = 4, RepsRange = "6-8", Order = 1 },
-            new WorkoutItem { WorkoutId = p2_push.Id, ExerciseId = GetExId("Overhead Press"), Sets = 3, RepsRange = "8-10", Order = 2 },
-            new WorkoutItem { WorkoutId = p2_push.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 3, RepsRange = "12-15", Order = 3 },
-            new WorkoutItem { WorkoutId = p2_push.Id, ExerciseId = GetExId("Triceps Pushdown"), Sets = 3, RepsRange = "12-15", Order = 4 }
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+                { WorkoutId = p2_push.Id, ExerciseId = GetExId("Bench Press"), Sets = 4, RepsRange = "6-8", Order = 1 },
+            new WorkoutItem
+            {
+                WorkoutId = p2_push.Id, ExerciseId = GetExId("Overhead Press"), Sets = 3, RepsRange = "8-10", Order = 2
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p2_push.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 3, RepsRange = "12-15", Order = 3
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p2_push.Id, ExerciseId = GetExId("Triceps Pushdown"), Sets = 3, RepsRange = "12-15",
+                Order = 4
+            }
         });
 
         // Pull Day
-        var p2_pull = new Workout { WorkoutProgramId = program2.Id, Name = "Pull (Çekiş)", Order = 2, Description = "Sırt, Ön Kol" };
+        var p2_pull = new Workout
+            { WorkoutProgramId = program2.Id, Name = "Pull", Order = 2, Description = "Back, Biceps" };
         await _connection.InsertAsync(p2_pull);
-        await _connection.InsertAllAsync(new[] {
-            new WorkoutItem { WorkoutId = p2_pull.Id, ExerciseId = GetExId("Deadlift"), Sets = 3, RepsRange = "5-8", Order = 1 },
-            new WorkoutItem { WorkoutId = p2_pull.Id, ExerciseId = GetExId("Pull Up"), Sets = 3, RepsRange = "8-10", Order = 2 },
-            new WorkoutItem { WorkoutId = p2_pull.Id, ExerciseId = GetExId("Dumbbell Curl"), Sets = 4, RepsRange = "10-12", Order = 3 }
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+                { WorkoutId = p2_pull.Id, ExerciseId = GetExId("Deadlift"), Sets = 3, RepsRange = "5-8", Order = 1 },
+            new WorkoutItem
+                { WorkoutId = p2_pull.Id, ExerciseId = GetExId("Pull Up"), Sets = 3, RepsRange = "8-10", Order = 2 },
+            new WorkoutItem
+            {
+                WorkoutId = p2_pull.Id, ExerciseId = GetExId("Dumbbell Curl"), Sets = 4, RepsRange = "10-12", Order = 3
+            }
         });
 
         // Legs Day
-        var p2_legs = new Workout { WorkoutProgramId = program2.Id, Name = "Legs (Bacak)", Order = 3, Description = "Ön ve Arka Bacak, Kalça" };
+        var p2_legs = new Workout
+        {
+            WorkoutProgramId = program2.Id, Name = "Legs", Order = 3, Description = "Quads, Hamstrings, Glutes"
+        };
         await _connection.InsertAsync(p2_legs);
-        await _connection.InsertAllAsync(new[] {
-            new WorkoutItem { WorkoutId = p2_legs.Id, ExerciseId = GetExId("Squat"), Sets = 4, RepsRange = "6-8", Order = 1 },
-            new WorkoutItem { WorkoutId = p2_legs.Id, ExerciseId = GetExId("Lunges"), Sets = 3, RepsRange = "10-12", Order = 2 },
-            new WorkoutItem { WorkoutId = p2_legs.Id, ExerciseId = GetExId("Plank"), Sets = 3, RepsRange = "60sn", Order = 3 }
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+                { WorkoutId = p2_legs.Id, ExerciseId = GetExId("Squat"), Sets = 4, RepsRange = "6-8", Order = 1 },
+            new WorkoutItem
+                { WorkoutId = p2_legs.Id, ExerciseId = GetExId("Lunges"), Sets = 3, RepsRange = "10-12", Order = 2 },
+            new WorkoutItem
+                { WorkoutId = p2_legs.Id, ExerciseId = GetExId("Plank"), Sets = 3, RepsRange = "60s", Order = 3 }
         });
     }
 
@@ -765,29 +917,54 @@ public class LocalDbService
 
         var exercisesToSeed = new List<Exercise>
         {
-            new Exercise { Name = "Cable Lat Pull Over", Difficulty = "Intermediate", Equipment = "Cable", CnsFatigueScore = 5.0m },
-            new Exercise { Name = "Smith Incline Bench Press", Difficulty = "Intermediate", Equipment = "Machine", CnsFatigueScore = 6.0m },
-            new Exercise { Name = "Fly Machine", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 4.0m },
-            new Exercise { Name = "Shoulder Machine", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 4.5m },
-            new Exercise { Name = "Triceps Kickback", Difficulty = "Beginner", Equipment = "Dumbbell", CnsFatigueScore = 3.0m },
-            new Exercise { Name = "Ab Crunch", Difficulty = "Beginner", Equipment = "Bodyweight", CnsFatigueScore = 3.5m },
-            new Exercise { Name = "Leg Raise", Difficulty = "Beginner", Equipment = "Bodyweight", CnsFatigueScore = 4.0m },
-            new Exercise { Name = "Leg Press", Difficulty = "Intermediate", Equipment = "Machine", CnsFatigueScore = 7.0m },
-            new Exercise { Name = "Leg Extension", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 5.0m },
+            new Exercise
+            {
+                Name = "Cable Lat Pull Over", Difficulty = "Intermediate", Equipment = "Cable", CnsFatigueScore = 5.0m
+            },
+            new Exercise
+            {
+                Name = "Smith Incline Bench Press", Difficulty = "Intermediate", Equipment = "Machine",
+                CnsFatigueScore = 6.0m
+            },
+            new Exercise
+                { Name = "Fly Machine", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 4.0m },
+            new Exercise
+                { Name = "Shoulder Machine", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 4.5m },
+            new Exercise
+                { Name = "Triceps Kickback", Difficulty = "Beginner", Equipment = "Dumbbell", CnsFatigueScore = 3.0m },
+            new Exercise
+                { Name = "Ab Crunch", Difficulty = "Beginner", Equipment = "Bodyweight", CnsFatigueScore = 3.5m },
+            new Exercise
+                { Name = "Leg Raise", Difficulty = "Beginner", Equipment = "Bodyweight", CnsFatigueScore = 4.0m },
+            new Exercise
+                { Name = "Leg Press", Difficulty = "Intermediate", Equipment = "Machine", CnsFatigueScore = 7.0m },
+            new Exercise
+                { Name = "Leg Extension", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 5.0m },
             new Exercise { Name = "Leg Curl", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 5.0m },
-            new Exercise { Name = "Rear Delt Machine Fly", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 4.0m },
-            new Exercise { Name = "Hammer Curl", Difficulty = "Beginner", Equipment = "Dumbbell", CnsFatigueScore = 3.0m },
-            new Exercise { Name = "Barbell Curl", Difficulty = "Intermediate", Equipment = "Barbell", CnsFatigueScore = 4.0m },
-            new Exercise { Name = "Calf Raise", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 3.5m },
-            new Exercise { Name = "Vertical Row", Difficulty = "Intermediate", Equipment = "Machine", CnsFatigueScore = 6.0m },
-            new Exercise { Name = "One Arm Cable Row", Difficulty = "Intermediate", Equipment = "Cable", CnsFatigueScore = 5.0m },
-            new Exercise { Name = "Cable Lateral Raise", Difficulty = "Beginner", Equipment = "Cable", CnsFatigueScore = 3.5m },
+            new Exercise
+            {
+                Name = "Rear Delt Machine Fly", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 4.0m
+            },
+            new Exercise
+                { Name = "Hammer Curl", Difficulty = "Beginner", Equipment = "Dumbbell", CnsFatigueScore = 3.0m },
+            new Exercise
+                { Name = "Barbell Curl", Difficulty = "Intermediate", Equipment = "Barbell", CnsFatigueScore = 4.0m },
+            new Exercise
+                { Name = "Calf Raise", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 3.5m },
+            new Exercise
+                { Name = "Vertical Row", Difficulty = "Intermediate", Equipment = "Machine", CnsFatigueScore = 6.0m },
+            new Exercise
+            {
+                Name = "One Arm Cable Row", Difficulty = "Intermediate", Equipment = "Cable", CnsFatigueScore = 5.0m
+            },
+            new Exercise
+                { Name = "Cable Lateral Raise", Difficulty = "Beginner", Equipment = "Cable", CnsFatigueScore = 3.5m },
             new Exercise { Name = "Pushdown", Difficulty = "Beginner", Equipment = "Cable", CnsFatigueScore = 3.0m }
         };
 
         var dbExercises = await _connection.Table<Exercise>().ToListAsync();
-        
-        foreach(var ex in exercisesToSeed)
+
+        foreach (var ex in exercisesToSeed)
         {
             if (!dbExercises.Any(e => e.Name == ex.Name))
             {
@@ -802,60 +979,124 @@ public class LocalDbService
         {
             Name = "W's Upper Lower",
             Level = "Advanced",
-            Goal = "Hipertrofi",
-            TargetMuscles = "Tüm Vücut",
-            Environment = "Spor Salonu",
+            Goal = "Hypertrophy",
+            TargetMuscles = "Full Body",
+            Environment = "Gym",
             Cycle = 14,
             LastCycleUpdateDate = DateTime.Now
         };
         await _connection.InsertAsync(program);
 
-        // Idman 1
-        var w1 = new Workout { WorkoutProgramId = program.Id, Name = "İdman 1", Order = 1 };
+        // Workout 1
+        var w1 = new Workout { WorkoutProgramId = program.Id, Name = "Workout 1", Order = 1 };
         await _connection.InsertAsync(w1);
-        await _connection.InsertAllAsync(new[] {
-            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Pull Up"), Sets = 2, RepsRange = "Tükeniş", Order = 1 },
-            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Cable Lat Pull Over"), Sets = 2, RepsRange = "Tükeniş", Order = 2 },
-            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Smith Incline Bench Press"), Sets = 2, RepsRange = "Tükeniş", Order = 3 },
-            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Fly Machine"), Sets = 2, RepsRange = "Tükeniş", Order = 4 },
-            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Shoulder Machine"), Sets = 2, RepsRange = "Tükeniş", Order = 5 },
-            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 6 },
-            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Triceps Pushdown"), Sets = 2, RepsRange = "Tükeniş", Order = 7 },
-            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Triceps Kickback"), Sets = 2, RepsRange = "Tükeniş", Order = 8 },
-            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Ab Crunch"), Sets = 2, RepsRange = "Tükeniş", Order = 9 },
-            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Leg Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 10 }
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+                { WorkoutId = w1.Id, ExerciseId = GetExId("Pull Up"), Sets = 2, RepsRange = "Failure", Order = 1 },
+            new WorkoutItem
+            {
+                WorkoutId = w1.Id, ExerciseId = GetExId("Cable Lat Pull Over"), Sets = 2, RepsRange = "Failure",
+                Order = 2
+            },
+            new WorkoutItem
+            {
+                WorkoutId = w1.Id, ExerciseId = GetExId("Smith Incline Bench Press"), Sets = 2, RepsRange = "Failure",
+                Order = 3
+            },
+            new WorkoutItem
+                { WorkoutId = w1.Id, ExerciseId = GetExId("Fly Machine"), Sets = 2, RepsRange = "Failure", Order = 4 },
+            new WorkoutItem
+            {
+                WorkoutId = w1.Id, ExerciseId = GetExId("Shoulder Machine"), Sets = 2, RepsRange = "Failure", Order = 5
+            },
+            new WorkoutItem
+            {
+                WorkoutId = w1.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 2, RepsRange = "Failure", Order = 6
+            },
+            new WorkoutItem
+            {
+                WorkoutId = w1.Id, ExerciseId = GetExId("Triceps Pushdown"), Sets = 2, RepsRange = "Failure", Order = 7
+            },
+            new WorkoutItem
+            {
+                WorkoutId = w1.Id, ExerciseId = GetExId("Triceps Kickback"), Sets = 2, RepsRange = "Failure", Order = 8
+            },
+            new WorkoutItem
+                { WorkoutId = w1.Id, ExerciseId = GetExId("Ab Crunch"), Sets = 2, RepsRange = "Failure", Order = 9 },
+            new WorkoutItem
+                { WorkoutId = w1.Id, ExerciseId = GetExId("Leg Raise"), Sets = 2, RepsRange = "Failure", Order = 10 }
         });
 
-        // Idman 2
-        var w2 = new Workout { WorkoutProgramId = program.Id, Name = "İdman 2", Order = 2 };
+        // Workout 2
+        var w2 = new Workout { WorkoutProgramId = program.Id, Name = "Workout 2", Order = 2 };
         await _connection.InsertAsync(w2);
-        await _connection.InsertAllAsync(new[] {
-            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Leg Press"), Sets = 2, RepsRange = "Tükeniş", Order = 1 },
-            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Leg Extension"), Sets = 2, RepsRange = "Tükeniş", Order = 2 },
-            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Leg Curl"), Sets = 2, RepsRange = "Tükeniş", Order = 3 },
-            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 4 },
-            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Rear Delt Machine Fly"), Sets = 2, RepsRange = "Tükeniş", Order = 5 },
-            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Hammer Curl"), Sets = 2, RepsRange = "Tükeniş", Order = 6 },
-            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Barbell Curl"), Sets = 2, RepsRange = "Tükeniş", Order = 7 },
-            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Calf Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 8 },
-            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Ab Crunch"), Sets = 2, RepsRange = "Tükeniş", Order = 9 },
-            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Leg Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 10 }
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+                { WorkoutId = w2.Id, ExerciseId = GetExId("Leg Press"), Sets = 2, RepsRange = "Failure", Order = 1 },
+            new WorkoutItem
+            {
+                WorkoutId = w2.Id, ExerciseId = GetExId("Leg Extension"), Sets = 2, RepsRange = "Failure", Order = 2
+            },
+            new WorkoutItem
+                { WorkoutId = w2.Id, ExerciseId = GetExId("Leg Curl"), Sets = 2, RepsRange = "Failure", Order = 3 },
+            new WorkoutItem
+            {
+                WorkoutId = w2.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 2, RepsRange = "Failure", Order = 4
+            },
+            new WorkoutItem
+            {
+                WorkoutId = w2.Id, ExerciseId = GetExId("Rear Delt Machine Fly"), Sets = 2, RepsRange = "Failure",
+                Order = 5
+            },
+            new WorkoutItem
+                { WorkoutId = w2.Id, ExerciseId = GetExId("Hammer Curl"), Sets = 2, RepsRange = "Failure", Order = 6 },
+            new WorkoutItem
+                { WorkoutId = w2.Id, ExerciseId = GetExId("Barbell Curl"), Sets = 2, RepsRange = "Failure", Order = 7 },
+            new WorkoutItem
+                { WorkoutId = w2.Id, ExerciseId = GetExId("Calf Raise"), Sets = 2, RepsRange = "Failure", Order = 8 },
+            new WorkoutItem
+                { WorkoutId = w2.Id, ExerciseId = GetExId("Ab Crunch"), Sets = 2, RepsRange = "Failure", Order = 9 },
+            new WorkoutItem
+                { WorkoutId = w2.Id, ExerciseId = GetExId("Leg Raise"), Sets = 2, RepsRange = "Failure", Order = 10 }
         });
 
-        // Idman 3
-        var w3 = new Workout { WorkoutProgramId = program.Id, Name = "İdman 3", Order = 3 };
+        // Workout 3
+        var w3 = new Workout { WorkoutProgramId = program.Id, Name = "Workout 3", Order = 3 };
         await _connection.InsertAsync(w3);
-        await _connection.InsertAllAsync(new[] {
-            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Smith Incline Bench Press"), Sets = 2, RepsRange = "Tükeniş", Order = 1 },
-            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Fly Machine"), Sets = 2, RepsRange = "Tükeniş", Order = 2 },
-            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Pull Up"), Sets = 2, RepsRange = "Tükeniş", Order = 3 },
-            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Vertical Row"), Sets = 2, RepsRange = "Tükeniş", Order = 4 },
-            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("One Arm Cable Row"), Sets = 2, RepsRange = "Tükeniş", Order = 5 },
-            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 6 },
-            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Cable Lateral Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 7 },
-            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Pushdown"), Sets = 2, RepsRange = "Tükeniş", Order = 8 },
-            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Ab Crunch"), Sets = 2, RepsRange = "Tükeniş", Order = 9 },
-            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Leg Raise"), Sets = 2, RepsRange = "Tükeniş", Order = 10 }
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+            {
+                WorkoutId = w3.Id, ExerciseId = GetExId("Smith Incline Bench Press"), Sets = 2, RepsRange = "Failure",
+                Order = 1
+            },
+            new WorkoutItem
+                { WorkoutId = w3.Id, ExerciseId = GetExId("Fly Machine"), Sets = 2, RepsRange = "Failure", Order = 2 },
+            new WorkoutItem
+                { WorkoutId = w3.Id, ExerciseId = GetExId("Pull Up"), Sets = 2, RepsRange = "Failure", Order = 3 },
+            new WorkoutItem
+                { WorkoutId = w3.Id, ExerciseId = GetExId("Vertical Row"), Sets = 2, RepsRange = "Failure", Order = 4 },
+            new WorkoutItem
+            {
+                WorkoutId = w3.Id, ExerciseId = GetExId("One Arm Cable Row"), Sets = 2, RepsRange = "Failure", Order = 5
+            },
+            new WorkoutItem
+            {
+                WorkoutId = w3.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 2, RepsRange = "Failure", Order = 6
+            },
+            new WorkoutItem
+            {
+                WorkoutId = w3.Id, ExerciseId = GetExId("Cable Lateral Raise"), Sets = 2, RepsRange = "Failure",
+                Order = 7
+            },
+            new WorkoutItem
+                { WorkoutId = w3.Id, ExerciseId = GetExId("Pushdown"), Sets = 2, RepsRange = "Failure", Order = 8 },
+            new WorkoutItem
+                { WorkoutId = w3.Id, ExerciseId = GetExId("Ab Crunch"), Sets = 2, RepsRange = "Failure", Order = 9 },
+            new WorkoutItem
+                { WorkoutId = w3.Id, ExerciseId = GetExId("Leg Raise"), Sets = 2, RepsRange = "Failure", Order = 10 }
         });
 
         // Generate 3 months of mock logs
@@ -863,7 +1104,7 @@ public class LocalDbService
         var r = new Random();
         var startDate = DateTime.Now.Date.AddDays(-90);
         int dayIndex = 0;
-        
+
         var workouts = new[] { w1, w2, w3 };
         var workoutItems = new List<List<WorkoutItem>>();
         workoutItems.Add(await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == w1.Id).ToListAsync());
@@ -875,10 +1116,10 @@ public class LocalDbService
             double weeksPassed = dayIdx / 7.0;
             return Math.Round(startWeight + (weeksPassed * 1.5) + (r.NextDouble() * 2 - 1), 1);
         }
-        
+
         int GetProgressiveReps(int dayIdx, int baseReps)
         {
-             return baseReps + (r.Next(0, 3));
+            return baseReps + (r.Next(0, 3));
         }
 
         while (dayIndex <= 90)
@@ -895,19 +1136,21 @@ public class LocalDbService
                 var currentWorkout = workouts[workoutIdx.Value];
                 var currentItems = workoutItems[workoutIdx.Value];
 
-                foreach(var item in currentItems)
+                foreach (var item in currentItems)
                 {
                     var exName = dbExercises.FirstOrDefault(e => e.Id == item.ExerciseId)?.Name ?? "";
-                    
+
                     double baseWeight = 50;
                     if (exName.Contains("Press")) baseWeight = 60;
                     if (exName.Contains("Fly")) baseWeight = 40;
-                    if (exName.Contains("Curl") || exName.Contains("Raise") || exName.Contains("Pushdown") || exName.Contains("Kickback")) baseWeight = 15;
+                    if (exName.Contains("Curl") || exName.Contains("Raise") || exName.Contains("Pushdown") ||
+                        exName.Contains("Kickback")) baseWeight = 15;
                     if (exName.Contains("Leg Press")) baseWeight = 120;
                     if (exName.Contains("Leg Extension") || exName.Contains("Leg Curl")) baseWeight = 45;
-                    if (exName.Contains("Pull Up") || exName.Contains("Ab Crunch") || exName.Contains("Leg Raise") || exName.Contains("Plank")) baseWeight = 0;
+                    if (exName.Contains("Pull Up") || exName.Contains("Ab Crunch") || exName.Contains("Leg Raise") ||
+                        exName.Contains("Plank")) baseWeight = 0;
 
-                    for(int s = 1; s <= item.Sets; s++)
+                    for (int s = 1; s <= item.Sets; s++)
                     {
                         logs.Add(new WorkoutLog
                         {
@@ -918,7 +1161,7 @@ public class LocalDbService
                             SetNumber = s,
                             Weight = baseWeight > 0 ? GetProgressiveWeight(dayIndex, baseWeight) : 0,
                             Reps = GetProgressiveReps(dayIndex, r.Next(8, 12)),
-                            RIR = 0, // Tükeniş
+                            RIR = 0, // Failure
                             FormRating = r.Next(3, 6),
                             Note = "",
                             IsCompleted = true,
@@ -928,6 +1171,7 @@ public class LocalDbService
                     }
                 }
             }
+
             dayIndex++;
         }
 

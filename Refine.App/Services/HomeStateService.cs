@@ -17,7 +17,8 @@ namespace Refine.App.Services
         public bool IsStreakLoaded { get; private set; } = false;
         public bool IsUpNextLoaded { get; private set; } = false;
 
-        public bool IsLoaded => IsUserLoaded && IsProgramsLoaded && IsTopExerciseLoaded && IsStreakLoaded && IsUpNextLoaded;
+        public bool IsLoaded =>
+            IsUserLoaded && IsProgramsLoaded && IsTopExerciseLoaded && IsStreakLoaded && IsUpNextLoaded;
 
         public User? User { get; private set; }
         public List<WorkoutProgram>? Programs { get; private set; }
@@ -44,7 +45,7 @@ namespace Refine.App.Services
         {
             _dbService = dbService;
             _analyticsService = analyticsService;
-            
+
             _dbService.OnDatabaseChanged += HandleDatabaseChanged;
         }
 
@@ -104,7 +105,10 @@ namespace Refine.App.Services
             {
                 User = await _dbService.GetUserAsync();
             }
-            catch (Exception ex) { Console.WriteLine($"HATA User: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"HATA User: {ex.Message}");
+            }
             finally
             {
                 IsUserLoaded = true;
@@ -118,7 +122,10 @@ namespace Refine.App.Services
             {
                 Programs = await _dbService.GetAllProgramsAsync();
             }
-            catch (Exception ex) { Console.WriteLine($"HATA Programs: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"HATA Programs: {ex.Message}");
+            }
             finally
             {
                 IsProgramsLoaded = true;
@@ -210,7 +217,7 @@ namespace Refine.App.Services
                 {
                     var workoutIds = program.Workouts.Select(w => w.Id).ToList();
                     var programLogs = allLogs.Where(l => workoutIds.Contains(l.WorkoutId)).ToList();
-                    
+
                     if (programLogs.Any())
                     {
                         var startDate = programLogs.Min(l => l.Date).Date;
@@ -240,14 +247,15 @@ namespace Refine.App.Services
                 {
                     var orderedWorkouts = program.Workouts.OrderBy(w => w.Order).ToList();
                     var completedWorkouts = new Dictionary<int, bool>();
-                    
-                    foreach(var w in orderedWorkouts)
+
+                    foreach (var w in orderedWorkouts)
                     {
                         completedWorkouts[w.Id] = await _dbService.HasLogForCycleAsync(w.Id, program.Cycle);
                     }
-                    
-                    var completedList = orderedWorkouts.Where(w => completedWorkouts.TryGetValue(w.Id, out bool comp) && comp).ToList();
-                    
+
+                    var completedList = orderedWorkouts
+                        .Where(w => completedWorkouts.TryGetValue(w.Id, out bool comp) && comp).ToList();
+
                     if (!completedList.Any())
                     {
                         UpNextWorkout = orderedWorkouts.FirstOrDefault();
@@ -256,7 +264,7 @@ namespace Refine.App.Services
                     {
                         var highestCompletedOrder = completedList.Max(w => w.Order);
                         UpNextWorkout = orderedWorkouts.FirstOrDefault(w => w.Order > highestCompletedOrder);
-                        
+
                         if (UpNextWorkout == null)
                         {
                             UpNextWorkout = orderedWorkouts.FirstOrDefault();
@@ -270,23 +278,24 @@ namespace Refine.App.Services
                     {
                         UpNextDuration = (UpNextWorkout.Items.Sum(i => i.Sets)) * 4;
                         var targetMuscles = UpNextWorkout.Items
-                            .Where(i => !string.IsNullOrWhiteSpace(i.Exercise?.PrimaryMuscleCategory) && i.Exercise.PrimaryMuscleCategory != "Genel")
+                            .Where(i => !string.IsNullOrWhiteSpace(i.Exercise?.PrimaryMuscleCategory) &&
+                                        i.Exercise.PrimaryMuscleCategory != "General")
                             .GroupBy(i => i.Exercise!.PrimaryMuscleCategory!)
                             .OrderByDescending(g => g.Count())
                             .ThenByDescending(g => g.Sum(item => item.Sets))
                             .Select(g => g.Key)
                             .Take(2)
                             .ToList();
-                            
+
                         if (targetMuscles.Any())
                         {
                             UpNextMuscleGroups = string.Join(" & ", targetMuscles);
                         }
                         else
                         {
-                            UpNextMuscleGroups = "Full Body";
+                            UpNextMuscleGroups = "GENERAL";
                         }
-                        
+
                         UpNextIsSaved = await _dbService.HasSavedLogForCycleAsync(UpNextWorkout.Id, program.Cycle);
                     }
                 }

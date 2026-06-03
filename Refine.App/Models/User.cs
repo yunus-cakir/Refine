@@ -7,7 +7,7 @@ namespace Refine.App.Models;
 
 public class AppSettings
 {
-    public string Language { get; set; } = "tr";
+    public string Language { get; set; } = "en";
     public string UnitSystem { get; set; } = "metric";
     public string Theme { get; set; } = "system";
     public DayOfWeek WeekStartDay { get; set; } = DayOfWeek.Monday;

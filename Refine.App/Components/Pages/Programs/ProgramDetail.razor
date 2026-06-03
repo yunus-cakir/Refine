@@ -32,19 +32,19 @@
                     @if (!_isSelected)
                     {
                         <button class="refine-ghost-btn" style="color: var(--color-primary-fixed);" @onclick="SelectProgram">
-                            <span class="material-symbols-outlined" style="font-size: 18px;">radio_button_unchecked</span> 
-                            SEÇİLİ YAP
+                            <span class="material-symbols-outlined" style="font-size: 18px;">radio_button_unchecked</span>
+                            MAKE SELECTED
                         </button>
                     }
                     else
                     {
                         <div class="refine-badge rf-flex-row rf-items-center" style="gap: 4px; width: max-content;">
-                            <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' 1;">check_circle</span> 
-                            SEÇİLİ PROGRAM
+                            <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' 1;">check_circle</span>
+                            SELECTED PROGRAM
                         </div>
                     }
                 </div>
-                
+
                 <a href="@($"/workouts/edit/{Id}/0")" class="refine-icon-btn" style="width: 32px; height: 32px; background-color: rgba(195, 244, 0, 0.1); color: var(--color-primary-fixed); border-color: rgba(195, 244, 0, 0.2);">
                     <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
                 </a>
@@ -60,7 +60,7 @@
 
             <!-- Workouts List -->
             <div class="rf-flex-col" style="gap: 16px;">
-                @if(_program.Workouts != null && _program.Workouts.Any())
+                @if (_program.Workouts != null && _program.Workouts.Any())
                 {
                     @foreach (var workout in _program.Workouts.OrderBy(w => w.Order))
                     {
@@ -71,13 +71,13 @@
                         <article class="rf-card rf-card-bordered" style="@(isSkipped ? "opacity: 0.75;" : "")">
                             <!-- The left thick border -->
                             <div class="@(isCompleted ? "rf-card-border-completed" : (isUpNext ? "rf-card-border-up-next" : "rf-card-border-upcoming"))" style="@(isSkipped ? "opacity: 0.5;" : "")"></div>
-                            
+
                             <a href="@($"/workouts/detail/{workout.Id}")" class="rf-card-bordered-content">
                                 <div class="rf-flex-row rf-justify-between rf-items-start" style="margin-bottom: 8px;">
                                     <h3 class="font-headline" style="color: @(isCompleted ? "var(--color-primary-fixed)" : (isUpNext ? "#ffffff" : "var(--color-on-surface-variant)")); font-size: 20px; font-weight: bold; margin: 0; line-height: 1.2; @(isSkipped ? "text-decoration: line-through; opacity: 0.85;" : "")">
                                         @workout.Name
                                     </h3>
-                                    
+
                                     <div class="rf-flex-row rf-items-center" style="gap: 4px; background-color: var(--color-surface-container); border-radius: 8px; padding: 4px; border: 1px solid rgba(255,255,255,0.05); z-index: 10; margin-top: -2px;" @onclick:stopPropagation="true" @onclick:preventDefault="true">
                                         <a href="@($"/workouts/edit/{Id}/{workout.Id}")" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: var(--color-on-surface-variant); text-decoration: none; border-radius: 6px;" @onclick:stopPropagation="true">
                                             <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
@@ -91,7 +91,7 @@
 
                                 <!-- Tags -->
                                 <div class="rf-flex-row rf-flex-wrap" style="gap: 8px; margin-bottom: 12px;">
-                                    @foreach(var tag in GetTags(workout))
+                                    @foreach (var tag in GetTags(workout))
                                     {
                                         <span class="@(isCompleted || isUpNext ? "rf-badge" : "rf-badge-faded")" style="font-size: 10px; padding: 3px 10px; @(isUpNext ? "color: #ffffff; border-color: rgba(255, 255, 255, 0.4); background-color: rgba(255, 255, 255, 0.1);" : "") @(isSkipped ? "text-decoration: line-through; opacity: 0.8;" : "")">
                                             @tag
@@ -111,28 +111,28 @@
                                     </div>
 
                                     <!-- Status -->
-                                    @if(isCompleted)
+                                    @if (isCompleted)
                                     {
                                         <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-primary-fixed); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
                                             COMPLETED
                                             <span class="material-symbols-outlined" style="font-size: 20px; font-variation-settings: 'FILL' 1;">check_circle</span>
                                         </div>
                                     }
-                                    else if(isUpNext)
+                                    else if (isUpNext)
                                     {
                                         <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: #ffffff; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
                                             UP NEXT
                                             <span class="material-symbols-outlined" style="font-size: 20px; font-variation-settings: 'FILL' 1;">play_circle</span>
                                         </div>
                                     }
-                                    else if(isSkipped)
+                                    else if (isSkipped)
                                     {
                                         <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-on-surface-variant); opacity: 0.8; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
                                             SKIPPED
                                             <span class="material-symbols-outlined" style="font-size: 20px;">cancel</span>
                                         </div>
                                     }
-                                    else if(_isSelected)
+                                    else if (_isSelected)
                                     {
                                         <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-on-surface-variant); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
                                             UPCOMING
@@ -172,21 +172,21 @@
     protected override async Task OnParametersSetAsync()
     {
         _program = await ProgramService.GetProgramByIdAsync(Id);
-        
+
         _completedWorkouts.Clear();
         if (_program != null)
         {
             TopBar.SetDetailMode("Program Detail");
-            
+
             if (_program.Workouts != null)
             {
-                foreach(var w in _program.Workouts)
+                foreach (var w in _program.Workouts)
                 {
                     _completedWorkouts[w.Id] = await ProgramService.HasLogWithinDaysAsync(w.Id, 9);
                 }
             }
         }
-        
+
         var selectedProgram = await ProgramService.GetSelectedWorkoutProgramAsync();
         _isSelected = selectedProgram != null && selectedProgram.Id == Id;
 
@@ -222,13 +222,14 @@
                 .Select(i => i.Exercise!.PrimaryMuscleCategory!.ToUpper())
                 .Distinct()
                 .ToList();
-                
+
             if (targetMuscles.Any())
             {
                 return targetMuscles;
             }
         }
-        return new List<string> { "GENEL" };
+
+        return new List<string> { "GENERAL" };
     }
 
     private async Task SelectProgram()
@@ -262,4 +263,5 @@
     {
         TopBar.OnLeftActionTapped -= HandleLeftAction;
     }
+
 }

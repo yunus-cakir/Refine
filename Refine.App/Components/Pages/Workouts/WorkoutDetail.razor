@@ -27,7 +27,7 @@ else
     }
 
     <div class="workout-detail-container">
-        
+
         <!-- Target Muscles -->
         <section class="section-margin">
             <h2 class="font-body target-muscles-title">Target Muscles</h2>
@@ -39,7 +39,7 @@ else
                         .Select(i => i.Exercise!.PrimaryMuscleCategory!.ToUpper())
                         .Distinct()
                         .ToList();
-                    
+
                     if (targetMuscles.Any())
                     {
                         foreach (var muscle in targetMuscles)
@@ -49,7 +49,7 @@ else
                     }
                     else
                     {
-                        <span class="refine-badge">GENEL</span>
+                        <span class="refine-badge">GENERAL</span>
                     }
                 }
             </div>
@@ -131,7 +131,7 @@ else
     private decimal CalculateItemCnsLoad(WorkoutItem item)
     {
         decimal baseScore = item.Exercise?.CnsFatigueScore ?? 0m;
-        
+
         int reps = 10;
         if (!string.IsNullOrWhiteSpace(item.RepsRange))
         {
@@ -141,10 +141,10 @@ else
                 reps = parsedRep;
             }
         }
-        
+
         decimal repMultiplier = reps > 0 ? (reps / 10m) : 1.0m;
         decimal rirMultiplier = 1.0m + ((3m - PreferredRIR) * 0.1m);
-        
+
         return baseScore * item.Sets * repMultiplier * rirMultiplier;
     }
 
@@ -179,7 +179,6 @@ else
             TopBar.SetDetailMode(_workout.Name);
         }
     }
-
 
 
     private bool _showTopBarMenu = false;
@@ -228,4 +227,5 @@ else
             NavManager.NavigateTo($"/session/active/{Id}{baseQuery}");
         }
     }
+
 }

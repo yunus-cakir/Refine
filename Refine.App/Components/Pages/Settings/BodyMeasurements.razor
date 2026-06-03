@@ -11,7 +11,7 @@
     {
         <div class="text-center py-5">
             <div class="spinner-border text-primary-container" role="status">
-                <span class="visually-hidden">Yükleniyor...</span>
+                <span class="visually-hidden">Loading...</span>
             </div>
         </div>
     }
@@ -28,7 +28,7 @@
                             <span class="material-symbols-outlined label-icon-top">height</span>
                         </div>
                         <div class="input-wrapper">
-                            <input type="number" step="any" class="body-input" placeholder="@(_ghostHeight?.ToString() ?? "---")" @bind="_inputHeight" />
+                            <input type="number" step="any" class="body-input" placeholder="@(_ghostHeight?.ToString() ?? "---")" @bind="_inputHeight"/>
                             <span class="unit-label">cm</span>
                         </div>
                     </div>
@@ -42,7 +42,7 @@
                             <span class="material-symbols-outlined label-icon-top">scale</span>
                         </div>
                         <div class="input-wrapper">
-                            <input type="number" step="any" class="body-input" placeholder="@(_ghostWeight?.ToString() ?? "---")" @bind="_inputWeight" />
+                            <input type="number" step="any" class="body-input" placeholder="@(_ghostWeight?.ToString() ?? "---")" @bind="_inputWeight"/>
                             <span class="unit-label">kg</span>
                         </div>
                     </div>
@@ -52,7 +52,7 @@
             <!-- Circumference Section Header -->
             <div class="mb-3">
                 <h5 class="font-headline fw-bold uppercase tracking-wider mb-2" style="font-size: 13px; letter-spacing: 0.1em; color: var(--color-on-surface-variant);">CIRCUMFERENCE DATA</h5>
-                <hr style="border-color: rgba(255, 255, 255, 0.08); margin: 0;" />
+                <hr style="border-color: rgba(255, 255, 255, 0.08); margin: 0;"/>
             </div>
 
             <!-- Circumference rows -->
@@ -66,7 +66,7 @@
                         <span class="row-title font-body text-white">Neck</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
-                        <input type="number" step="any" class="body-input" placeholder="@(_ghostNeck?.ToString() ?? "---")" @bind="_inputNeck" />
+                        <input type="number" step="any" class="body-input" placeholder="@(_ghostNeck?.ToString() ?? "---")" @bind="_inputNeck"/>
                         <span class="unit-label">cm</span>
                     </div>
                 </div>
@@ -80,7 +80,7 @@
                         <span class="row-title font-body text-white">Shoulders</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
-                        <input type="number" step="any" class="body-input" placeholder="@(_ghostShoulder?.ToString() ?? "---")" @bind="_inputShoulder" />
+                        <input type="number" step="any" class="body-input" placeholder="@(_ghostShoulder?.ToString() ?? "---")" @bind="_inputShoulder"/>
                         <span class="unit-label">cm</span>
                     </div>
                 </div>
@@ -94,7 +94,7 @@
                         <span class="row-title font-body text-white">Waist</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
-                        <input type="number" step="any" class="body-input" placeholder="@(_ghostWaist?.ToString() ?? "---")" @bind="_inputWaist" />
+                        <input type="number" step="any" class="body-input" placeholder="@(_ghostWaist?.ToString() ?? "---")" @bind="_inputWaist"/>
                         <span class="unit-label">cm</span>
                     </div>
                 </div>
@@ -108,7 +108,7 @@
                         <span class="row-title font-body text-white">Hips</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
-                        <input type="number" step="any" class="body-input" placeholder="@(_ghostHip?.ToString() ?? "---")" @bind="_inputHip" />
+                        <input type="number" step="any" class="body-input" placeholder="@(_ghostHip?.ToString() ?? "---")" @bind="_inputHip"/>
                         <span class="unit-label">cm</span>
                     </div>
                 </div>
@@ -168,7 +168,7 @@
         {
             // Height is a flat cached biometric property
             _ghostHeight = _user.Height > 0 ? _user.Height : null;
-            
+
             // Weight is also flat cached on User but we can check if they have logs
             _ghostWeight = _user.Weight > 0 ? _user.Weight : null;
 
@@ -252,4 +252,5 @@
         // Always clean up subscriptions to prevent event memory leaks
         TopBar.OnLeftActionTapped -= HandleLeftAction;
     }
+
 }

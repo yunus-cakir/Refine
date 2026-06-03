@@ -5,8 +5,7 @@ namespace Refine.App.Models;
 
 public class Exercise
 {
-    [PrimaryKey, AutoIncrement]
-    public int Id { get; set; }
+    [PrimaryKey, AutoIncrement] public int Id { get; set; }
 
     public string Name { get; set; } = "";
     public string Difficulty { get; set; } = "";
@@ -19,12 +18,12 @@ public class Exercise
     public List<ExerciseMuscleMap> MuscleMaps { get; set; } = new();
 
     [Ignore]
-    public string PrimaryMuscleCategory 
+    public string PrimaryMuscleCategory
     {
-        get 
+        get
         {
             var primaryMap = MuscleMaps?.OrderByDescending(m => m.ImpactMultiplier).FirstOrDefault();
-            return primaryMap?.MuscleGroup?.Category ?? "Genel";
+            return primaryMap?.MuscleGroup?.Category ?? "General";
         }
     }
 
