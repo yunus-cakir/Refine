@@ -3,16 +3,9 @@
 @using Refine.App.Services
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
-@inject IJSRuntime JS
+@inject TopBarBridge TopBar
 
 <div class="page-container py-4 px-0 min-h-screen">
-    <!-- Header with Back Button -->
-    <div class="d-flex align-items-center gap-3 mb-4">
-        <button class="back-btn d-flex align-items-center justify-content-center" @onclick='() => JS.InvokeVoidAsync("history.back")'>
-            <span class="material-symbols-outlined text-white" style="font-size: 20px;">arrow_back</span>
-        </button>
-        <h3 class="font-headline fw-bold m-0 text-white">Workout Settings</h3>
-    </div>
 
     @if (_user == null)
     {
@@ -24,15 +17,96 @@
     }
     else
     {
-        <!-- Placeholder Card -->
-        <div class="settings-card animate-fade-in p-4 mb-4 text-center">
-            <div class="icon-glow mb-3 mx-auto d-flex align-items-center justify-content-center">
-                <span class="material-symbols-outlined text-primary-container" style="font-size: 32px;">fitness_center</span>
+        <div class="settings-list d-flex flex-column gap-4 px-3 animate-fade-in pb-5">
+            <!-- Preferred Rep Range Card -->
+            <div class="rf-card p-4">
+                <div class="d-flex align-items-start justify-content-between mb-4">
+                    <h6 class="text-white text-uppercase m-0 tracking-wider" style="font-size: 13px; text-align: left;">Preferred Rep Range</h6>
+                    <div class="value-badge ms-3">@_user.WorkoutSettings.PreferredRepRange</div>
+                </div>
+
+                <div class="dual-slider-container relative mb-3">
+                    <div class="slider-track absolute w-full h-2 rounded-full top-50 translate-middle-y"></div>
+                    <div class="slider-fill absolute h-2 rounded-full top-50 translate-middle-y" style="@GetRepRangeFillStyle()"></div>
+
+                    <input type="range" min="1" max="20" step="1" value="@_user.WorkoutSettings.PreferredMinReps" @oninput="OnMinRepsInput" @onchange="OnSettingsCommitted" class="dual-slider min-slider absolute w-full h-full top-0 start-0 m-0 p-0"/>
+                    <input type="range" min="1" max="20" step="1" value="@_user.WorkoutSettings.PreferredMaxReps" @oninput="OnMaxRepsInput" @onchange="OnSettingsCommitted" class="dual-slider max-slider absolute w-full h-full top-0 start-0 m-0 p-0"/>
+                </div>
+
+                <div class="d-flex align-items-start justify-content-between text-on-surface-variant font-label small mt-4" style="font-size: 10px;">
+                    <div class="text-start" style="width: 33%">POWER</div>
+                    <div class="text-center" style="width: 34%">HYPERTROPHY</div>
+                    <div class="text-end" style="width: 33%">ENDURANCE</div>
+                </div>
             </div>
-            <h5 class="text-white fw-bold mb-2">Configure Your Workouts</h5>
-            <p class="text-on-surface-variant small mb-0 px-3">
-                Workout parameters, preferred target rep ranges, RIR (Reps in Reserve) targets, and automation settings will be fully editable here soon.
-            </p>
+
+            <!-- Target RIR Card -->
+            <div class="rf-card p-4">
+                <div class="d-flex align-items-start justify-content-between mb-4">
+                    <div class="d-flex flex-column gap-1 text-start">
+                        <h6 class="text-white text-uppercase m-0 tracking-wider" style="font-size: 13px;">Target RIR</h6>
+                        <span class="text-on-surface-variant font-label small" style="opacity: 0.8;">Reps In Reserve</span>
+                    </div>
+                    <div class="value-badge ms-3">@_user.WorkoutSettings.PreferredRIR.ToString("0.0")</div>
+                </div>
+
+                <div class="single-slider-container relative mb-3">
+                    <div class="slider-track absolute w-full h-2 rounded-full top-50 translate-middle-y"></div>
+                    <div class="slider-fill absolute h-2 rounded-full top-50 translate-middle-y" style="@GetRirFillStyle()"></div>
+
+                    <!-- Track dots -->
+                    <div class="track-dots absolute w-full h-full top-0 start-0 pointer-events-none d-flex align-items-center justify-content-between px-2">
+                        @for (int i = 0; i <= 5; i++)
+                        {
+                            <div class="track-dot rounded-full bg-background" style="width: 4px; height: 4px;"></div>
+                        }
+                    </div>
+                    <input type="range" min="0" max="5" step="0.5" value="@_user.WorkoutSettings.PreferredRIR" @oninput="OnRirInput" @onchange="OnSettingsCommitted" class="single-slider absolute w-full h-full top-0 start-0 m-0 p-0"/>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between text-on-surface-variant font-label small mt-4" style="font-size: 10px;">
+                    <span>0 (FAILURE)</span>
+                    <span>SUB-MAXIMAL</span>
+                    <span>5 (RECOVERY)</span>
+                </div>
+            </div>
+
+            <!-- Auto Copy Previous Set Data Card -->
+            <div class="rf-card p-4">
+                <h6 class="text-white text-uppercase mb-2 tracking-wider text-start" style="font-size: 13px;">Auto Copy Previous Set Data</h6>
+                <p class="text-on-surface-variant font-label small mb-4 text-start" style="opacity: 0.8;">Automatically import selected previous week data.</p>
+
+                <div class="d-flex flex-column gap-4 mt-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="text-white font-title-sm">Weight</span>
+                        <label class="custom-switch m-0">
+                            <input type="checkbox" @bind="_user.WorkoutSettings.AutoCopyWeight" @bind:after="SaveSettings"/>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="text-white font-title-sm">Reps</span>
+                        <label class="custom-switch m-0">
+                            <input type="checkbox" @bind="_user.WorkoutSettings.AutoCopyReps" @bind:after="SaveSettings"/>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="text-white font-title-sm">RIR</span>
+                        <label class="custom-switch m-0">
+                            <input type="checkbox" @bind="_user.WorkoutSettings.AutoCopyRIR" @bind:after="SaveSettings"/>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="text-white font-title-sm">Form Rating</span>
+                        <label class="custom-switch m-0">
+                            <input type="checkbox" @bind="_user.WorkoutSettings.AutoCopyFormRating" @bind:after="SaveSettings"/>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
         </div>
     }
 </div>
@@ -40,9 +114,107 @@
 @code {
     private User? _user;
 
+    protected override void OnInitialized()
+    {
+        TopBar.SetDetailMode("Workout Settings");
+    }
+
     protected override async Task OnInitializedAsync()
     {
         _user = await DbService.GetUserAsync();
+        if (_user != null)
+        {
+            bool changed = false;
+            if (_user.WorkoutSettings.PreferredMaxReps > 20)
+            {
+                _user.WorkoutSettings.PreferredMaxReps = 20;
+                changed = true;
+            }
+            if (_user.WorkoutSettings.PreferredMinReps > 20)
+            {
+                _user.WorkoutSettings.PreferredMinReps = 20;
+                changed = true;
+            }
+            if (changed)
+            {
+                UpdateRepRange();
+                await SaveSettings();
+            }
+        }
     }
 
+    private void OnMinRepsInput(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var val))
+        {
+            _user!.WorkoutSettings.PreferredMinReps = val;
+            if (_user.WorkoutSettings.PreferredMinReps > _user.WorkoutSettings.PreferredMaxReps)
+            {
+                _user.WorkoutSettings.PreferredMinReps = _user.WorkoutSettings.PreferredMaxReps;
+            }
+            UpdateRepRange();
+        }
+    }
+
+    private void OnMaxRepsInput(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var val))
+        {
+            _user!.WorkoutSettings.PreferredMaxReps = val;
+            if (_user.WorkoutSettings.PreferredMaxReps < _user.WorkoutSettings.PreferredMinReps)
+            {
+                _user.WorkoutSettings.PreferredMaxReps = _user.WorkoutSettings.PreferredMinReps;
+            }
+            UpdateRepRange();
+        }
+    }
+
+    private void OnRirInput(ChangeEventArgs e)
+    {
+        if (decimal.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var val))
+        {
+            _user!.WorkoutSettings.PreferredRIR = val;
+        }
+    }
+
+    private async Task OnSettingsCommitted()
+    {
+        await SaveSettings();
+    }
+
+    private void UpdateRepRange()
+    {
+        _user!.WorkoutSettings.PreferredRepRange = $"{_user.WorkoutSettings.PreferredMinReps} - {_user.WorkoutSettings.PreferredMaxReps}";
+    }
+
+    private string GetRepRangeFillStyle()
+    {
+        if (_user == null) return "left: 0%; width: 0%;";
+        var min = _user.WorkoutSettings.PreferredMinReps;
+        var max = _user.WorkoutSettings.PreferredMaxReps;
+        const int sliderMin = 1;
+        const int sliderMax = 20;
+        const int range = sliderMax - sliderMin;
+
+        var leftPercent = ((min - sliderMin) * 100.0) / range;
+        var widthPercent = ((max - min) * 100.0) / range;
+        return $"left: {leftPercent}%; width: {widthPercent}%;";
+    }
+
+    private string GetRirFillStyle()
+    {
+        if (_user == null) return "width: 0%;";
+        var val = _user.WorkoutSettings.PreferredRIR;
+        const decimal sliderMax = 5.0m;
+        var widthPercent = (val * 100m) / sliderMax;
+        return $"width: {widthPercent}%;";
+    }
+
+    private async Task SaveSettings()
+    {
+        if (_user != null)
+        {
+            await DbService.UpdateUserAsync(_user);
+        }
+    }
 }

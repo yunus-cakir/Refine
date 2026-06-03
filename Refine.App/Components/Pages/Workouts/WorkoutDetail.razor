@@ -126,7 +126,7 @@ else
 
     private decimal TotalCnsLoad => _workout?.Items?.Sum(i => CalculateItemCnsLoad(i)) ?? 0;
     private decimal CnsThreshold = 150m;
-    private int PreferredRIR = 2;
+    private decimal PreferredRIR = 2.0m;
 
     private decimal CalculateItemCnsLoad(WorkoutItem item)
     {
@@ -143,7 +143,7 @@ else
         }
 
         decimal repMultiplier = reps > 0 ? (reps / 10m) : 1.0m;
-        decimal rirMultiplier = 1.0m + ((3m - PreferredRIR) * 0.1m);
+        decimal rirMultiplier = 1.0m + ((3.0m - PreferredRIR) * 0.1m);
 
         return baseScore * item.Sets * repMultiplier * rirMultiplier;
     }

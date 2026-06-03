@@ -15,9 +15,14 @@ public class AppSettings
 
 public class WorkoutSettings
 {
-    public int PreferredReps { get; set; } = 10;
-    public int PreferredRIR { get; set; } = 2;
-    public bool AutoCopyPreviousSetData { get; set; } = true;
+    public int PreferredMinReps { get; set; } = 8;
+    public int PreferredMaxReps { get; set; } = 12;
+    public string PreferredRepRange { get; set; } = "8-12";
+    public decimal PreferredRIR { get; set; } = 2.0m;
+    public bool AutoCopyWeight { get; set; } = true;
+    public bool AutoCopyReps { get; set; } = true;
+    public bool AutoCopyRIR { get; set; } = true;
+    public bool AutoCopyFormRating { get; set; } = true;
     public decimal CnsThreshold { get; set; } = 150m;
     public string CycleLength { get; set; } = "Weekly";
 }

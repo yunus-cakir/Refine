@@ -3,17 +3,10 @@
 @using Refine.App.Services
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
-@inject IJSRuntime JS
+@inject TopBarBridge TopBar
+@implements IDisposable
 
 <div class="page-container py-4 px-0 min-h-screen">
-    <!-- Header with Back Button -->
-    <div class="d-flex align-items-center gap-3 mb-4">
-        <button class="back-btn d-flex align-items-center justify-content-center" @onclick='() => JS.InvokeVoidAsync("history.back")'>
-            <span class="material-symbols-outlined text-white" style="font-size: 20px;">arrow_back</span>
-        </button>
-        <h3 class="font-headline fw-bold m-0 text-white">Edit Profile</h3>
-    </div>
-
     @if (_user == null)
     {
         <div class="text-center py-5">
@@ -24,25 +17,127 @@
     }
     else
     {
-        <!-- Placeholder Card -->
-        <div class="settings-card animate-fade-in p-4 mb-4 text-center">
-            <div class="icon-glow mb-3 mx-auto d-flex align-items-center justify-content-center">
-                <span class="material-symbols-outlined text-primary-container" style="font-size: 32px;">edit</span>
+        <!-- Avatar Section -->
+        <div class="text-center mb-5 mt-2">
+            <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px; border: 4px solid var(--refine-primary-container); background-color: #C3F400;">
+                <span class="material-symbols-outlined" style="font-size: 64px; font-variation-settings: 'FILL' 1; color: #000000;">person</span>
             </div>
-            <h5 class="text-white fw-bold mb-2">Edit Athlete Details</h5>
-            <p class="text-on-surface-variant small mb-0 px-3">
-                Your first name, last name, email address, profile avatar, and basic login credentials will be fully editable here soon.
-            </p>
+        </div>
+
+        <!-- Form Section -->
+        <div class="mb-4 animate-fade-in">
+            <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">First Name</div>
+            <div class="rf-card input-card">
+                <span class="material-symbols-outlined input-icon">person</span>
+                <input type="text" class="profile-input" @bind="_user.FirstName" placeholder="Enter first name" />
+            </div>
+        </div>
+
+        <div class="mb-4 animate-fade-in" style="animation-delay: 0.05s;">
+            <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">Last Name</div>
+            <div class="rf-card input-card">
+                <span class="material-symbols-outlined input-icon">badge</span>
+                <input type="text" class="profile-input" @bind="_user.LastName" placeholder="Enter last name" />
+            </div>
+        </div>
+
+        <div class="mb-4 animate-fade-in" style="animation-delay: 0.1s;">
+            <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">Email Address</div>
+            <div class="rf-card input-card">
+                <span class="material-symbols-outlined input-icon">mail</span>
+                <input type="email" class="profile-input" @bind="_user.Email" placeholder="Enter email address" />
+            </div>
+        </div>
+
+        <div class="mb-4 animate-fade-in" style="animation-delay: 0.15s;">
+            <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">Gender</div>
+            <div class="rf-card input-card" @onclick="() => _showGenderDropdown = true" style="cursor: pointer;">
+                <span class="material-symbols-outlined input-icon">wc</span>
+                <div class="profile-input d-flex align-items-center" style="color: @(string.IsNullOrEmpty(_user.Gender) ? "rgba(255,255,255,0.35)" : "#ffffff") !important;">
+                    @(string.IsNullOrEmpty(_user.Gender) ? "Select Gender" : _user.Gender)
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 20px;">expand_more</span>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="mt-4 px-1">
+            <button class="rf-button-primary w-100" @onclick="SaveProfile">
+                <span class="material-symbols-outlined" style="font-size: 20px;">check</span>
+                SAVE PROFILE
+            </button>
+        </div>
+    }
+
+    <!-- Bottom Sheet for Gender Selection -->
+    @if (_showGenderDropdown && _user != null)
+    {
+        <div class="bottom-sheet-backdrop" @onclick="() => _showGenderDropdown = false"></div>
+        <div class="bottom-sheet animate-slide-up">
+            <div class="bottom-sheet-handle"></div>
+            <div class="bottom-sheet-title">SELECT CLASSIFICATION</div>
+            
+            <div class="bottom-sheet-options">
+                <button class="bottom-sheet-option @(_user.Gender == "Male" ? "selected" : "")" @onclick='() => SelectGender("Male")'>
+                    <span class="material-symbols-outlined option-icon">male</span>
+                    <span class="option-text">Male</span>
+                    @if (_user.Gender == "Male") { <span class="material-symbols-outlined check-icon">check</span> }
+                </button>
+                
+                <button class="bottom-sheet-option @(_user.Gender == "Female" ? "selected" : "")" @onclick='() => SelectGender("Female")'>
+                    <span class="material-symbols-outlined option-icon">female</span>
+                    <span class="option-text">Female</span>
+                    @if (_user.Gender == "Female") { <span class="material-symbols-outlined check-icon">check</span> }
+                </button>
+                
+                <button class="bottom-sheet-option @(_user.Gender == "Non-binary" ? "selected" : "")" @onclick='() => SelectGender("Non-binary")'>
+                    <span class="material-symbols-outlined option-icon">transgender</span>
+                    <span class="option-text">Non-binary</span>
+                    @if (_user.Gender == "Non-binary") { <span class="material-symbols-outlined check-icon">check</span> }
+                </button>
+                
+                <button class="bottom-sheet-option @(_user.Gender == "Prefer not to say" ? "selected" : "")" @onclick='() => SelectGender("Prefer not to say")'>
+                    <span class="material-symbols-outlined option-icon">visibility_off</span>
+                    <span class="option-text">Prefer not to say</span>
+                    @if (_user.Gender == "Prefer not to say") { <span class="material-symbols-outlined check-icon">check</span> }
+                </button>
+            </div>
+
+            <button class="bottom-sheet-cancel" @onclick="() => _showGenderDropdown = false">CANCEL</button>
         </div>
     }
 </div>
 
 @code {
     private User? _user;
+    private bool _showGenderDropdown = false;
 
     protected override async Task OnInitializedAsync()
     {
+        TopBar.SetDetailMode("Edit Profile");
         _user = await DbService.GetUserAsync();
     }
 
+    private void SelectGender(string gender)
+    {
+        if (_user != null)
+        {
+            _user.Gender = gender;
+        }
+        _showGenderDropdown = false;
+    }
+
+    private async Task SaveProfile()
+    {
+        if (_user != null)
+        {
+            await DbService.UpdateUserAsync(_user);
+            NavManager.NavigateTo("/profile");
+        }
+    }
+
+    public void Dispose()
+    {
+        TopBar.SetHomeMode();
+    }
 }

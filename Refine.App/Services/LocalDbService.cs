@@ -52,7 +52,7 @@ public class LocalDbService
                 MetabolismType = "normal",
                 AppSettings = new AppSettings { Language = "en", UnitSystem = "metric", Theme = "dark" },
                 WorkoutSettings = new WorkoutSettings
-                    { PreferredReps = 10, PreferredRIR = 2, AutoCopyPreviousSetData = true }
+                    { PreferredMinReps = 8, PreferredMaxReps = 12, PreferredRepRange = "8-12", PreferredRIR = 2.0m, AutoCopyWeight = true, AutoCopyReps = true, AutoCopyRIR = true, AutoCopyFormRating = true }
             };
             await _connection.InsertWithChildrenAsync(newUser);
 
@@ -122,7 +122,7 @@ public class LocalDbService
             if (user.WorkoutSettings == null)
             {
                 user.WorkoutSettings = new WorkoutSettings
-                    { PreferredReps = 10, PreferredRIR = 2, AutoCopyPreviousSetData = true };
+                    { PreferredMinReps = 8, PreferredMaxReps = 12, PreferredRepRange = "8-12", PreferredRIR = 2.0m, AutoCopyWeight = true, AutoCopyReps = true, AutoCopyRIR = true, AutoCopyFormRating = true };
                 needsUpdate = true;
             }
 

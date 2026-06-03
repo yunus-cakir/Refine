@@ -1,0 +1,136 @@
+/* Card styling is handled by global rf-card class */
+
+.value-badge {
+    background-color: rgba(195, 244, 0, 0.1);
+    color: var(--color-primary-container);
+    border: 1px solid rgba(195, 244, 0, 0.2);
+    padding: 6px 16px;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--text-lg);
+    font-family: var(--font-mono);
+    white-space: nowrap;
+}
+
+/* Sliders */
+.dual-slider-container, .single-slider-container {
+    height: 24px;
+}
+
+.slider-track {
+    background-color: rgba(255, 255, 255, 0.15);
+    height: 8px;
+    width: 100%;
+}
+
+.slider-fill {
+    background-color: var(--color-primary-container);
+    box-shadow: 0 0 10px rgba(195, 244, 0, 0.6), 0 0 4px rgba(195, 244, 0, 0.4);
+    z-index: 1;
+    height: 8px;
+}
+
+.bg-background {
+    background-color: var(--color-background);
+}
+
+.dual-slider, .single-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    outline: none;
+    pointer-events: none; /* Let clicks pass through the track */
+    width: 100%;
+    height: 100%;
+}
+
+.track-dots {
+    width: 100%;
+    height: 100%;
+}
+
+/* Thumbs */
+.dual-slider::-webkit-slider-thumb, .single-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    pointer-events: auto;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-background);
+    border: 3px solid var(--color-primary-container);
+    cursor: pointer;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 0 8px rgba(195, 244, 0, 0.5);
+}
+
+.dual-slider::-moz-range-thumb, .single-slider::-moz-range-thumb {
+    pointer-events: auto;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-background);
+    border: 3px solid var(--color-primary-container);
+    cursor: pointer;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 0 8px rgba(195, 244, 0, 0.5);
+}
+
+/* Custom Switch */
+.custom-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.custom-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-surface-container-highest);
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--color-on-surface-variant);
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--color-primary-container);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--color-primary-container);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+    background-color: var(--color-on-primary-fixed);
+}
+
+/* Prevent card elevation/hover animation on settings page */
+.rf-card:hover {
+    transform: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}

@@ -71,14 +71,6 @@
         else if (relativeUri.StartsWith("more") || relativeUri.StartsWith("preferences")) tabKey = "more";
 
         NavBridge.LocationChanged(tabKey);
-
-        if (relativeUri.StartsWith("profile/edit", StringComparison.OrdinalIgnoreCase) ||
-            relativeUri.StartsWith("profile/workout-settings", StringComparison.OrdinalIgnoreCase) ||
-            relativeUri.StartsWith("profile/nutrition-settings", StringComparison.OrdinalIgnoreCase) ||
-            relativeUri.StartsWith("profile/app-settings", StringComparison.OrdinalIgnoreCase))
-        {
-            TopBar.SetHomeMode(string.Empty);
-        }
     }
 
     private void HandleNavigation(string uri)

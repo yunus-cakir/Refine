@@ -169,7 +169,7 @@ else
 
     private List<ExerciseHistoryGroup>? _logsGrouped;
     private decimal CnsThreshold = 150m;
-    private int PreferredRIR = 2;
+    private decimal PreferredRIR = 2.0m;
 
     private decimal TotalActualCnsLoad => _logsGrouped?.Sum(g =>
         g.Logs.Sum(l =>
@@ -180,7 +180,7 @@ else
     private decimal CalculateLogCnsLoad(WorkoutLog log, decimal baseScore)
     {
         int reps = log.Reps ?? 10;
-        int rir = log.RIR ?? PreferredRIR;
+        decimal rir = (decimal?)log.RIR ?? PreferredRIR;
 
         decimal repMultiplier = reps > 0 ? (reps / 10m) : 1.0m;
         decimal rirMultiplier = 1.0m + ((3m - rir) * 0.1m);

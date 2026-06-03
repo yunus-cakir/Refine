@@ -17,7 +17,7 @@
     else
     {
         <!-- Profile Header -->
-        <div class="profile-header d-flex align-items-center justify-content-between mb-5 animate-fade-in">
+        <div class="profile-header d-flex align-items-center justify-content-between mb-5 animate-fade-in px-3">
             <div class="d-flex align-items-center gap-3">
                 <!-- Glowing Avatar -->
                 <div class="avatar-container">
@@ -28,7 +28,7 @@
                 <!-- User Info -->
                 <div class="user-info">
                     <h2 class="user-name font-headline m-0">
-                        @(string.IsNullOrWhiteSpace(_user.FirstName) && string.IsNullOrWhiteSpace(_user.LastName) ? "Alex Mercer" : $"{_user.FirstName} {_user.LastName}")
+                        @(string.IsNullOrWhiteSpace(_user.FirstName) && string.IsNullOrWhiteSpace(_user.LastName) ? "John Doe" : $"{_user.FirstName} {_user.LastName}")
                     </h2>
                     <div class="badge-container d-flex align-items-center gap-1 mt-1">
                         <span class="material-symbols-outlined badge-icon">stars</span>
@@ -43,7 +43,7 @@
             </button>
         </div>
 
-        <More IsEmbedded="true" />
+        <More IsEmbedded="true"/>
     }
 </div>
 

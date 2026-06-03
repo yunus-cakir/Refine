@@ -22,13 +22,13 @@
             <div class="row g-3 mb-4">
                 <!-- BOY Card -->
                 <div class="col-6">
-                    <div class="measurement-card-top">
+                    <div class="refine-active-card">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="card-label-top font-label">HEIGHT</span>
+                            <span class="refine-input-label">HEIGHT</span>
                             <span class="material-symbols-outlined label-icon-top">height</span>
                         </div>
                         <div class="input-wrapper">
-                            <input type="number" step="any" class="body-input" placeholder="@(_ghostHeight?.ToString() ?? "---")" @bind="_inputHeight"/>
+                            <input type="number" step="any" class="rf-input-number" style="padding-right: 42px; width: 100%;" placeholder="@(_ghostHeight?.ToString() ?? "---")" @bind="_inputHeight"/>
                             <span class="unit-label">cm</span>
                         </div>
                     </div>
@@ -36,13 +36,13 @@
 
                 <!-- KILO Card -->
                 <div class="col-6">
-                    <div class="measurement-card-top">
+                    <div class="refine-active-card">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="card-label-top font-label">WEIGHT</span>
-                            <span class="material-symbols-outlined label-icon-top">scale</span>
+                            <span class="refine-input-label">WEIGHT</span>
+                            <span class="material-symbols-outlined label-icon-top">weight</span>
                         </div>
                         <div class="input-wrapper">
-                            <input type="number" step="any" class="body-input" placeholder="@(_ghostWeight?.ToString() ?? "---")" @bind="_inputWeight"/>
+                            <input type="number" step="any" class="rf-input-number" style="padding-right: 42px; width: 100%;" placeholder="@(_ghostWeight?.ToString() ?? "---")" @bind="_inputWeight"/>
                             <span class="unit-label">kg</span>
                         </div>
                     </div>
@@ -51,64 +51,64 @@
 
             <!-- Circumference Section Header -->
             <div class="mb-3">
-                <h5 class="font-headline fw-bold uppercase tracking-wider mb-2" style="font-size: 13px; letter-spacing: 0.1em; color: var(--color-on-surface-variant);">CIRCUMFERENCE DATA</h5>
+                <h5 class="refine-input-label" style="font-size: 13px; letter-spacing: 0.1em; color: var(--color-on-surface-variant);">CIRCUMFERENCE DATA</h5>
                 <hr style="border-color: rgba(255, 255, 255, 0.08); margin: 0;"/>
             </div>
 
             <!-- Circumference rows -->
             <div class="d-flex flex-column gap-3 mb-4">
                 <!-- Boyun çevresi -->
-                <div class="circumference-row-card p-3 d-flex justify-content-between align-items-center">
+                <div class="refine-active-card p-3 d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-3">
                         <div class="row-icon-container">
                             <span class="material-symbols-outlined row-icon">line_weight</span>
                         </div>
-                        <span class="row-title font-body text-white">Neck</span>
+                        <span class="refine-input-label" style="margin: 0; font-size: 15px;">Neck</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
-                        <input type="number" step="any" class="body-input" placeholder="@(_ghostNeck?.ToString() ?? "---")" @bind="_inputNeck"/>
+                        <input type="number" step="any" class="rf-input-number" style="padding-right: 42px; width: 100%;" placeholder="@(_ghostNeck?.ToString() ?? "---")" @bind="_inputNeck"/>
                         <span class="unit-label">cm</span>
                     </div>
                 </div>
 
                 <!-- Omuz çevresi -->
-                <div class="circumference-row-card p-3 d-flex justify-content-between align-items-center">
+                <div class="refine-active-card p-3 d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-3">
                         <div class="row-icon-container">
                             <span class="material-symbols-outlined row-icon">sports_gymnastics</span>
                         </div>
-                        <span class="row-title font-body text-white">Shoulders</span>
+                        <span class="refine-input-label" style="margin: 0; font-size: 15px;">Shoulders</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
-                        <input type="number" step="any" class="body-input" placeholder="@(_ghostShoulder?.ToString() ?? "---")" @bind="_inputShoulder"/>
+                        <input type="number" step="any" class="rf-input-number" style="padding-right: 42px; width: 100%;" placeholder="@(_ghostShoulder?.ToString() ?? "---")" @bind="_inputShoulder"/>
                         <span class="unit-label">cm</span>
                     </div>
                 </div>
 
                 <!-- Bel çevresi -->
-                <div class="circumference-row-card p-3 d-flex justify-content-between align-items-center">
+                <div class="refine-active-card p-3 d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-3">
                         <div class="row-icon-container">
                             <span class="material-symbols-outlined row-icon">accessibility</span>
                         </div>
-                        <span class="row-title font-body text-white">Waist</span>
+                        <span class="refine-input-label" style="margin: 0; font-size: 15px;">Waist</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
-                        <input type="number" step="any" class="body-input" placeholder="@(_ghostWaist?.ToString() ?? "---")" @bind="_inputWaist"/>
+                        <input type="number" step="any" class="rf-input-number" style="padding-right: 42px; width: 100%;" placeholder="@(_ghostWaist?.ToString() ?? "---")" @bind="_inputWaist"/>
                         <span class="unit-label">cm</span>
                     </div>
                 </div>
 
                 <!-- Kalça çevresi -->
-                <div class="circumference-row-card p-3 d-flex justify-content-between align-items-center">
+                <div class="refine-active-card p-3 d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-3">
                         <div class="row-icon-container">
                             <span class="material-symbols-outlined row-icon">boy</span>
                         </div>
-                        <span class="row-title font-body text-white">Hips</span>
+                        <span class="refine-input-label" style="margin: 0; font-size: 15px;">Hips</span>
                     </div>
                     <div class="input-wrapper" style="width: 130px;">
-                        <input type="number" step="any" class="body-input" placeholder="@(_ghostHip?.ToString() ?? "---")" @bind="_inputHip"/>
+                        <input type="number" step="any" class="rf-input-number" style="padding-right: 42px; width: 100%;" placeholder="@(_ghostHip?.ToString() ?? "---")" @bind="_inputHip"/>
                         <span class="unit-label">cm</span>
                     </div>
                 </div>
@@ -116,7 +116,7 @@
 
             <!-- Save Button -->
             <div class="mt-4 px-1">
-                <button class="refine-glow-btn w-100 py-3 rounded-pill fw-bold" @onclick="SaveMeasurements">
+                <button class="rf-button-primary w-100" @onclick="SaveMeasurements">
                     <span class="material-symbols-outlined" style="font-size: 20px;">check</span>
                     SAVE
                 </button>

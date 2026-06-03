@@ -112,6 +112,7 @@
 .refine-card,
 .rf-card {
     background-color: #1a1b1d;
+    /* #1a1b1d; 19191b */
     backdrop-filter: blur(24px);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 16px;
@@ -407,11 +408,6 @@
     transform: scale(1.05);
 }
 
-.settings-card {
-    background: #111211;
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    border-radius: 20px;
-}
 
 .icon-glow {
     width: 64px;
@@ -463,7 +459,8 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background-color: #c3f400; /* color-primary */
+    background-color: #c3f400;
+    /* color-primary */
     display: flex;
     align-items: center;
     justify-content: center;
