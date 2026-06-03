@@ -146,7 +146,7 @@ public partial class MainPage : ContentPage
                 string targetUrl = tap.CommandParameter?.ToString() ?? "";
                 if (targetUrl == "preferences")
                 {
-                    _navBridge.NavigateTo("profile");
+                    _navBridge.NavigateTo("more");
                 }
                 else
                 {
@@ -178,9 +178,9 @@ public partial class MainPage : ContentPage
         IconAnalytics.TextColor = inactiveColor;
         TextAnalytics.TextColor = inactiveColor;
 
-        IconPreferences.FontFamily = fontOutlined;
-        IconPreferences.TextColor = inactiveColor;
-        TextPreferences.TextColor = inactiveColor;
+        IconMore.FontFamily = fontOutlined;
+        IconMore.TextColor = inactiveColor;
+        TextMore.TextColor = inactiveColor;
 
         // 2. Seçili olanı AKTİF YAP (Filled Font + Neon Renk)
         switch (activeUrl)
@@ -204,10 +204,10 @@ public partial class MainPage : ContentPage
                 break;
 
             case "preferences":
-            case "profile":
-                IconPreferences.FontFamily = fontFilled;
-                IconPreferences.TextColor = activeColor;
-                TextPreferences.TextColor = activeColor;
+            case "more":
+                IconMore.FontFamily = fontFilled;
+                IconMore.TextColor = activeColor;
+                TextMore.TextColor = activeColor;
                 break;
         }
     }

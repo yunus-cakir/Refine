@@ -67,7 +67,8 @@
         var tabKey = "";
         if (relativeUri.StartsWith("workouts") || relativeUri.StartsWith("session") || relativeUri.StartsWith("history") || relativeUri.StartsWith("programs")) tabKey = "workouts";
         else if (relativeUri.StartsWith("analytics")) tabKey = "analytics";
-        else if (relativeUri.StartsWith("profile") || relativeUri.StartsWith("preferences")) tabKey = "profile";
+        else if (relativeUri.StartsWith("profile")) tabKey = "profile";
+        else if (relativeUri.StartsWith("more") || relativeUri.StartsWith("preferences")) tabKey = "more";
 
         NavBridge.LocationChanged(tabKey);
 
@@ -97,7 +98,7 @@
         var baseUri = NavManager.BaseUri;
 
         // If we are at the home page or a root tab, let MAUI handle it (which closes the app)
-        if (currentUri == baseUri || currentUri == baseUri + "workouts" || currentUri == baseUri + "analytics" || currentUri == baseUri + "preferences")
+        if (currentUri == baseUri || currentUri == baseUri + "workouts" || currentUri == baseUri + "analytics" || currentUri == baseUri + "preferences" || currentUri == baseUri + "more")
         {
             return false;
         }

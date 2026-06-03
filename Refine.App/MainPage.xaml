@@ -147,13 +147,13 @@
                     <Label Text="Analytics" FontSize="10" FontAttributes="Bold" HorizontalOptions="Center" x:Name="TextAnalytics"/>
                 </VerticalStackLayout>
 
-                <!-- 4. Preferences -->
+                <!-- 4. Preferences (More) -->
                 <VerticalStackLayout Grid.Column="3" VerticalOptions="Center" HorizontalOptions="Center" Spacing="2">
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnNavTapped" CommandParameter="preferences"/>
                     </VerticalStackLayout.GestureRecognizers>
-                    <Label x:Name="IconPreferences" Text="{x:Static local:IconPaths.Preferences}" FontFamily="MaterialOutlined" FontSize="24" HorizontalOptions="Center" />
-                    <Label Text="Preferences" FontSize="10" FontAttributes="Bold" HorizontalOptions="Center" x:Name="TextPreferences"/>
+                    <Label x:Name="IconMore" Text="{x:Static local:IconPaths.More}" FontFamily="MaterialOutlined" FontSize="24" HorizontalOptions="Center" />
+                    <Label Text="More" FontSize="10" FontAttributes="Bold" HorizontalOptions="Center" x:Name="TextMore"/>
                 </VerticalStackLayout>
             </Grid>
         </Grid>

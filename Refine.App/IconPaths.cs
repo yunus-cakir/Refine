@@ -6,7 +6,7 @@ public static class IconPaths
     public const string Home = "\ue88a";
     public const string Workouts = "\ueb43"; // fitness_center
     public const string Analytics = "\uef3e"; // analytics
-    public const string Preferences = "\ue8b8"; // settings
+    public const string More = "\ue241"; // format_list_bulleted
     
     public const string ArrowBack = "\ue5c4"; // arrow_back
     public const string MoreVert = "\ue5d4"; // more_vert
@@ -25,6 +25,6 @@ public static class IconPaths
     
     public const string Analytics_Outline = Analytics;
     public const string Analytics_Filled = Analytics;
-    public const string Preferences_Outline = Preferences;
-    public const string Preferences_Filled = Preferences;
+    public const string More_Outline = More;
+    public const string More_Filled = More;
 }
