@@ -146,8 +146,6 @@
 
     protected override void OnInitialized()
     {
-        // Register left navigation action and configure native top bar
-        TopBar.OnLeftActionTapped += HandleLeftAction;
         TopBar.SetDetailMode("BODY MEASUREMENTS");
     }
 
@@ -156,10 +154,7 @@
         await LoadUserAndGhostValues();
     }
 
-    private void HandleLeftAction()
-    {
-        NavManager.NavigateTo("/profile");
-    }
+
 
     private async Task LoadUserAndGhostValues()
     {
@@ -250,7 +245,6 @@
     public void Dispose()
     {
         // Always clean up subscriptions to prevent event memory leaks
-        TopBar.OnLeftActionTapped -= HandleLeftAction;
     }
 
 }

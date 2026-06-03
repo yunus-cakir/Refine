@@ -188,7 +188,6 @@
 
     protected override void OnInitialized()
     {
-        TopBar.OnLeftActionTapped += HandleLeftAction;
         TopBar.OnRightActionTapped += HandleRightAction;
     }
 
@@ -363,10 +362,7 @@
         NavManager.NavigateTo("/programs");
     }
 
-    private void HandleLeftAction()
-    {
-        NavManager.NavigateTo("/");
-    }
+
 
     private void ToggleTopBarMenu()
     {
@@ -381,7 +377,6 @@
 
     public void Dispose()
     {
-        TopBar.OnLeftActionTapped -= HandleLeftAction;
         TopBar.OnRightActionTapped -= HandleRightAction;
     }
 

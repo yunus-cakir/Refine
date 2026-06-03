@@ -166,7 +166,6 @@
 
     protected override void OnInitialized()
     {
-        TopBar.OnLeftActionTapped += HandleLeftAction;
     }
 
     protected override async Task OnParametersSetAsync()
@@ -254,14 +253,10 @@
         }
     }
 
-    private void HandleLeftAction()
-    {
-        NavManager.NavigateTo("/programs");
-    }
+
 
     public void Dispose()
     {
-        TopBar.OnLeftActionTapped -= HandleLeftAction;
     }
 
 }

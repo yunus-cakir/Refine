@@ -68,7 +68,6 @@
 
     protected override void OnInitialized()
     {
-        TopBar.OnLeftActionTapped += HandleLeftAction;
     }
 
     protected override async Task OnInitializedAsync()
@@ -95,13 +94,9 @@
         }
     }
 
-    private void HandleLeftAction()
-    {
-        NavManager.NavigateTo("/workouts");
-    }
+
 
     public void Dispose()
     {
-        TopBar.OnLeftActionTapped -= HandleLeftAction;
     }
 }

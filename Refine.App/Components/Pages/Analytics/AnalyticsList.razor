@@ -140,13 +140,9 @@
 
     protected override void OnInitialized()
     {
-        TopBar.OnLeftActionTapped += HandleLeftAction;
     }
 
-    private void HandleLeftAction()
-    {
-        NavManager.NavigateTo("/");
-    }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -329,7 +325,6 @@
 
     public async ValueTask DisposeAsync()
     {
-        TopBar.OnLeftActionTapped -= HandleLeftAction;
         await Task.CompletedTask;
     }
 

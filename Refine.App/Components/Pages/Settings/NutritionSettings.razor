@@ -3,11 +3,12 @@
 @using Refine.App.Services
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
+@inject IJSRuntime JS
 
 <div class="page-container py-4 px-0 min-h-screen">
     <!-- Header with Back Button -->
     <div class="d-flex align-items-center gap-3 mb-4">
-        <button class="back-btn d-flex align-items-center justify-content-center" @onclick='() => NavManager.NavigateTo("/profile")'>
+        <button class="back-btn d-flex align-items-center justify-content-center" @onclick='() => JS.InvokeVoidAsync("history.back")'>
             <span class="material-symbols-outlined text-white" style="font-size: 20px;">arrow_back</span>
         </button>
         <h3 class="font-headline fw-bold m-0 text-white">Nutrition Settings</h3>

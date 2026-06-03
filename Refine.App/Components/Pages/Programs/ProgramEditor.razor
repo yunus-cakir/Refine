@@ -126,7 +126,6 @@
 
     protected override void OnInitialized()
     {
-        TopBar.OnLeftActionTapped += HandleLeftAction;
     }
 
     protected override async Task OnInitializedAsync()
@@ -231,17 +230,10 @@
         await DbService.UpdateWorkoutOrdersAsync(sortedList);
     }
 
-    private void HandleLeftAction()
-    {
-        if (Id == 0)
-            NavManager.NavigateTo("/programs");
-        else
-            NavManager.NavigateTo($"/programs/{Id}");
-    }
+
 
     public void Dispose()
     {
-        TopBar.OnLeftActionTapped -= HandleLeftAction;
         _objRef?.Dispose();
     }
 }
