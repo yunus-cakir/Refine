@@ -8,23 +8,23 @@
 
 
 <EditForm Model="@_workout" OnValidSubmit="SaveWorkout">
-    <DataAnnotationsValidator />
+    <DataAnnotationsValidator/>
 
     <div class="refine-card p-3 mb-4">
         <div class="mb-3">
             <label class="form-label text-muted small">Gün Adı</label>
-            <InputText @bind-Value="_workout.Name" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Push Day" />
+            <InputText @bind-Value="_workout.Name" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Push Day"/>
         </div>
         <div class="mb-3">
             <label class="form-label text-muted small">Açıklama</label>
-            <InputText @bind-Value="_workout.Description" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Göğüs ve Omuz odaklı..." />
+            <InputText @bind-Value="_workout.Description" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Göğüs ve Omuz odaklı..."/>
         </div>
 
         @if (ProgramId != 0)
         {
             <div class="mb-3">
                 <label class="form-label text-muted small">Program içi Sıralama (Order)</label>
-                <InputNumber @bind-Value="_workout.Order" class="form-control bg-dark text-white border-secondary" />
+                <InputNumber @bind-Value="_workout.Order" class="form-control bg-dark text-white border-secondary"/>
             </div>
         }
     </div>
@@ -36,7 +36,7 @@
             var dynamicColor = Refine.App.Services.CnsHelper.GetCnsColor(percentage);
         }
         <div class="d-flex justify-content-between align-items-center mb-1">
-            <span class="small fw-bold text-muted">Anlık CNS Yükü</span>
+            <span class="small fw-bold text-muted">Estimated CNS Load</span>
             <span class="small fw-bold" style="color: @dynamicColor;">
                 %@percentage.ToString("0")
             </span>
@@ -106,11 +106,11 @@
                     <div class="row g-2">
                         <div class="col-6">
                             <label class="small text-muted">Set</label>
-                            <InputNumber @bind-Value="item.Sets" class="form-control form-control-sm bg-dark text-white border-secondary" />
+                            <InputNumber @bind-Value="item.Sets" class="form-control form-control-sm bg-dark text-white border-secondary"/>
                         </div>
                         <div class="col-6">
                             <label class="small text-muted">Tekrar (Reps)</label>
-                            <InputText @bind-Value="item.RepsRange" class="form-control form-control-sm bg-dark text-white border-secondary" />
+                            <InputText @bind-Value="item.RepsRange" class="form-control form-control-sm bg-dark text-white border-secondary"/>
                         </div>
                     </div>
                 </div>
@@ -145,7 +145,7 @@
     private decimal CalculateItemCnsLoad(WorkoutItem item)
     {
         decimal baseScore = item.Exercise?.CnsFatigueScore ?? 0m;
-        
+
         // Parse RepsRange (e.g. "8-12" -> 12, "10" -> 10)
         int reps = 10; // default
         if (!string.IsNullOrWhiteSpace(item.RepsRange))
@@ -156,13 +156,12 @@
                 reps = parsedRep;
             }
         }
-        
+
         decimal repMultiplier = reps > 0 ? (reps / 10m) : 1.0m;
         decimal rirMultiplier = 1.0m + ((3.0m - PreferredRIR) * 0.1m);
-        
+
         return baseScore * item.Sets * repMultiplier * rirMultiplier;
     }
-
 
 
     protected override async Task OnInitializedAsync()
@@ -191,7 +190,6 @@
 
         TopBar.SetDetailMode(WorkoutId == 0 ? "Yeni Antrenman Günü" : "Antrenmanı Düzenle");
     }
-
 
 
     // YENİ EKLEME (Listenin sonuna)
@@ -267,4 +265,5 @@
     {
         await JS.InvokeVoidAsync("history.back");
     }
+
 }

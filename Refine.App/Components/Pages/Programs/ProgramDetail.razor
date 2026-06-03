@@ -44,18 +44,21 @@
                         </div>
                     }
                 </div>
-
-                <a href="@($"/workouts/edit/{Id}/0")" class="refine-icon-btn" style="width: 32px; height: 32px; background-color: rgba(195, 244, 0, 0.1); color: var(--color-primary-fixed); border-color: rgba(195, 244, 0, 0.2);">
-                    <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
-                </a>
             </div>
 
             <!-- Section Title -->
             <div class="rf-flex-row rf-items-center rf-justify-between" style="margin-top: 8px;">
-                <h3 class="font-headline" style="font-size: 20px; color: var(--color-primary); font-weight: 600; margin: 0;">Workout Days</h3>
-                <span class="@(_isSelected ? "rf-badge" : "rf-badge-faded")" style="font-size: 10px; padding: 3px 10px;">
-                    @(_program.Workouts?.Count ?? 0) DAYS
-                </span>
+                <div class="rf-flex-row rf-items-center" style="gap: 8px;">
+                    <h3 class="font-headline" style="font-size: 20px; color: var(--color-primary); font-weight: 600; margin: 0;">Workout Days</h3>
+                    <span class="@(_isSelected ? "rf-badge" : "rf-badge-faded")" style="font-size: 10px; padding: 3px 10px;">
+                        @(_program.Workouts?.Count ?? 0) DAYS
+                    </span>
+                </div>
+
+                <a href="@($"/workouts/edit/{Id}/0")" class="refine-icon-btn" style="width: auto; height: 32px; padding: 0 12px; border-radius: 16px; display: flex; align-items: center; gap: 4px; background-color: rgba(195, 244, 0, 0.1); color: var(--color-primary-fixed); border-color: rgba(195, 244, 0, 0.2); text-decoration: none;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                    <span class="font-label" style="font-size: 11px; font-weight: bold; letter-spacing: 0.05em;">ADD</span>
+                </a>
             </div>
 
             <!-- Workouts List -->

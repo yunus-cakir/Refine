@@ -69,7 +69,7 @@ else
                 var dynamicColor = Refine.App.Services.CnsHelper.GetCnsColor(percentage);
             }
             <div class="cns-header">
-                <span class="font-label cns-label">CNS Yorgunluk Yükü (Tahmini)</span>
+                <span class="font-label cns-label">Estimated CNS Load</span>
                 <span class="font-label" style="color: @dynamicColor; font-size: 11px;">
                     %@percentage.ToString("0")
                 </span>
@@ -95,7 +95,7 @@ else
             {
                 @foreach (var item in _workout.Items.OrderBy(i => i.Order))
                 {
-                    <article class="refine-card exercise-card">
+                    <article class="rf-card exercise-card">
                         <div class="exercise-card-content">
                             <div class="exercise-icon-container">
                                 <span class="material-symbols-outlined exercise-icon" style="font-variation-settings: 'FILL' 0;">fitness_center</span>
@@ -103,12 +103,14 @@ else
                             <div class="exercise-details">
                                 <div class="exercise-header">
                                     <h3 class="font-body exercise-title">@(item.Exercise?.Name ?? "Bilinmeyen Hareket")</h3>
-                                    <span class="material-symbols-outlined exercise-more-icon">more_vert</span>
                                 </div>
                                 <div class="exercise-stats font-body">
                                     <span class="stat-item"><span class="material-symbols-outlined stat-icon">repeat</span> @item.Sets Sets</span>
-                                    <span class="stat-divider">•</span>
-                                    <span class="stat-item"><span class="material-symbols-outlined stat-icon">fitness_center</span> @item.RepsRange Reps</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.RepsRange) && !item.RepsRange.Equals("Failure", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="stat-divider">•</span>
+                                        <span class="stat-item"><span class="material-symbols-outlined stat-icon">fitness_center</span> @item.RepsRange Reps</span>
+                                    }
                                 </div>
                             </div>
                         </div>
