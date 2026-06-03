@@ -25,9 +25,7 @@
 <div class="workout-detail-container">
     @if (_isLoading)
     {
-        <div class="loader-container">
-            <span class="material-symbols-outlined animate-spin" style="color: var(--color-primary-fixed); font-size: 32px;">progress_activity</span>
-        </div>
+        <RfSpinner IsLoading="true" />
     }
     else if (_selectedProgram == null)
     {

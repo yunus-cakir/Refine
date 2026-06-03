@@ -1,0 +1,37 @@
+@using Refine.App.Services
+
+<div class="rf-card @CssClass">
+    @{
+        var percentage = CnsThreshold > 0 ? Math.Min((CurrentLoad / CnsThreshold) * 100, 100) : 0;
+        var dynamicColor = CnsHelper.GetCnsColor(percentage);
+    }
+    <div class="rf-flex-col" style="gap: 8px;">
+        <div class="rf-flex-row rf-justify-between rf-items-center">
+            <div class="rf-flex-row rf-items-center" style="gap: 8px; align-self: flex-start; margin-top: 4px;">
+                <span class="material-symbols-outlined" style="font-size: 20px;">neurology</span>
+                <span class="font-label" style="font-size: 13px; text-transform: uppercase;">@Title</span>
+            </div>
+            <div class="rf-flex-row" style="align-items: baseline; gap: 4px;">
+                <span class="font-headline" style="font-size: 28px; font-weight: bold; color: @dynamicColor;">@percentage.ToString("0")</span>
+                <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">%</span>
+            </div>
+        </div>
+        <div style="width: 100%; background-color: var(--color-surface-container-highest); height: 6px; border-radius: 9999px; overflow: hidden; margin-top: auto;">
+            <div style="background-color: @dynamicColor; width: @(percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%; height: 100%; border-radius: 9999px;"></div>
+        </div>
+        @if (CurrentLoad >= CnsThreshold)
+        {
+            <div class="mt-2 small d-flex align-items-center gap-1" style="color: @dynamicColor;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">warning</span> @WarningMessage
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "CNS Load";
+    [Parameter] public decimal CurrentLoad { get; set; }
+    [Parameter] public decimal CnsThreshold { get; set; }
+    [Parameter] public string WarningMessage { get; set; } = "The workout appears to have exceeded the safe fatigue threshold.";
+    [Parameter] public string CssClass { get; set; } = "mb-4";
+}

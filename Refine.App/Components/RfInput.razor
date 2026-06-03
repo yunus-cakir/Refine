@@ -1,0 +1,56 @@
+@typeparam TValue
+
+<div class="mb-4 animate-fade-in" style="@(Delay > 0 ? $"animation-delay: {Delay.ToString(System.Globalization.CultureInfo.InvariantCulture)}s;" : "")">
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">@Title</div>
+    }
+    <div class="rf-card input-card">
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <span class="material-symbols-outlined input-icon">@Icon</span>
+        }
+        <input type="@Type" class="profile-input" value="@Value" @onchange="OnChange" placeholder="@Placeholder" @attributes="AdditionalAttributes" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string Type { get; set; } = "text";
+    [Parameter] public double Delay { get; set; } = 0;
+
+    [Parameter] public TValue? Value { get; set; }
+    [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private async Task OnChange(ChangeEventArgs e)
+    {
+        var val = e.Value;
+        if (val == null)
+        {
+            await ValueChanged.InvokeAsync(default);
+            return;
+        }
+
+        try
+        {
+            var targetType = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
+            var strVal = val.ToString();
+            if (string.IsNullOrEmpty(strVal))
+            {
+                await ValueChanged.InvokeAsync(default);
+                return;
+            }
+            var converted = (TValue)Convert.ChangeType(strVal, targetType, System.Globalization.CultureInfo.InvariantCulture);
+            await ValueChanged.InvokeAsync(converted);
+        }
+        catch
+        {
+            // ignore conversion errors
+        }
+    }
+}

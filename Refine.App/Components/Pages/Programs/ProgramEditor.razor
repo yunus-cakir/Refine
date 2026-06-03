@@ -8,113 +8,123 @@
 @inject TopBarBridge TopBar
 @implements IDisposable
 
-<div class="mb-4">
-    <h3 class="fw-bold">@(Id == 0 ? "Yeni Program" : "Programı Düzenle")</h3>
-</div>
+@if (_showTopBarMenu)
+{
+    <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
+    <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
+        <button type="button" class="refine-dropdown-item" @onclick="async () => { ToggleTopBarMenu(); await SaveProgram(); }">
+            <span class="material-symbols-outlined text-[20px]">check</span>
+            Save Program
+        </button>
+    </div>
+}
 
-<div class="row">
-    <div class="col-12 col-md-12 mb-4">
+<div class="page-container py-4 px-0 min-h-screen">
+    @if (_isLoading)
+    {
+        <RfSpinner IsLoading="true"/>
+    }
+    else
+    {
         <EditForm Model="@_program" OnValidSubmit="SaveProgram">
             <DataAnnotationsValidator />
 
-            <div class="refine-card p-4">
-                <h5 class="fw-bold mb-3 text-primary">1. Program Detayları</h5>
+            <RfInput Title="Program Name" Icon="fitness_center" Placeholder="e.g. 5x5 Power" @bind-Value="_program.Name"/>
 
-                <div class="mb-3">
-                    <label class="small text-muted">Program Adı</label>
-                    <InputText @bind-Value="_program.Name" class="form-control bg-dark text-white border-secondary" placeholder="Örn: 5x5 Power" />
+            <div class="row g-2 mb-4 animate-fade-in" style="animation-delay: 0.05s;">
+                <div class="col-6">
+                    <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">Level</div>
+                    <select @bind="_program.Level" class="form-select w-100 text-white" style="border-radius: 12px; background-color: var(--refine-surface) !important; border: 1px solid rgba(255,255,255,0.05) !important; padding: 12px 16px; height: 50px;">
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
                 </div>
-
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label class="small text-muted">Seviye</label>
-                        <InputSelect @bind-Value="_program.Level" class="form-select bg-dark text-white border-secondary">
-                            <option value="Beginner">Beginner</option>
-                            <option value="Intermediate">Intermediate</option>
-                            <option value="Advanced">Advanced</option>
-                        </InputSelect>
-                    </div>
-                    <div class="col-6">
-                        <label class="small text-muted">Hedef</label>
-                        <InputSelect @bind-Value="_program.Goal" class="form-select bg-dark text-white border-secondary">
-                            <option value="Muscle Gain">Muscle Gain</option>
-                            <option value="Strength">Strength</option>
-                            <option value="Fat Loss">Fat Loss</option>
-                            <option value="Endurance">Endurance</option>
-                        </InputSelect>
-                    </div>
+                <div class="col-6">
+                    <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">Goal</div>
+                    <select @bind="_program.Goal" class="form-select w-100 text-white" style="border-radius: 12px; background-color: var(--refine-surface) !important; border: 1px solid rgba(255,255,255,0.05) !important; padding: 12px 16px; height: 50px;">
+                        <option value="Muscle Gain">Muscle Gain</option>
+                        <option value="Strength">Strength</option>
+                        <option value="Fat Loss">Fat Loss</option>
+                        <option value="Endurance">Endurance</option>
+                    </select>
                 </div>
+            </div>
 
-                <div class="mb-3">
-                    <label class="small text-muted">Ortam</label>
-                    <InputText @bind-Value="_program.Environment" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Gym, Home" />
-                </div>
+            <RfInput Title="Environment" Icon="location_on" Placeholder="e.g. Gym, Home" Delay="0.1" @bind-Value="_program.Environment"/>
 
-                <button type="submit" class="btn btn-primary w-100 fw-bold">
-                    @(Id == 0 ? "PROGRAMI OLUŞTUR & DEVAM ET" : "BİLGİLERİ GÜNCELLE")
+            <div class="mt-4 px-1 pb-4 animate-fade-in" style="animation-delay: 0.15s;">
+                <button type="submit" class="rf-button-primary w-100">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">@(Id == 0 ? "add" : "check")</span>
+                    @(Id == 0 ? "CREATE PROGRAM" : "SAVE PROGRAM")
                 </button>
             </div>
         </EditForm>
-    </div>
 
-    @if (Id != 0)
-    {
-        <div class="col-12 col-md-12">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold m-0">2. Antrenman Günleri</h5>
-                <a href="@($"/workouts/edit/{Id}/0")" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                    <i class="bi bi-plus-lg"></i> Sıfırdan Ekle
-                </a>
-            </div>
-
-            <div class="refine-card p-3 mb-4 border border-secondary border-dashed" style="border-style: dashed !important; background: transparent;">
-                <label class="small text-muted mb-2 d-block">Mevcut Antrenmanlardan Kopyala:</label>
-                <div class="d-flex gap-2">
-                    <select class="form-select form-select-sm bg-dark text-white border-secondary" @bind="_selectedStandaloneId">
-                        <option value="0">Bir antrenman seç...</option>
-                        @if (_standaloneWorkouts != null)
-                        {
-                            @foreach (var w in _standaloneWorkouts)
-                            {
-                                <option value="@w.Id">@w.Name (@(w.Items?.Count ?? 0) Hareket)</option>
-                            }
-                        }
-                    </select>
-                    <button class="btn btn-sm btn-light text-nowrap fw-bold" @onclick="ImportWorkout">
-                        <i class="bi bi-copy me-1"></i> Kopyala
-                    </button>
+        @if (Id != 0)
+        {
+            <div class="mt-2 animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+                    <div class="text-on-surface-variant small text-uppercase fw-bold m-0" style="letter-spacing: 0.15em; font-size: 11px;">Workouts</div>
+                    <a href="@($"/workouts/edit/{Id}/0")" class="rf-button-primary text-decoration-none d-flex align-items-center" style="font-size: 12px; padding: 6px 12px; border-radius: 20px;">
+                        <span class="material-symbols-outlined me-1" style="font-size: 16px;">add</span> Add New
+                    </a>
                 </div>
-            </div>
 
-            <div id="workout-list" class="d-flex flex-column gap-2 pb-5">
+                <div class="rf-card p-3 mb-4 d-flex flex-column gap-2" style="background: transparent; border: 1px dashed rgba(255,255,255,0.2) !important;">
+                    <label class="text-on-surface-variant small mb-1 fw-bold" style="font-size: 11px;">Copy from Standalone Workouts:</label>
+                    <div class="d-flex gap-2">
+                        <select class="form-select flex-grow-1 text-white" @bind="_selectedStandaloneId" style="border-radius: 12px; background-color: var(--refine-surface) !important; border: 1px solid rgba(255,255,255,0.05) !important;">
+                            <option value="0">Select workout...</option>
+                            @if (_standaloneWorkouts != null)
+                            {
+                                @foreach (var w in _standaloneWorkouts)
+                                {
+                                    <option value="@w.Id">@w.Name (@(w.Items?.Count ?? 0) Exercises)</option>
+                                }
+                            }
+                        </select>
+                        <button type="button" class="rf-button-primary px-3 fw-bold d-flex align-items-center justify-content-center" @onclick="ImportWorkout" style="border-radius: 12px; height: 50px;">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">content_copy</span>
+                        </button>
+                    </div>
+                </div>
 
-                @if (_program.Workouts != null && _program.Workouts.Any())
-                {
-                    @foreach (var workout in _program.Workouts.OrderBy(w => w.Order))
+                <div id="workout-list" class="d-flex flex-column gap-3 pb-5">
+                    @if (_program.Workouts != null && _program.Workouts.Any())
                     {
-                        <div class="refine-card p-3 d-flex justify-content-between align-items-center" @key="workout.Id">
-
-                            <div class="d-flex align-items-center">
-                                <div class="drag-handle me-3 text-muted" style="cursor: move; padding: 10px;">
-                                    <i class="bi bi-grip-vertical fs-4"></i>
+                        @foreach (var workout in _program.Workouts.OrderBy(w => w.Order))
+                        {
+                            <div class="rf-card d-flex justify-content-between align-items-center exercise-card" style="padding: 12px 16px;" @key="workout.Id">
+                                <div class="d-flex align-items-center">
+                                    <div class="drag-handle me-3" style="cursor: move; padding: 10px; color: rgba(255,255,255,0.2);">
+                                        <span class="material-symbols-outlined fs-4">drag_indicator</span>
+                                    </div>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold text-white fs-5">@workout.Name</span>
+                                        <span class="text-on-surface-variant lh-1" style="font-size: 14px; margin-top: 1px;">@(workout.Items?.Count ?? 0) Exercises</span>
+                                    </div>
                                 </div>
-
-                                <div>
-                                    <h6 class="fw-bold mb-0">@workout.Name</h6>
-                                    <small class="text-muted">@(workout.Items?.Count ?? 0) Hareket</small>
+                                <div class="d-flex gap-2">
+                                    <a href="@($"/workouts/edit/{Id}/{workout.Id}")" class="btn btn-sm text-white icon-btn">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+                                    </a>
+                                    <button type="button" class="btn btn-sm border-0 icon-btn" @onclick="() => DeleteWorkout(workout)">
+                                        <span class="material-symbols-outlined" style="font-size: 18px; color: #ff4d4d;">close</span>
+                                    </button>
                                 </div>
                             </div>
-
-                            <div class="d-flex gap-2">
-                                <a href="@($"/workouts/edit/{Id}/{workout.Id}")" class="btn btn-sm btn-dark text-muted"><i class="bi bi-pencil-fill"></i></a>
-                                <button class="btn btn-sm btn-dark text-danger" @onclick="() => DeleteWorkout(workout)"><i class="bi bi-trash-fill"></i></button>
-                            </div>
-
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 rounded mb-4" style="border: 1px dashed rgba(255,255,255,0.2); color: rgba(255,255,255,0.4);">
+                            No workouts added yet.
                         </div>
                     }
-                }
+                </div>
             </div>
-        </div>
+        }
     }
 </div>
 
@@ -123,19 +133,30 @@
     private WorkoutProgram _program = new();
     private List<Workout>? _standaloneWorkouts;
     private int _selectedStandaloneId;
+    private bool _showTopBarMenu = false;
+    private bool _isLoading = true;
 
     protected override void OnInitialized()
     {
+        TopBar.OnRightActionTapped += HandleRightAction;
     }
 
     protected override async Task OnInitializedAsync()
     {
-        TopBar.SetDetailMode(Id == 0 ? "New Program" : "Edit Program");
-        _standaloneWorkouts = await DbService.GetStandaloneWorkoutsAsync();
-
-        if (Id != 0)
+        _isLoading = true;
+        try
         {
-            await LoadProgramData();
+            TopBar.SetDetailMode(Id == 0 ? "New Program" : "Edit Program");
+            _standaloneWorkouts = await DbService.GetStandaloneWorkoutsAsync();
+
+            if (Id != 0)
+            {
+                await LoadProgramData();
+            }
+        }
+        finally
+        {
+            _isLoading = false;
         }
     }
 
@@ -146,23 +167,37 @@
             _program = existing;
     }
 
+    private void ToggleTopBarMenu()
+    {
+        _showTopBarMenu = !_showTopBarMenu;
+    }
+
+    private void HandleRightAction()
+    {
+        ToggleTopBarMenu();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        TopBar.OnRightActionTapped -= HandleRightAction;
+        _objRef?.Dispose();
+    }
+
     private async Task SaveProgram()
     {
-        // Programı kaydet ve ID'yi al
         int newId = await DbService.SaveWorkoutProgramAsync(_program);
 
-        // Eğer yeni oluşturulduysa URL'yi güncelle (Refresh yapmadan ID'li hale geç)
         if (Id == 0)
         {
             Id = newId;
-            NavManager.NavigateTo($"/programs/edit/{newId}", replace: true); // Replace önemli
-            TopBar.SetDetailMode("Programı Düzenle");
-            // Veriyi tekrar çek ki Workouts listesi null gelmesin
+            NavManager.NavigateTo($"/programs/edit/{newId}", replace: true);
+            TopBar.SetDetailMode("Edit Program");
             await LoadProgramData();
         }
         else
         {
-            await UiHelper.ShowAlert("Başarılı", "Program bilgileri güncellendi.", "OK");
+            await UiHelper.ShowAlert("Success", "Program updated successfully.", "OK");
         }
     }
 
@@ -170,19 +205,16 @@
     {
         if (_selectedStandaloneId == 0) return;
 
-        // Servisteki kopyalama metodunu çağır
         await DbService.DuplicateWorkoutToProgramAsync(_selectedStandaloneId, Id);
-
-        // Listeyi yenile
         await LoadProgramData();
-        _selectedStandaloneId = 0; // Seçimi sıfırla
+        _selectedStandaloneId = 0; 
     }
 
     private async Task DeleteWorkout(Workout w)
     {
-        bool confirm = await UiHelper.ShowConfirm("Sil",
-            "Bu gün programdan silinsin mi?",
-            "Evet", "Hayır");
+        bool confirm = await UiHelper.ShowConfirm("Delete",
+            "Are you sure you want to delete this workout from the program?",
+            "Yes", "No");
 
         if (confirm)
         {
@@ -191,49 +223,34 @@
         }
     }
 
-    // JS'den çağrılabilmesi için referans tutucu
     private DotNetObjectReference<ProgramEditor>? _objRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Sayfa ilk kez çizildiğinde SortableJS'i başlat
-        if (firstRender && Id != 0) // Sadece program varsa
+        if (firstRender && Id != 0) 
         {
             _objRef = DotNetObjectReference.Create(this);
-            // JS fonksiyonunu çağır: ID="workout-list" olan yere uygula
             await JSRuntime.InvokeVoidAsync("initSortable", "workout-list", _objRef);
         }
     }
 
-    // JS TARAFINDAN ÇAĞRILACAK METOT
     [JSInvokable]
-    public async Task OnUpdateOrder(int oldIndex, int newIndex) // void yerine async Task
+    public async Task OnUpdateOrder(int oldIndex, int newIndex) 
     {
-        // 1. Listeyi kopyala ve yer değiştir
         var sortedList = _program.Workouts.OrderBy(w => w.Order).ToList();
         var itemToMove = sortedList[oldIndex];
 
         sortedList.RemoveAt(oldIndex);
         sortedList.Insert(newIndex, itemToMove);
 
-        // 2. Order numaralarını 1'den başlayarak yeniden ver
         for (int i = 0; i < sortedList.Count; i++)
         {
             sortedList[i].Order = i + 1;
         }
 
-        // 3. UI'ı güncelle
         _program.Workouts = sortedList;
-        StateHasChanged(); // UI hemen tepki versin
+        StateHasChanged(); 
 
-        // 4. VERİTABANINA KAYDET (Arka planda)
         await DbService.UpdateWorkoutOrdersAsync(sortedList);
     }
-
-
-
-    public void Dispose()
-    {
-        _objRef?.Dispose();
-    }
-}
+}

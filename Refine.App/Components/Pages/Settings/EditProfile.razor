@@ -25,29 +25,11 @@
         </div>
 
         <!-- Form Section -->
-        <div class="mb-4 animate-fade-in">
-            <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">First Name</div>
-            <div class="rf-card input-card">
-                <span class="material-symbols-outlined input-icon">person</span>
-                <input type="text" class="profile-input" @bind="_user.FirstName" placeholder="Enter first name" />
-            </div>
-        </div>
+        <RfInput Title="First Name" Icon="person" Placeholder="Enter first name" @bind-Value="_user.FirstName" />
 
-        <div class="mb-4 animate-fade-in" style="animation-delay: 0.05s;">
-            <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">Last Name</div>
-            <div class="rf-card input-card">
-                <span class="material-symbols-outlined input-icon">badge</span>
-                <input type="text" class="profile-input" @bind="_user.LastName" placeholder="Enter last name" />
-            </div>
-        </div>
+        <RfInput Title="Last Name" Icon="badge" Placeholder="Enter last name" Delay="0.05" @bind-Value="_user.LastName" />
 
-        <div class="mb-4 animate-fade-in" style="animation-delay: 0.1s;">
-            <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">Email Address</div>
-            <div class="rf-card input-card">
-                <span class="material-symbols-outlined input-icon">mail</span>
-                <input type="email" class="profile-input" @bind="_user.Email" placeholder="Enter email address" />
-            </div>
-        </div>
+        <RfInput Title="Email Address" Icon="mail" Type="email" Placeholder="Enter email address" Delay="0.1" @bind-Value="_user.Email" />
 
         <div class="mb-4 animate-fade-in" style="animation-delay: 0.15s;">
             <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">Gender</div>

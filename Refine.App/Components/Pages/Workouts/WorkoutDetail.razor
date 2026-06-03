@@ -64,28 +64,7 @@ else
 
         <!-- CNS YÜKÜ PROGRESS BAR -->
         <div class="cns-container section-margin">
-            @{
-                var percentage = CnsThreshold > 0 ? Math.Min((TotalCnsLoad / CnsThreshold) * 100, 100) : 0;
-                var dynamicColor = Refine.App.Services.CnsHelper.GetCnsColor(percentage);
-            }
-            <div class="cns-header">
-                <span class="font-label cns-label">Estimated CNS Load</span>
-                <span class="font-label" style="color: @dynamicColor; font-size: 11px;">
-                    %@percentage.ToString("0")
-                </span>
-            </div>
-            <div class="cns-progress-track">
-                <div class="cns-progress-fill" style="width: @percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%; background-color: @dynamicColor;"></div>
-            </div>
-            @if (TotalCnsLoad >= CnsThreshold)
-            {
-                <div class="cns-warning" style="border-left: 4px solid @dynamicColor; color: @dynamicColor;">
-                    <i class="bi bi-exclamation-triangle-fill cns-warning-icon"></i>
-                    <div class="font-body" style="font-size: 14px;">
-                        <strong>Severe CNS Fatigue!</strong> This program may overtax your nervous system.
-                    </div>
-                </div>
-            }
+            <CnsLoadCard Title="Estimated CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" WarningMessage="Severe CNS Fatigue! This program may overtax your nervous system." CssClass="m-0" />
         </div>
 
 
