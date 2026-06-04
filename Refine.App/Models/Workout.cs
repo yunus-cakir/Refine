@@ -17,4 +17,7 @@ public class Workout
 
     [OneToMany(CascadeOperations = CascadeOperation.All)]
     public List<WorkoutItem> Items { get; set; } = new();
+
+    [ManyToOne]
+    public WorkoutProgram? WorkoutProgram { get; set; }
 }

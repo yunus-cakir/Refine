@@ -3,79 +3,273 @@
 @using Refine.App.Services
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+@inject SelectionStateService SelectionState
+@implements IDisposable
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold m-0">Egzersizler</h3>
-    <a href="/exercises/edit/0" class="btn btn-primary rounded-pill px-3 fw-bold">
-        <i class="bi bi-plus-lg me-1"></i> Yeni
-    </a>
-</div>
-
-@if (_exercises == null)
+@if (_showTopBarMenu)
 {
-    <div class="text-center"><div class="spinner-border text-primary"></div></div>
-}
-else
-{
-    <div class="row g-3 pb-5">
-        @foreach (var item in _exercises)
+    <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
+    <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
+        @if (!_isSelectionMode)
         {
-            <div class="col-12">
-                <div class="refine-card p-3 d-flex align-items-center justify-content-between">
-
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center"
-                             style="width: 50px; height: 50px;">
-                            <i class="bi bi-activity text-primary fs-4"></i>
-                        </div>
-
-                        <div>
-                            <h6 class="fw-bold mb-0">@item.Name</h6>
-                            <small class="text-muted">@item.PrimaryMuscleCategory • @item.Difficulty</small>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2 align-items-center">
-                        <a href="@($"/exercises/edit/{item.Id}")" class="btn btn-warning btn-sm fw-bold text-dark d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px;">
-                            <i class="bi bi-pencil-fill" style="font-size: 0.9rem;"></i>
-                        </a>
-
-                        <button class="btn btn-danger btn-sm fw-bold text-white d-flex align-items-center justify-content-center"
-                                style="width: 32px; height: 32px; border-radius: 8px;"
-                                @onclick="() => DeleteExercise(item)">
-                            <i class="bi bi-trash-fill" style="font-size: 0.9rem;"></i>
-                        </button>
-                    </div>
-
-                </div>
-            </div>
+            <button class="refine-dropdown-item" @onclick="EnableSelectionMode">
+                <span class="material-symbols-outlined text-[20px]">check_box</span>
+                Select Exercises
+            </button>
+            <button class="refine-dropdown-item" @onclick="AddExercise">
+                <span class="material-symbols-outlined text-[20px]">add</span>
+                Add New Exercise
+            </button>
+        }
+        else
+        {
+            <button class="refine-dropdown-item" @onclick="DisableSelectionMode">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+                Exit Selection Mode
+            </button>
+            <button class="refine-dropdown-item-primary" @onclick="ConfirmSelection">
+                <span class="material-symbols-outlined text-[20px]">done</span>
+                Add Selected (@_selectedExerciseIds.Count)
+            </button>
         }
     </div>
 }
 
+<div class="exercise-list-container py-3 px-3 animate-fade-in">
+    @if (_exercises == null)
+    {
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+            <div class="spinner-border text-primary-container" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Search bar -->
+        <div class="mb-4">
+            <div class="search-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" 
+                       class="search-input" 
+                       placeholder="Search exercises..." 
+                       @bind="_searchText" 
+                       @bind:event="oninput" />
+            </div>
+        </div>
+
+        @if (!FilteredExercises.Any())
+        {
+            <div class="text-center py-5 text-on-surface-variant font-body">
+                <span class="material-symbols-outlined display-4 mb-3" style="opacity: 0.5;">fitness_center</span>
+                <p>No exercises found.</p>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3 pb-5">
+                @foreach (var ex in FilteredExercises)
+                {
+                    bool isSelected = _selectedExerciseIds.Contains(ex.Id);
+
+                    <div class="rf-card exercise-card d-flex align-items-center justify-content-between p-3" 
+                         @onclick="() => OnCardTapped(ex)">
+                        
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="exercise-icon-container">
+                                <span class="material-symbols-outlined exercise-icon">fitness_center</span>
+                            </div>
+                            
+                            <div class="d-flex flex-column align-items-start">
+                                <span class="fw-bold text-white fs-6 mb-1 text-start">@ex.Name</span>
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <span class="rf-badge-faded" style="font-size: 10px; padding: 2px 8px;">
+                                        @ex.PrimaryMuscleCategory
+                                    </span>
+                                    <span class="difficulty-badge @GetDifficultyClass(ex.Difficulty)">
+                                        @ex.Difficulty
+                                    </span>
+                                    @if (!string.IsNullOrWhiteSpace(ex.Equipment))
+                                    {
+                                        <span class="text-on-surface-variant" style="font-size: 11px;">
+                                            @ex.Equipment
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (_isSelectionMode)
+                        {
+                            <div class="ms-3" @onclick:stopPropagation="true">
+                                <label class="custom-checkbox-container">
+                                    <input type="checkbox" 
+                                           checked="@isSelected" 
+                                           @onchange="() => ToggleExerciseSelection(ex.Id)" />
+                                    <span class="checkmark"></span>
+                                </label>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "selection")]
+    public bool Selection { get; set; }
+
     private List<Exercise>? _exercises;
+    private string _searchText = "";
+    private bool _showTopBarMenu = false;
+    private bool _isSelectionMode = false;
+    private HashSet<int> _selectedExerciseIds = new();
+
+    private IEnumerable<Exercise> FilteredExercises
+    {
+        get
+        {
+            if (_exercises == null) return Enumerable.Empty<Exercise>();
+            if (string.IsNullOrWhiteSpace(_searchText)) return _exercises;
+
+            return _exercises.Where(e => 
+                e.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                e.PrimaryMuscleCategory.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                (e.Equipment != null && e.Equipment.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+            );
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        TopBar.OnRightActionTapped += HandleRightAction;
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
-    }
-
-    private async Task LoadData()
-    {
-        _exercises = await DbService.GetExercisesAsync(); // Servisteki metodun adını kontrol et
-    }
-
-    private async Task DeleteExercise(Exercise ex)
-    {
-        bool confirm = await UiHelper.ShowConfirm("Sil",
-            $"{ex.Name} silinsin mi?",
-            "Evet", "Hayır");
-
-        if (confirm)
+        _exercises = await DbService.GetExercisesAsync();
+        if (_exercises != null)
         {
-            await DbService.DeleteExerciseAsync(ex);
-            await LoadData();
+            _exercises = _exercises.OrderBy(e => e.Name).ToList();
         }
+    }
+
+    protected override void OnParametersSet()
+    {
+        _isSelectionMode = Selection;
+        UpdateTopBarTitle();
+    }
+
+    private void UpdateTopBarTitle()
+    {
+        if (_isSelectionMode)
+        {
+            TopBar.SetDetailMode("Select Exercises");
+        }
+        else
+        {
+            TopBar.SetDetailMode("Exercises");
+        }
+    }
+
+    private void HandleRightAction()
+    {
+        _showTopBarMenu = !_showTopBarMenu;
+        StateHasChanged();
+    }
+
+    private void ToggleTopBarMenu()
+    {
+        _showTopBarMenu = !_showTopBarMenu;
+    }
+
+    private void EnableSelectionMode()
+    {
+        _showTopBarMenu = false;
+        _isSelectionMode = true;
+        _selectedExerciseIds.Clear();
+        UpdateTopBarTitle();
+    }
+
+    private void DisableSelectionMode()
+    {
+        _showTopBarMenu = false;
+        _isSelectionMode = false;
+        _selectedExerciseIds.Clear();
+        UpdateTopBarTitle();
+    }
+
+    private void AddExercise()
+    {
+        _showTopBarMenu = false;
+        NavManager.NavigateTo("/exercises/edit/0");
+    }
+
+    private void OnCardTapped(Exercise ex)
+    {
+        if (_isSelectionMode)
+        {
+            ToggleExerciseSelection(ex.Id);
+        }
+        else
+        {
+            NavManager.NavigateTo($"/exercises/edit/{ex.Id}");
+        }
+    }
+
+    private void ToggleExerciseSelection(int exerciseId)
+    {
+        if (_selectedExerciseIds.Contains(exerciseId))
+        {
+            _selectedExerciseIds.Remove(exerciseId);
+        }
+        else
+        {
+            _selectedExerciseIds.Add(exerciseId);
+        }
+        StateHasChanged();
+    }
+
+    private async Task ConfirmSelection()
+    {
+        _showTopBarMenu = false;
+        if (!_selectedExerciseIds.Any())
+        {
+            await UiHelper.ShowAlert("No Selection", "Please select at least one exercise.", "OK");
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(SelectionState.ReturnUrl))
+        {
+            SelectionState.SelectedIds = _selectedExerciseIds.ToList();
+            SelectionState.IsActive = true;
+            NavManager.NavigateTo(SelectionState.ReturnUrl);
+            return;
+        }
+
+        string msg = $"Selected {_selectedExerciseIds.Count} exercises.";
+        await UiHelper.ShowAlert("Success", msg, "OK");
+        
+        DisableSelectionMode();
+    }
+
+    private string GetDifficultyClass(string difficulty)
+    {
+        return (difficulty?.ToLower()) switch
+        {
+            "beginner" => "difficulty-beginner",
+            "intermediate" => "difficulty-intermediate",
+            "advanced" => "difficulty-advanced",
+            _ => "difficulty-beginner"
+        };
+    }
+
+    public void Dispose()
+    {
+        TopBar.OnRightActionTapped -= HandleRightAction;
     }
 }

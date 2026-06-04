@@ -42,6 +42,9 @@ public static class MauiProgram
         // Kullanıcı Servisi (Home.razor'ın çökme sebebi muhtemelen buydu)
         //builder.Services.AddSingleton<UserService>();
 
+        builder.Services.AddSingleton<WorkoutEditorState>();
+        builder.Services.AddSingleton<SelectionStateService>();
+
         // Eğer kullanıyorsan diğer servisler:
         // builder.Services.AddSingleton<ExerciseService>();
         // builder.Services.AddSingleton<WorkoutProgramService>();

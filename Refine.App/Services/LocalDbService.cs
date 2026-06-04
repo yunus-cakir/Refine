@@ -210,8 +210,62 @@ public class LocalDbService
     {
         await Init();
 
+        if (workout.WorkoutProgramId != 0)
+        {
+            var otherWorkouts = await _connection!.Table<Workout>()
+                .Where(w => w.WorkoutProgramId == workout.WorkoutProgramId && w.Id != workout.Id)
+                .ToListAsync();
+
+            if (workout.Id == 0 && workout.Order == 0)
+            {
+                var maxOrder = otherWorkouts.Any() ? otherWorkouts.Max(w => w.Order) : 0;
+                workout.Order = maxOrder + 1;
+            }
+
+            bool hasConflict = otherWorkouts.Any(w => w.Order == workout.Order);
+            if (hasConflict)
+            {
+                var workoutsToUpdate = otherWorkouts.Where(w => w.Order >= workout.Order).ToList();
+                foreach (var w in workoutsToUpdate)
+                {
+                    w.Order += 1;
+                }
+
+                if (workoutsToUpdate.Any())
+                {
+                    await _connection!.RunInTransactionAsync(tran =>
+                    {
+                        foreach (var w in workoutsToUpdate)
+                        {
+                            tran.Update(w);
+                        }
+                    });
+                }
+            }
+        }
+
         if (workout.Id != 0)
+        {
+            if (workout.Items != null)
+            {
+                var newItems = workout.Items.Where(i => i.Id == 0).ToList();
+                if (newItems.Any())
+                {
+                    foreach (var item in newItems)
+                    {
+                        item.WorkoutId = workout.Id;
+                    }
+                    await _connection!.InsertAllAsync(newItems);
+                }
+                
+                var existingItems = workout.Items.Where(i => i.Id != 0).ToList();
+                if (existingItems.Any())
+                {
+                    await _connection!.UpdateAllAsync(existingItems);
+                }
+            }
             await _connection!.UpdateWithChildrenAsync(workout);
+        }
         else
             await _connection!.InsertWithChildrenAsync(workout, recursive: true);
 
@@ -536,15 +590,17 @@ public class LocalDbService
         var sourceWorkout = await GetWorkoutByIdAsync(sourceWorkoutId);
         if (sourceWorkout == null) return;
 
-        var existingCount = await _connection!.Table<Workout>().Where(w => w.WorkoutProgramId == targetProgramId)
-            .CountAsync();
+        var existingWorkouts = await _connection!.Table<Workout>()
+            .Where(w => w.WorkoutProgramId == targetProgramId)
+            .ToListAsync();
+        var maxOrder = existingWorkouts.Any() ? existingWorkouts.Max(w => w.Order) : 0;
 
         var newWorkout = new Workout
         {
             WorkoutProgramId = targetProgramId,
             Name = sourceWorkout.Name,
             Description = sourceWorkout.Description,
-            Order = existingCount + 1,
+            Order = maxOrder + 1,
             Items = new List<WorkoutItem>()
         };
 
@@ -583,6 +639,21 @@ public class LocalDbService
     {
         await Init();
         return await _connection!.Table<WorkoutProgram>().ToListAsync();
+    }
+
+    public async Task<List<Workout>> GetAllWorkoutsWithProgramAsync()
+    {
+        await Init();
+        var workouts = await _connection!.Table<Workout>().ToListAsync();
+        foreach (var workout in workouts)
+        {
+            if (workout.WorkoutProgramId != 0)
+            {
+                workout.WorkoutProgram = await _connection.Table<WorkoutProgram>().Where(p => p.Id == workout.WorkoutProgramId).FirstOrDefaultAsync();
+            }
+            await _connection.GetChildrenAsync(workout, recursive: true);
+        }
+        return workouts;
     }
 
     public async Task<WorkoutProgram?> GetProgramByIdAsync(int id)

@@ -27,7 +27,7 @@
     else
     {
         <EditForm Model="@_program" OnValidSubmit="SaveProgram">
-            <DataAnnotationsValidator />
+            <DataAnnotationsValidator/>
 
             <RfInput Title="Program Name" Icon="fitness_center" Placeholder="e.g. 5x5 Power" @bind-Value="_program.Name"/>
 
@@ -64,30 +64,18 @@
         @if (Id != 0)
         {
             <div class="mt-2 animate-fade-in" style="animation-delay: 0.2s;">
-                <div class="d-flex justify-content-between align-items-center mb-3 px-1">
-                    <div class="text-on-surface-variant small text-uppercase fw-bold m-0" style="letter-spacing: 0.15em; font-size: 11px;">Workouts</div>
-                    <a href="@($"/workouts/edit/{Id}/0")" class="rf-button-primary text-decoration-none d-flex align-items-center" style="font-size: 12px; padding: 6px 12px; border-radius: 20px;">
-                        <span class="material-symbols-outlined me-1" style="font-size: 16px;">add</span> Add New
-                    </a>
-                </div>
-
-                <div class="rf-card p-3 mb-4 d-flex flex-column gap-2" style="background: transparent; border: 1px dashed rgba(255,255,255,0.2) !important;">
-                    <label class="text-on-surface-variant small mb-1 fw-bold" style="font-size: 11px;">Copy from Standalone Workouts:</label>
-                    <div class="d-flex gap-2">
-                        <select class="form-select flex-grow-1 text-white" @bind="_selectedStandaloneId" style="border-radius: 12px; background-color: var(--refine-surface) !important; border: 1px solid rgba(255,255,255,0.05) !important;">
-                            <option value="0">Select workout...</option>
-                            @if (_standaloneWorkouts != null)
-                            {
-                                @foreach (var w in _standaloneWorkouts)
-                                {
-                                    <option value="@w.Id">@w.Name (@(w.Items?.Count ?? 0) Exercises)</option>
-                                }
-                            }
-                        </select>
-                        <button type="button" class="rf-button-primary px-3 fw-bold d-flex align-items-center justify-content-center" @onclick="ImportWorkout" style="border-radius: 12px; height: 50px;">
-                            <span class="material-symbols-outlined" style="font-size: 18px;">content_copy</span>
-                        </button>
+                <div class="rf-flex-row rf-items-center rf-justify-between mb-3 px-1">
+                    <div class="rf-flex-row rf-items-center" style="gap: 8px;">
+                        <h3 class="font-headline" style="font-size: 20px; color: var(--color-primary); font-weight: 600; margin: 0;">Workout Days</h3>
+                        <span class="@(_isSelected ? "rf-badge" : "rf-badge-faded")" style="font-size: 10px; padding: 3px 10px;">
+                            @(_program.Workouts?.Count ?? 0) DAYS
+                        </span>
                     </div>
+
+                    <a href="@($"/workouts/edit/{Id}/0")" class="refine-icon-btn" style="width: auto; height: 32px; padding: 0 12px; border-radius: 16px; display: flex; align-items: center; gap: 4px; background-color: rgba(195, 244, 0, 0.1); color: var(--color-primary-fixed); border-color: rgba(195, 244, 0, 0.2); text-decoration: none;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                        <span class="font-label" style="font-size: 11px; font-weight: bold; letter-spacing: 0.05em;">ADD</span>
+                    </a>
                 </div>
 
                 <div id="workout-list" class="d-flex flex-column gap-3 pb-5">
@@ -97,15 +85,18 @@
                         {
                             <div class="rf-card d-flex justify-content-between align-items-center exercise-card" style="padding: 12px 16px;" @key="workout.Id">
                                 <div class="d-flex align-items-center">
-                                    <div class="drag-handle me-3" style="cursor: move; padding: 10px; color: rgba(255,255,255,0.2);">
-                                        <span class="material-symbols-outlined fs-4">drag_indicator</span>
-                                    </div>
                                     <div class="d-flex flex-column">
                                         <span class="fw-bold text-white fs-5">@workout.Name</span>
-                                        <span class="text-on-surface-variant lh-1" style="font-size: 14px; margin-top: 1px;">@(workout.Items?.Count ?? 0) Exercises</span>
+                                        <span class="text-on-surface-variant lh-1" style="font-size: 14px; margin-top: 1px;">@(workout.Items?.Count ?? 0) Exercises &bull; @(workout.Items?.Sum(i => i.Sets) ?? 0) Sets</span>
                                     </div>
                                 </div>
                                 <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm text-white icon-btn" @onclick="() => MoveItemUp(workout)" disabled="@(workout.Order == 1)">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">arrow_upward</span>
+                                    </button>
+                                    <button type="button" class="btn btn-sm text-white icon-btn" @onclick="() => MoveItemDown(workout)" disabled="@(_program.Workouts == null || workout.Order == _program.Workouts.Count)">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">arrow_downward</span>
+                                    </button>
                                     <a href="@($"/workouts/edit/{Id}/{workout.Id}")" class="btn btn-sm text-white icon-btn">
                                         <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
                                     </a>
@@ -131,10 +122,9 @@
 @code {
     [Parameter] public int Id { get; set; }
     private WorkoutProgram _program = new();
-    private List<Workout>? _standaloneWorkouts;
-    private int _selectedStandaloneId;
     private bool _showTopBarMenu = false;
     private bool _isLoading = true;
+    private bool _isSelected;
 
     protected override void OnInitialized()
     {
@@ -147,7 +137,6 @@
         try
         {
             TopBar.SetDetailMode(Id == 0 ? "New Program" : "Edit Program");
-            _standaloneWorkouts = await DbService.GetStandaloneWorkoutsAsync();
 
             if (Id != 0)
             {
@@ -165,6 +154,9 @@
         var existing = await DbService.GetProgramByIdAsync(Id);
         if (existing != null)
             _program = existing;
+
+        var selectedProgram = await DbService.GetSelectedWorkoutProgramAsync();
+        _isSelected = selectedProgram != null && selectedProgram.Id == Id;
     }
 
     private void ToggleTopBarMenu()
@@ -181,7 +173,6 @@
     public void Dispose()
     {
         TopBar.OnRightActionTapped -= HandleRightAction;
-        _objRef?.Dispose();
     }
 
     private async Task SaveProgram()
@@ -201,14 +192,7 @@
         }
     }
 
-    private async Task ImportWorkout()
-    {
-        if (_selectedStandaloneId == 0) return;
 
-        await DbService.DuplicateWorkoutToProgramAsync(_selectedStandaloneId, Id);
-        await LoadProgramData();
-        _selectedStandaloneId = 0; 
-    }
 
     private async Task DeleteWorkout(Workout w)
     {
@@ -223,34 +207,39 @@
         }
     }
 
-    private DotNetObjectReference<ProgramEditor>? _objRef;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && Id != 0) 
-        {
-            _objRef = DotNetObjectReference.Create(this);
-            await JSRuntime.InvokeVoidAsync("initSortable", "workout-list", _objRef);
-        }
+        // Sortable logic removed
+        await Task.CompletedTask;
     }
 
-    [JSInvokable]
-    public async Task OnUpdateOrder(int oldIndex, int newIndex) 
+    private async Task MoveItemUp(Workout workout)
     {
+        if (workout.Order <= 1) return;
         var sortedList = _program.Workouts.OrderBy(w => w.Order).ToList();
-        var itemToMove = sortedList[oldIndex];
-
-        sortedList.RemoveAt(oldIndex);
-        sortedList.Insert(newIndex, itemToMove);
-
-        for (int i = 0; i < sortedList.Count; i++)
+        var index = sortedList.FindIndex(w => w.Id == workout.Id);
+        if (index > 0)
         {
-            sortedList[i].Order = i + 1;
+            var prev = sortedList[index - 1];
+            (workout.Order, prev.Order) = (prev.Order, workout.Order);
+            _program.Workouts = sortedList.OrderBy(w => w.Order).ToList();
+            await DbService.UpdateWorkoutOrdersAsync(_program.Workouts);
         }
-
-        _program.Workouts = sortedList;
-        StateHasChanged(); 
-
-        await DbService.UpdateWorkoutOrdersAsync(sortedList);
     }
-}
+
+    private async Task MoveItemDown(Workout workout)
+    {
+        if (_program.Workouts == null) return;
+        if (workout.Order >= _program.Workouts.Count) return;
+        var sortedList = _program.Workouts.OrderBy(w => w.Order).ToList();
+        var index = sortedList.FindIndex(w => w.Id == workout.Id);
+        if (index < sortedList.Count - 1)
+        {
+            var next = sortedList[index + 1];
+            (workout.Order, next.Order) = (next.Order, workout.Order);
+            _program.Workouts = sortedList.OrderBy(w => w.Order).ToList();
+            await DbService.UpdateWorkoutOrdersAsync(_program.Workouts);
+        }
+    }
+
+}

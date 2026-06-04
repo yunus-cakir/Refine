@@ -15,6 +15,17 @@
     }
     else
     {
+        @if (_showTopBarMenu)
+        {
+            <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
+            <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
+                <button class="refine-dropdown-item" @onclick="() => { ToggleTopBarMenu(); EditProgram(); }">
+                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                    Edit Program
+                </button>
+            </div>
+        }
+
         <div class="rf-flex-col" style="gap: 24px; padding-bottom: 80px;">
             <!-- Header & Info -->
             <div class="rf-flex-col" style="gap: 8px;">
@@ -169,6 +180,7 @@
 
     protected override void OnInitialized()
     {
+        TopBar.OnRightActionTapped += HandleRightAction;
     }
 
     protected override async Task OnParametersSetAsync()
@@ -256,10 +268,30 @@
         }
     }
 
+    private bool _showTopBarMenu = false;
 
+    private void ToggleTopBarMenu()
+    {
+        _showTopBarMenu = !_showTopBarMenu;
+    }
+
+    private void EditProgram()
+    {
+        if (_program != null)
+        {
+            NavManager.NavigateTo($"/programs/edit/{_program.Id}");
+        }
+    }
+
+    private void HandleRightAction()
+    {
+        ToggleTopBarMenu();
+        InvokeAsync(StateHasChanged);
+    }
 
     public void Dispose()
     {
+        TopBar.OnRightActionTapped -= HandleRightAction;
     }
 
 }

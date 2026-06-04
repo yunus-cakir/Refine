@@ -5,12 +5,30 @@
 @inject NavigationManager NavManager
 @inject TopBarBridge TopBar
 @inject IJSRuntime JS
+@inject WorkoutEditorState EditorState
+@inject SelectionStateService SelectionState
 @implements IDisposable
 
 @if (_showTopBarMenu)
 {
     <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
     <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
+        <div class="refine-dropdown-item position-relative" style="cursor: pointer;">
+            <div class="d-flex align-items-center gap-2 w-100">
+                <span class="material-symbols-outlined text-[20px]">content_copy</span>
+                <span>Copy From Another...</span>
+            </div>
+            <select class="position-absolute top-0 start-0 w-100 h-100" style="opacity: 0; cursor: pointer; appearance: none;" @onchange="OnWorkoutSelected">
+                <option value="0" disabled selected>Import Workout</option>
+                @if (_allWorkouts != null)
+                {
+                    @foreach (var w in _allWorkouts)
+                    {
+                        <option value="@w.Id">@(w.WorkoutProgram != null ? $"{w.WorkoutProgram.Name} - " : "")@w.Name</option>
+                    }
+                }
+            </select>
+        </div>
         <button type="button" class="refine-dropdown-item" @onclick="async () => { ToggleTopBarMenu(); await SaveWorkout(); }">
             <span class="material-symbols-outlined text-[20px]">check</span>
             Save Workout
@@ -28,6 +46,7 @@
         <EditForm Model="@_workout" OnValidSubmit="SaveWorkout">
             <DataAnnotationsValidator/>
 
+
             <RfInput Title="Workout Title" Icon="fitness_center" Placeholder="e.g. Push Day" @bind-Value="_workout.Name"/>
 
             <RfInput Title="Workout Description" Icon="description" Placeholder="e.g. Chest and Shoulders focus..." Delay="0.05" @bind-Value="_workout.Description"/>
@@ -43,19 +62,10 @@
             </div>
 
             <!-- Add Exercise -->
-            <div class="d-flex gap-2 mb-4 animate-fade-in" style="animation-delay: 0.2s;">
-                <select class="form-select bg-dark text-white border-secondary" @bind="_selectedExerciseId" style="border-radius: 12px; background-color: var(--refine-surface) !important; border: 1px solid rgba(255,255,255,0.05) !important;">
-                    <option value="0">Select Exercise...</option>
-                    @if (_allExercises != null)
-                    {
-                        @foreach (var ex in _allExercises)
-                        {
-                            <option value="@ex.Id">@ex.Name (@ex.PrimaryMuscleCategory)</option>
-                        }
-                    }
-                </select>
-                <button type="button" class="rf-button-primary px-4 fw-bold" @onclick="AddExerciseToList" style="border-radius: 12px; height: 100%;">
-                    ADD
+            <div class="d-flex mb-4 animate-fade-in" style="animation-delay: 0.2s;">
+                <button type="button" class="rf-button-primary w-100 fw-bold d-flex justify-content-center align-items-center gap-2" @onclick="GoToExerciseSelection" style="border-radius: 12px; height: 50px;">
+                    <span class="material-symbols-outlined">add</span>
+                    ADD EXERCISE
                 </button>
             </div>
 
@@ -186,9 +196,10 @@
 
     private Workout _workout = new() { Items = new List<WorkoutItem>() };
     private List<Exercise>? _allExercises;
-    private int _selectedExerciseId;
     private bool _showTopBarMenu = false;
     private bool _isLoading = true;
+    private int _selectedWorkoutToCopy;
+    private List<Workout>? _allWorkouts;
 
     private decimal TotalCnsLoad => _workout?.Items?.Sum(i => CalculateItemCnsLoad(i)) ?? 0;
     private decimal CnsThreshold = 150m;
@@ -220,7 +231,7 @@
         TopBar.OnRightActionTapped += HandleRightAction;
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         _isLoading = true;
         try
@@ -233,18 +244,58 @@
             }
 
             _allExercises = await DbService.GetExercisesAsync();
+            _allWorkouts = await DbService.GetAllWorkoutsWithProgramAsync();
 
-            if (WorkoutId != 0)
+            if (EditorState.IsActive && EditorState.DraftWorkout != null && 
+                EditorState.DraftWorkout.Id == WorkoutId && EditorState.DraftWorkout.WorkoutProgramId == ProgramId)
             {
-                var existing = await DbService.GetWorkoutByIdAsync(WorkoutId);
-                if (existing != null)
-                {
-                    _workout = existing;
-                }
+                // Restore from in-memory draft
+                _workout = EditorState.DraftWorkout;
             }
             else
             {
-                _workout.WorkoutProgramId = ProgramId;
+                if (WorkoutId != 0)
+                {
+                    var existing = await DbService.GetWorkoutByIdAsync(WorkoutId);
+                    if (existing != null)
+                    {
+                        _workout = existing;
+                    }
+                }
+                else
+                {
+                    _workout.WorkoutProgramId = ProgramId;
+                    if (ProgramId != 0 && _allWorkouts != null)
+                    {
+                        var programWorkouts = _allWorkouts.Where(w => w.WorkoutProgramId == ProgramId).ToList();
+                        var maxOrder = programWorkouts.Any() ? programWorkouts.Max(w => w.Order) : 0;
+                        _workout.Order = maxOrder + 1;
+                    }
+                }
+                EditorState.IsActive = true;
+                EditorState.DraftWorkout = _workout;
+            }
+
+            // Process pending selections from ExerciseList
+            if (SelectionState.IsActive && SelectionState.SelectedIds.Any())
+            {
+                int orderBase = _workout.Items.Count > 0 ? _workout.Items.Max(i => i.Order) : 0;
+                foreach (var exId in SelectionState.SelectedIds)
+                {
+                    var exercise = _allExercises?.FirstOrDefault(e => e.Id == exId);
+                    if (exercise != null)
+                    {
+                        _workout.Items.Add(new WorkoutItem
+                        {
+                            ExerciseId = exercise.Id,
+                            Exercise = exercise,
+                            Sets = 3,
+                            RepsRange = "10",
+                            Order = ++orderBase
+                        });
+                    }
+                }
+                SelectionState.Clear();
             }
 
             TopBar.SetDetailMode(WorkoutId == 0 ? "New Workout" : "Edit Workout");
@@ -266,29 +317,69 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private bool _isNavigatingAwayForSelection = false;
+
     public void Dispose()
     {
         TopBar.OnRightActionTapped -= HandleRightAction;
+        if (!_isNavigatingAwayForSelection)
+        {
+            EditorState.Clear();
+        }
     }
 
-    private void AddExerciseToList()
+    private async Task GoToExerciseSelection()
     {
-        if (_selectedExerciseId == 0) return;
-
-        var exercise = _allExercises?.FirstOrDefault(e => e.Id == _selectedExerciseId);
-        if (exercise != null)
+        if (string.IsNullOrWhiteSpace(_workout.Name))
         {
-            _workout.Items.Add(new WorkoutItem
-            {
-                ExerciseId = exercise.Id,
-                Exercise = exercise,
-                Sets = 3,
-                RepsRange = "10",
-                Order = _workout.Items.Count + 1
-            });
-
-            _selectedExerciseId = 0;
+            await UiHelper.ShowAlert("Validation", "Please enter a workout title before adding exercises.", "OK");
+            return;
         }
+
+        // Save current draft to memory and prepare return state
+        EditorState.DraftWorkout = _workout;
+        EditorState.IsActive = true;
+        
+        SelectionState.ReturnUrl = $"/workouts/edit/{ProgramId}/{WorkoutId}";
+        SelectionState.SelectedIds.Clear();
+        SelectionState.IsActive = false;
+
+        _isNavigatingAwayForSelection = true;
+        NavManager.NavigateTo($"/exercises?selection=true");
+    }
+
+    private async Task ImportFromWorkout()
+    {
+        if (_selectedWorkoutToCopy == 0) return;
+        var sourceWorkout = await DbService.GetWorkoutByIdAsync(_selectedWorkoutToCopy);
+        if (sourceWorkout?.Items != null)
+        {
+            int orderBase = _workout.Items.Count > 0 ? _workout.Items.Max(i => i.Order) : 0;
+            foreach (var item in sourceWorkout.Items)
+            {
+                _workout.Items.Add(new WorkoutItem
+                {
+                    ExerciseId = item.ExerciseId,
+                    Exercise = item.Exercise,
+                    Sets = item.Sets,
+                    RepsRange = item.RepsRange,
+                    Order = ++orderBase
+                });
+            }
+        }
+
+        _selectedWorkoutToCopy = 0;
+    }
+
+    private async Task OnWorkoutSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id) && id > 0)
+        {
+            _selectedWorkoutToCopy = id;
+            await ImportFromWorkout();
+        }
+
+        ToggleTopBarMenu();
     }
 
     private void RemoveItem(WorkoutItem item)
@@ -328,11 +419,13 @@
     {
         if (string.IsNullOrWhiteSpace(_workout.Name)) return;
         await DbService.SaveWorkoutWithItemsAsync(_workout);
+        EditorState.Clear();
         await GoBack();
     }
 
     private async Task GoBack()
     {
+        EditorState.Clear();
         await JS.InvokeVoidAsync("history.back");
     }
 
