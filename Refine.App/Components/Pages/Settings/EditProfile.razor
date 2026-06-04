@@ -31,16 +31,14 @@
 
         <RfInput Title="Email Address" Icon="mail" Type="email" Placeholder="Enter email address" Delay="0.1" @bind-Value="_user.Email" />
 
-        <div class="mb-4 animate-fade-in" style="animation-delay: 0.15s;">
-            <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">Gender</div>
-            <div class="rf-card input-card" @onclick="() => _showGenderDropdown = true" style="cursor: pointer;">
-                <span class="material-symbols-outlined input-icon">wc</span>
-                <div class="profile-input d-flex align-items-center" style="color: @(string.IsNullOrEmpty(_user.Gender) ? "rgba(255,255,255,0.35)" : "#ffffff") !important;">
-                    @(string.IsNullOrEmpty(_user.Gender) ? "Select Gender" : _user.Gender)
-                </div>
-                <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 20px;">expand_more</span>
-            </div>
-        </div>
+        <RfDropdown TValue="string"
+                    Title="Gender"
+                    Icon="wc"
+                    Placeholder="Select Gender"
+                    SheetTitle="SELECT CLASSIFICATION"
+                    Delay="0.15"
+                    @bind-Value="_user.Gender"
+                    Options="_genderOptions" />
 
         <!-- Save Button -->
         <div class="mt-4 px-1">
@@ -51,62 +49,24 @@
         </div>
     }
 
-    <!-- Bottom Sheet for Gender Selection -->
-    @if (_showGenderDropdown && _user != null)
-    {
-        <div class="bottom-sheet-backdrop" @onclick="() => _showGenderDropdown = false"></div>
-        <div class="bottom-sheet animate-slide-up">
-            <div class="bottom-sheet-handle"></div>
-            <div class="bottom-sheet-title">SELECT CLASSIFICATION</div>
-            
-            <div class="bottom-sheet-options">
-                <button class="bottom-sheet-option @(_user.Gender == "Male" ? "selected" : "")" @onclick='() => SelectGender("Male")'>
-                    <span class="material-symbols-outlined option-icon">male</span>
-                    <span class="option-text">Male</span>
-                    @if (_user.Gender == "Male") { <span class="material-symbols-outlined check-icon">check</span> }
-                </button>
-                
-                <button class="bottom-sheet-option @(_user.Gender == "Female" ? "selected" : "")" @onclick='() => SelectGender("Female")'>
-                    <span class="material-symbols-outlined option-icon">female</span>
-                    <span class="option-text">Female</span>
-                    @if (_user.Gender == "Female") { <span class="material-symbols-outlined check-icon">check</span> }
-                </button>
-                
-                <button class="bottom-sheet-option @(_user.Gender == "Non-binary" ? "selected" : "")" @onclick='() => SelectGender("Non-binary")'>
-                    <span class="material-symbols-outlined option-icon">transgender</span>
-                    <span class="option-text">Non-binary</span>
-                    @if (_user.Gender == "Non-binary") { <span class="material-symbols-outlined check-icon">check</span> }
-                </button>
-                
-                <button class="bottom-sheet-option @(_user.Gender == "Prefer not to say" ? "selected" : "")" @onclick='() => SelectGender("Prefer not to say")'>
-                    <span class="material-symbols-outlined option-icon">visibility_off</span>
-                    <span class="option-text">Prefer not to say</span>
-                    @if (_user.Gender == "Prefer not to say") { <span class="material-symbols-outlined check-icon">check</span> }
-                </button>
-            </div>
 
-            <button class="bottom-sheet-cancel" @onclick="() => _showGenderDropdown = false">CANCEL</button>
-        </div>
-    }
 </div>
 
 @code {
     private User? _user;
-    private bool _showGenderDropdown = false;
+    
+    private List<RfDropdownOption<string>> _genderOptions = new()
+    {
+        new() { Value = "Male", Text = "Male", Icon = "male" },
+        new() { Value = "Female", Text = "Female", Icon = "female" },
+        new() { Value = "Non-binary", Text = "Non-binary", Icon = "transgender" },
+        new() { Value = "Prefer not to say", Text = "Prefer not to say", Icon = "visibility_off" }
+    };
 
     protected override async Task OnInitializedAsync()
     {
         TopBar.SetDetailMode("Edit Profile");
         _user = await DbService.GetUserAsync();
-    }
-
-    private void SelectGender(string gender)
-    {
-        if (_user != null)
-        {
-            _user.Gender = gender;
-        }
-        _showGenderDropdown = false;
     }
 
     private async Task SaveProfile()

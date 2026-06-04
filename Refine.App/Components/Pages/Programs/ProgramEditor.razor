@@ -31,27 +31,33 @@
 
             <RfInput Title="Program Name" Icon="fitness_center" Placeholder="e.g. 5x5 Power" @bind-Value="_program.Name"/>
 
-            <div class="row g-2 mb-4 animate-fade-in" style="animation-delay: 0.05s;">
+            <div class="row g-2 animate-fade-in" style="animation-delay: 0.05s;">
                 <div class="col-6">
-                    <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">Level</div>
-                    <select @bind="_program.Level" class="form-select w-100 text-white" style="border-radius: 12px; background-color: var(--refine-surface) !important; border: 1px solid rgba(255,255,255,0.05) !important; padding: 12px 16px; height: 50px;">
-                        <option value="Beginner">Beginner</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Advanced">Advanced</option>
-                    </select>
+                    <RfDropdown TValue="string"
+                                Title="Level"
+                                Placeholder="Select Level"
+                                SheetTitle="SELECT LEVEL"
+                                @bind-Value="_program.Level"
+                                Options="_levelOptions" />
                 </div>
                 <div class="col-6">
-                    <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">Goal</div>
-                    <select @bind="_program.Goal" class="form-select w-100 text-white" style="border-radius: 12px; background-color: var(--refine-surface) !important; border: 1px solid rgba(255,255,255,0.05) !important; padding: 12px 16px; height: 50px;">
-                        <option value="Muscle Gain">Muscle Gain</option>
-                        <option value="Strength">Strength</option>
-                        <option value="Fat Loss">Fat Loss</option>
-                        <option value="Endurance">Endurance</option>
-                    </select>
+                    <RfDropdown TValue="string"
+                                Title="Goal"
+                                Placeholder="Select Goal"
+                                SheetTitle="SELECT GOAL"
+                                @bind-Value="_program.Goal"
+                                Options="_goalOptions" />
                 </div>
             </div>
 
-            <RfInput Title="Environment" Icon="location_on" Placeholder="e.g. Gym, Home" Delay="0.1" @bind-Value="_program.Environment"/>
+            <RfDropdown TValue="string"
+                        Title="Environment"
+                        Icon="location_on"
+                        Placeholder="Select Environment"
+                        SheetTitle="SELECT ENVIRONMENT"
+                        Delay="0.1"
+                        @bind-Value="_program.Environment"
+                        Options="_environmentOptions" />
 
             <div class="mt-4 px-1 pb-4 animate-fade-in" style="animation-delay: 0.15s;">
                 <button type="submit" class="rf-button-primary w-100">
@@ -125,6 +131,29 @@
     private bool _showTopBarMenu = false;
     private bool _isLoading = true;
     private bool _isSelected;
+
+    private List<RfDropdownOption<string>> _levelOptions = new()
+    {
+        new() { Value = "Beginner", Text = "Beginner" },
+        new() { Value = "Intermediate", Text = "Intermediate" },
+        new() { Value = "Advanced", Text = "Advanced" }
+    };
+
+    private List<RfDropdownOption<string>> _goalOptions = new()
+    {
+        new() { Value = "Muscle Gain", Text = "Muscle Gain" },
+        new() { Value = "Strength", Text = "Strength" },
+        new() { Value = "Fat Loss", Text = "Fat Loss" },
+        new() { Value = "Endurance", Text = "Endurance" }
+    };
+
+    private List<RfDropdownOption<string>> _environmentOptions = new()
+    {
+        new() { Value = "Gym", Text = "Gym", Icon = "fitness_center" },
+        new() { Value = "Home", Text = "Home", Icon = "home" },
+        new() { Value = "Outdoor", Text = "Outdoor", Icon = "park" },
+        new() { Value = "Track", Text = "Track", Icon = "sprint" }
+    };
 
     protected override void OnInitialized()
     {

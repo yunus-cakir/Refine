@@ -1,0 +1,95 @@
+@typeparam TValue
+@using Refine.App.Models
+
+<div class="mb-4 @(Delay > 0 ? "animate-fade-in" : "")" style="@(Delay > 0 ? $"animation-delay: {Delay}s;" : "")">
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">@Title</div>
+    }
+    <div class="rf-card input-card" @onclick="OpenDropdown" style="cursor: pointer;">
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <span class="material-symbols-outlined input-icon">@Icon</span>
+        }
+        <div class="profile-input d-flex align-items-center" style="color: @(EqualityComparer<TValue>.Default.Equals(Value, default) || string.IsNullOrEmpty(Value?.ToString()) ? "rgba(255,255,255,0.35)" : "#ffffff") !important;">
+            @(EqualityComparer<TValue>.Default.Equals(Value, default) || string.IsNullOrEmpty(Value?.ToString()) ? Placeholder : GetDisplayValue(Value))
+        </div>
+        <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 20px;">expand_more</span>
+    </div>
+</div>
+
+<!-- Bottom Sheet for Selection -->
+@if (_showDropdown)
+{
+    <div class="bottom-sheet-backdrop @(_isClosing ? "closing" : "")" @onclick="CloseDropdown"></div>
+    <div class="bottom-sheet @(_isClosing ? "animate-slide-down" : "animate-slide-up")">
+        <div class="bottom-sheet-handle"></div>
+        @if (!string.IsNullOrEmpty(SheetTitle))
+        {
+            <div class="bottom-sheet-title">@SheetTitle</div>
+        }
+        
+        <div class="bottom-sheet-options">
+            @foreach (var option in Options)
+            {
+                var isSelected = EqualityComparer<TValue>.Default.Equals(Value, option.Value);
+                <button type="button" class="bottom-sheet-option @(isSelected ? "selected" : "")" @onclick="() => SelectOption(option.Value)">
+                    @if (!string.IsNullOrEmpty(option.Icon))
+                    {
+                        <span class="material-symbols-outlined option-icon">@option.Icon</span>
+                    }
+                    <span class="option-text">@option.Text</span>
+                    @if (isSelected) 
+                    { 
+                        <span class="material-symbols-outlined check-icon">check</span> 
+                    }
+                </button>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Icon { get; set; } = "";
+    [Parameter] public string Placeholder { get; set; } = "Select";
+    [Parameter] public string SheetTitle { get; set; } = "SELECT OPTION";
+    [Parameter] public double Delay { get; set; } = 0;
+    
+    [Parameter] public TValue Value { get; set; } = default!;
+    [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
+    
+    [Parameter] public IEnumerable<RfDropdownOption<TValue>> Options { get; set; } = new List<RfDropdownOption<TValue>>();
+
+    private bool _showDropdown = false;
+    private bool _isClosing = false;
+
+    private void OpenDropdown()
+    {
+        _isClosing = false;
+        _showDropdown = true;
+    }
+
+    private async Task CloseDropdown()
+    {
+        if (_isClosing) return;
+        _isClosing = true;
+        StateHasChanged();
+        await Task.Delay(300); // Wait for animation
+        _showDropdown = false;
+        _isClosing = false;
+    }
+
+    private async Task SelectOption(TValue value)
+    {
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+        await CloseDropdown();
+    }
+
+    private string GetDisplayValue(TValue value)
+    {
+        var option = Options.FirstOrDefault(o => EqualityComparer<TValue>.Default.Equals(o.Value, value));
+        return option?.Text ?? value?.ToString() ?? "";
+    }
+}
