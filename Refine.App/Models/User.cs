@@ -12,9 +12,11 @@ public class AppSettings
     public string Theme { get; set; } = "system";
     public DayOfWeek WeekStartDay { get; set; } = DayOfWeek.Monday;
 }
-
 public class WorkoutSettings
 {
+    public int PreferredRestTime { get; set; } = 90;
+    public int AverageSetDuration { get; set; } = 45;
+    public int PreferredSetCount { get; set; } = 3;
     public int PreferredMinReps { get; set; } = 8;
     public int PreferredMaxReps { get; set; } = 12;
     public string PreferredRepRange { get; set; } = "8-12";

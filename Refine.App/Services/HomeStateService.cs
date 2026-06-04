@@ -243,6 +243,7 @@ namespace Refine.App.Services
             try
             {
                 var program = await _dbService.GetSelectedWorkoutProgramAsync();
+                var user = await _dbService.GetUserAsync();
                 if (program != null && program.Workouts != null && program.Workouts.Any())
                 {
                     var orderedWorkouts = program.Workouts.OrderBy(w => w.Order).ToList();
@@ -276,7 +277,7 @@ namespace Refine.App.Services
 
                     if (UpNextWorkout != null && UpNextWorkout.Items != null)
                     {
-                        UpNextDuration = (UpNextWorkout.Items.Sum(i => i.Sets)) * 4;
+                        UpNextDuration = (UpNextWorkout.Items.Sum(i => i.Sets)) * ((user?.WorkoutSettings?.PreferredRestTime ?? 90) + (user?.WorkoutSettings?.AverageSetDuration ?? 45)) / 60;
                         var targetMuscles = UpNextWorkout.Items
                             .Where(i => !string.IsNullOrWhiteSpace(i.Exercise?.PrimaryMuscleCategory) &&
                                         i.Exercise.PrimaryMuscleCategory != "General")

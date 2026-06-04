@@ -18,6 +18,26 @@
     else
     {
         <div class="settings-list d-flex flex-column gap-4 px-3 animate-fade-in pb-5">
+            <!-- Preferred Set Count Card -->
+            <div class="rf-card p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex flex-column gap-1 text-start">
+                        <h6 class="text-white text-uppercase m-0 tracking-wider" style="font-size: 13px;">Preferred Set Count</h6>
+                        <span class="text-on-surface-variant font-label small" style="opacity: 0.8;">Default sets for new exercises</span>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between bg-dark rounded-pill px-1 py-1" style="border: 1px solid rgba(255,255,255,0.05); min-width: 120px;">
+                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 32px; height: 32px; background: rgba(255,255,255,0.1);" @onclick="() => { if(_user.WorkoutSettings.PreferredSetCount > 1) { _user.WorkoutSettings.PreferredSetCount--; SaveSettings(); } }">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">remove</span>
+                        </button>
+                        <input type="number" class="form-control bg-transparent text-white text-center border-0 fw-bold p-0" style="width: 40px; box-shadow: none;" @bind="_user.WorkoutSettings.PreferredSetCount" @bind:after="SaveSettings"/>
+                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-dark" style="width: 32px; height: 32px; background: #C3F400;" @onclick="() => { _user.WorkoutSettings.PreferredSetCount++; SaveSettings(); }">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Preferred Rep Range Card -->
             <div class="rf-card p-4">
                 <div class="d-flex align-items-start justify-content-between mb-4">
@@ -68,6 +88,46 @@
                     <span>0 (FAILURE)</span>
                     <span>SUB-MAXIMAL</span>
                     <span>5 (RECOVERY)</span>
+                </div>
+            </div>
+
+            <!-- Preferred Rest Time Card -->
+            <div class="rf-card p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex flex-column gap-1 text-start">
+                        <h6 class="text-white text-uppercase m-0 tracking-wider" style="font-size: 13px;">Preferred Rest Time</h6>
+                        <span class="text-on-surface-variant font-label small" style="opacity: 0.8;">Default rest between sets</span>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between bg-dark rounded-pill px-1 py-1" style="border: 1px solid rgba(255,255,255,0.05); min-width: 130px;">
+                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 32px; height: 32px; background: rgba(255,255,255,0.1);" @onclick="() => { if(_user.WorkoutSettings.PreferredRestTime >= 15) { _user.WorkoutSettings.PreferredRestTime -= 15; SaveSettings(); } }">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">remove</span>
+                        </button>
+                        <input type="text" class="form-control bg-transparent text-white text-center border-0 fw-bold p-0" style="width: 50px; box-shadow: none;" value="@FormatTime(_user.WorkoutSettings.PreferredRestTime)" @onchange="OnRestTimeChanged"/>
+                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-dark" style="width: 32px; height: 32px; background: #C3F400;" @onclick="() => { _user.WorkoutSettings.PreferredRestTime += 15; SaveSettings(); }">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Average Set Duration Card -->
+            <div class="rf-card p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex flex-column gap-1 text-start">
+                        <h6 class="text-white text-uppercase m-0 tracking-wider" style="font-size: 13px;">Average Set Duration</h6>
+                        <span class="text-on-surface-variant font-label small" style="opacity: 0.8;">Used when estimating total workout duration.</span>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between bg-dark rounded-pill px-1 py-1" style="border: 1px solid rgba(255,255,255,0.05); min-width: 130px;">
+                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 32px; height: 32px; background: rgba(255,255,255,0.1);" @onclick="() => { if(_user.WorkoutSettings.AverageSetDuration >= 15) { _user.WorkoutSettings.AverageSetDuration -= 15; SaveSettings(); } }">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">remove</span>
+                        </button>
+                        <input type="text" class="form-control bg-transparent text-white text-center border-0 fw-bold p-0" style="width: 50px; box-shadow: none;" value="@FormatTime(_user.WorkoutSettings.AverageSetDuration)" @onchange="OnSetDurationChanged"/>
+                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-dark" style="width: 32px; height: 32px; background: #C3F400;" @onclick="() => { _user.WorkoutSettings.AverageSetDuration += 15; SaveSettings(); }">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -130,17 +190,62 @@
                 _user.WorkoutSettings.PreferredMaxReps = 20;
                 changed = true;
             }
+
             if (_user.WorkoutSettings.PreferredMinReps > 20)
             {
                 _user.WorkoutSettings.PreferredMinReps = 20;
                 changed = true;
             }
+
             if (changed)
             {
                 UpdateRepRange();
                 await SaveSettings();
             }
         }
+    }
+
+    private string FormatTime(int totalSeconds)
+    {
+        int mins = totalSeconds / 60;
+        int secs = totalSeconds % 60;
+        return $"{mins}:{secs:D2}";
+    }
+
+    private async Task OnRestTimeChanged(ChangeEventArgs e)
+    {
+        if (e.Value is string s && !string.IsNullOrWhiteSpace(s))
+        {
+            var parts = s.Split(':');
+            if (parts.Length == 2 && int.TryParse(parts[0], out int m) && int.TryParse(parts[1], out int sec))
+            {
+                _user!.WorkoutSettings.PreferredRestTime = (m * 60) + sec;
+            }
+            else if (int.TryParse(s, out int totalSec))
+            {
+                _user!.WorkoutSettings.PreferredRestTime = totalSec;
+            }
+        }
+
+        await SaveSettings();
+    }
+
+    private async Task OnSetDurationChanged(ChangeEventArgs e)
+    {
+        if (e.Value is string s && !string.IsNullOrWhiteSpace(s))
+        {
+            var parts = s.Split(':');
+            if (parts.Length == 2 && int.TryParse(parts[0], out int m) && int.TryParse(parts[1], out int sec))
+            {
+                _user!.WorkoutSettings.AverageSetDuration = (m * 60) + sec;
+            }
+            else if (int.TryParse(s, out int totalSec))
+            {
+                _user!.WorkoutSettings.AverageSetDuration = totalSec;
+            }
+        }
+
+        await SaveSettings();
     }
 
     private void OnMinRepsInput(ChangeEventArgs e)
@@ -152,6 +257,7 @@
             {
                 _user.WorkoutSettings.PreferredMinReps = _user.WorkoutSettings.PreferredMaxReps;
             }
+
             UpdateRepRange();
         }
     }
@@ -165,6 +271,7 @@
             {
                 _user.WorkoutSettings.PreferredMaxReps = _user.WorkoutSettings.PreferredMinReps;
             }
+
             UpdateRepRange();
         }
     }
@@ -217,4 +324,5 @@
             await DbService.UpdateUserAsync(_user);
         }
     }
+
 }

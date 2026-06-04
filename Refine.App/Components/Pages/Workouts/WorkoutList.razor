@@ -130,7 +130,7 @@
                                 <!-- Duration -->
                                 <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-on-surface-variant); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
                                     <span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>
-                                    @((workout.Items?.Sum(i => i.Sets) ?? 0) * 4) MIN
+                                    @((workout.Items?.Sum(i => i.Sets) ?? 0) * ((_user?.WorkoutSettings?.PreferredRestTime ?? 90) + (_user?.WorkoutSettings?.AverageSetDuration ?? 45)) / 60) MIN
                                 </div>
 
                                 <!-- Status -->
@@ -183,6 +183,7 @@
     private bool _isUpNextSaved = false;
     private int? _activeCardMenuId;
     private Dictionary<int, bool> _workoutHasLog = new();
+    private User? _user;
 
     protected override void OnInitialized()
     {
@@ -198,6 +199,7 @@
     private async Task LoadData()
     {
         _isLoading = true;
+        _user = await DbService.GetUserAsync();
         _selectedProgram = await DbService.GetSelectedWorkoutProgramAsync();
 
         _completedWorkouts.Clear();

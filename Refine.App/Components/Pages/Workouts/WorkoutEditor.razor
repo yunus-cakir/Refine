@@ -204,6 +204,7 @@
     private decimal TotalCnsLoad => _workout?.Items?.Sum(i => CalculateItemCnsLoad(i)) ?? 0;
     private decimal CnsThreshold = 150m;
     private decimal PreferredRIR = 2.0m;
+    private int PreferredSetCount = 3;
 
     private decimal CalculateItemCnsLoad(WorkoutItem item)
     {
@@ -241,6 +242,7 @@
             {
                 CnsThreshold = user.WorkoutSettings.CnsThreshold;
                 PreferredRIR = user.WorkoutSettings.PreferredRIR;
+                PreferredSetCount = user.WorkoutSettings.PreferredSetCount;
             }
 
             _allExercises = await DbService.GetExercisesAsync();
@@ -289,7 +291,7 @@
                         {
                             ExerciseId = exercise.Id,
                             Exercise = exercise,
-                            Sets = 3,
+                            Sets = PreferredSetCount,
                             RepsRange = "10",
                             Order = ++orderBase
                         });
