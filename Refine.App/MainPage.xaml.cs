@@ -214,19 +214,20 @@ public partial class MainPage : ContentPage
 
     protected override bool OnBackButtonPressed()
     {
-        // Try to handle back natively in Blazor first
-        var task = _navBridge.RequestHardwareBackAsync();
-        
-        // Since OnBackButtonPressed is synchronous, we block briefly or run async void.
-        // It's safer to run synchronously if possible, or return true and evaluate asynchronously.
-        // For MAUI Blazor, returning true prevents app close. If we want to close, we can use Application.Current.Quit().
-        var handled = task.GetAwaiter().GetResult();
-        
-        if (handled)
-        {
-            return true; // We handled it
-        }
+        // Cancel the native back navigation immediately to prevent closing the app
+        // while we check asynchronously with Blazor.
+        _ = HandleBackAsync();
+        return true; 
+    }
 
-        return base.OnBackButtonPressed(); // Exit app
+    private async Task HandleBackAsync()
+    {
+        bool handled = await _navBridge.RequestHardwareBackAsync();
+        
+        if (!handled)
+        {
+            // If Blazor didn't handle it, we are at the root. Quit the app natively.
+            Application.Current?.Quit();
+        }
     }
 }

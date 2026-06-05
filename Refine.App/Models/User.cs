@@ -60,11 +60,11 @@ public class User
     public List<BiometricLog> BiometricLogs { get; set; } = new();
 
     // Blob settings
-    [TextBlob("AppSettingsBlob")]
+    [TextBlob("AppSettingsBlob"), Ignore]
     public AppSettings AppSettings { get; set; } = new();
     public string AppSettingsBlob { get; set; } = "";
 
-    [TextBlob("WorkoutSettingsBlob")]
+    [TextBlob("WorkoutSettingsBlob"), Ignore]
     public WorkoutSettings WorkoutSettings { get; set; } = new();
     public string WorkoutSettingsBlob { get; set; } = "";
 }

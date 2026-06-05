@@ -27,70 +27,79 @@ public class LocalDbService
 
             _connection = new SQLiteAsyncConnection(DbConstants.DatabasePath, DbConstants.Flags);
 
-        await _connection.CreateTableAsync<MuscleGroup>();
-        await _connection.CreateTableAsync<ExerciseMuscleMap>();
-        await _connection.CreateTableAsync<Exercise>();
-        await _connection.CreateTableAsync<WorkoutProgram>();
-        await _connection.CreateTableAsync<Workout>();
-        await _connection.CreateTableAsync<WorkoutItem>();
-        await _connection.CreateTableAsync<WorkoutLog>();
-        await _connection.CreateTableAsync<User>();
-        await _connection.CreateTableAsync<BiometricLog>();
-
-        // Varsayılan kullanıcı ve ayarları oluştur (Eğer yoksa)
-        var userCount = await _connection.Table<User>().CountAsync();
-        if (userCount == 0)
-        {
-            var newUser = new User
+            try
             {
-                FirstName = "John",
-                LastName = "",
-                Height = 175,
-                Weight = 75,
-                Gender = "Male",
-                TargetDailyCalories = 2500,
-                MetabolismType = "normal",
-                AppSettings = new AppSettings { Language = "en", UnitSystem = "metric", Theme = "dark" },
-                WorkoutSettings = new WorkoutSettings
-                    { PreferredMinReps = 8, PreferredMaxReps = 12, PreferredRepRange = "8-12", PreferredRIR = 2.0m, AutoCopyWeight = true, AutoCopyReps = true, AutoCopyRIR = true, AutoCopyFormRating = true }
-            };
-            await _connection.InsertWithChildrenAsync(newUser);
+                await _connection.CreateTableAsync<MuscleGroup>();
+                await _connection.CreateTableAsync<ExerciseMuscleMap>();
+                await _connection.CreateTableAsync<Exercise>();
+                await _connection.CreateTableAsync<WorkoutProgram>();
+                await _connection.CreateTableAsync<Workout>();
+                await _connection.CreateTableAsync<WorkoutItem>();
+                await _connection.CreateTableAsync<WorkoutLog>();
+                await _connection.CreateTableAsync<User>();
+                await _connection.CreateTableAsync<BiometricLog>();
 
-            var initialLog = new BiometricLog
+                // Varsayılan kullanıcı ve ayarları oluştur (Eğer yoksa)
+                var userCount = await _connection.Table<User>().CountAsync();
+                if (userCount == 0)
+                {
+                    var newUser = new User
+                    {
+                        FirstName = "John",
+                        LastName = "",
+                        Height = 175,
+                        Weight = 75,
+                        Gender = "Male",
+                        TargetDailyCalories = 2500,
+                        MetabolismType = "normal",
+                        AppSettings = new AppSettings { Language = "en", UnitSystem = "metric", Theme = "dark" },
+                        WorkoutSettings = new WorkoutSettings
+                            { PreferredMinReps = 8, PreferredMaxReps = 12, PreferredRepRange = "8-12", PreferredRIR = 2.0m, AutoCopyWeight = true, AutoCopyReps = true, AutoCopyRIR = true, AutoCopyFormRating = true }
+                    };
+                    await _connection.InsertWithChildrenAsync(newUser);
+
+                    var initialLog = new BiometricLog
+                    {
+                        UserId = newUser.Id,
+                        Date = DateTime.Now,
+                        Weight = 75,
+                        Neck = 38,
+                        Shoulder = 115,
+                        Waist = 85
+                    };
+                    await _connection.InsertAsync(initialLog);
+                }
+
+                // Eğer Egzersiz tablosu boşsa, örnek verileri yükle
+                if (await _connection.Table<Exercise>().CountAsync() == 0)
+                {
+                    await SeedDataAsync();
+                }
+
+                // Rename existing "Mock İdman Programı" to "W's Upper Lower" if it exists
+                var existingMock = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "Mock İdman Programı")
+                    .FirstOrDefaultAsync();
+                if (existingMock != null)
+                {
+                    existingMock.Name = "W's Upper Lower";
+                    await _connection.UpdateAsync(existingMock);
+                }
+
+                var mockProgramExists =
+                    await _connection.Table<WorkoutProgram>().Where(p => p.Name == "W's Upper Lower").CountAsync();
+                if (mockProgramExists == 0)
+                {
+                    await SeedMockProgramAsync();
+                }
+
+                _isInitialized = true;
+            }
+            catch (Exception ex)
             {
-                UserId = newUser.Id,
-                Date = DateTime.Now,
-                Weight = 75,
-                Neck = 38,
-                Shoulder = 115,
-                Waist = 85
-            };
-            await _connection.InsertAsync(initialLog);
-        }
-
-        // Eğer Egzersiz tablosu boşsa, örnek verileri yükle
-        if (await _connection.Table<Exercise>().CountAsync() == 0)
-        {
-            await SeedDataAsync();
-        }
-
-        // Rename existing "Mock İdman Programı" to "W's Upper Lower" if it exists
-        var existingMock = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "Mock İdman Programı")
-            .FirstOrDefaultAsync();
-        if (existingMock != null)
-        {
-            existingMock.Name = "W's Upper Lower";
-            await _connection.UpdateAsync(existingMock);
-        }
-
-        var mockProgramExists =
-            await _connection.Table<WorkoutProgram>().Where(p => p.Name == "W's Upper Lower").CountAsync();
-        if (mockProgramExists == 0)
-        {
-            await SeedMockProgramAsync();
-        }
-
-            _isInitialized = true;
+                Console.WriteLine($"[LocalDbService] Initialization Error: {ex.Message}");
+                // Not throwing here allows the app to stay alive, 
+                // but subsequent operations might fail or retry.
+            }
         }
         finally
         {

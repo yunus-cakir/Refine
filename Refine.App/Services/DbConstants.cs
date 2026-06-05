@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 namespace Refine.App.Services
 {
@@ -10,9 +10,7 @@ namespace Refine.App.Services
             // Veritabanını okuma/yazma modunda aç
             SQLite.SQLiteOpenFlags.ReadWrite |
             // Yoksa oluştur
-            SQLite.SQLiteOpenFlags.Create |
-            // Çoklu thread erişimine izin ver
-            SQLite.SQLiteOpenFlags.SharedCache;
+            SQLite.SQLiteOpenFlags.Create;
 
         public static string DatabasePath =>
             Path.Combine(FileSystem.AppDataDirectory, DatabaseFilename);
