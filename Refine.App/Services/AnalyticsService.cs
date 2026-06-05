@@ -9,6 +9,8 @@ public class ChartDataPoint
 {
     public DateTime Date { get; set; }
     public double Value { get; set; }
+    public int? LatestWorkoutId { get; set; }
+    public long? LatestWorkoutTicks { get; set; }
 }
 
 public class AnalyticsService

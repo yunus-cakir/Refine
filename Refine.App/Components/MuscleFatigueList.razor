@@ -1,0 +1,60 @@
+@using Refine.App.Models
+@using Refine.App.Services
+
+<div class="rf-card rf-flex-col @CssStyle" style="gap: 16px;">
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <div class="rf-flex-row rf-items-center" style="gap: 8px; margin-top: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 20px;">weight</span>
+            <span class="font-label" style="font-size: 13px; text-transform: uppercase;">@Title</span>
+        </div>
+    }
+
+    @if (Fatigues != null && Fatigues.Any())
+    {
+        <div class="rf-flex-col" style="gap: 16px;">
+            @foreach (var muscle in Fatigues)
+            {
+                var mColor = RfProgressBar.GetDynamicColor(muscle.FatiguePercentage);
+                <div class="rf-flex-col" style="gap: 8px;">
+                    <div class="rf-flex-row" style="align-items: center; justify-content: space-between; gap: 16px; width: 100%;">
+                        <!-- Left Column: Title & Sub-muscles badges -->
+                        <div class="rf-flex-col" style="flex: 1; gap: 6px; min-width: 0;">
+                            <span class="font-body" style="font-weight: 600; font-size: 15px; color: var(--color-on-surface);">@muscle.MuscleCategory</span>
+                            @if (muscle.SubMuscles != null && muscle.SubMuscles.Any())
+                            {
+                                <div class="rf-flex-row" style="flex-wrap: wrap; gap: 6px;">
+                                    @foreach (var sub in muscle.SubMuscles)
+                                    {
+                                        var subColor = RfProgressBar.GetDynamicColor(sub.FatiguePercentage);
+                                        <span class="rf-badge-faded" style="font-size: 10px; padding: 2px 8px; border-color: rgba(255, 255, 255, 0.05); color: var(--color-on-surface-variant); display: inline-flex; align-items: center;">
+                                            <span style="font-weight: 500;">@sub.MuscleName</span>
+                                            <span style="color: @subColor; margin-left: 4px; font-weight: bold;">@Math.Round(sub.FatiguePercentage)%</span>
+                                        </span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        
+                        <!-- Right Column: Primary muscle group percentage -->
+                        <div style="flex-shrink: 0; text-align: right; display: flex; align-items: center; justify-content: flex-end;">
+                            <span class="font-headline" style="color: @mColor; font-size: 20px; font-weight: bold; line-height: 1;">@Math.Round(muscle.FatiguePercentage)%</span>
+                        </div>
+                    </div>
+                    <RfProgressBar Percentage="@muscle.FatiguePercentage" />
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="font-body" style="color: var(--color-on-surface-variant); text-align: center; margin: 0;">@EmptyMessage</p>
+    }
+</div>
+
+@code {
+    [Parameter] public IEnumerable<MuscleFatigueInfo> Fatigues { get; set; } = new List<MuscleFatigueInfo>();
+    [Parameter] public string Title { get; set; } = "Muscle Fatigue";
+    [Parameter] public string EmptyMessage { get; set; } = "No significant muscle fatigue recorded recently.";
+    [Parameter] public string CssStyle { get; set; } = "";
+}

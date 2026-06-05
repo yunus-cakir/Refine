@@ -42,7 +42,7 @@
         <!-- Bento Grid: Stats & Analytics -->
         <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
             <!-- Recovery Metric -->
-            <RecoveryCard IsLoading="!StateService.IsStreakLoaded" Value="84" />
+            <RecoveryCard IsLoading="!StateService.IsRecoveryLoaded" Value="StateService.RecoveryState.OverallRecoveryScore" OnClick="NavigateToRecovery" />
 
             <!-- Streak Metric -->
             <StreakCard 
@@ -115,5 +115,10 @@
         {
             NavManager.NavigateTo($"/session/active/{StateService.UpNextWorkout.Id}?cycle={StateService.UpNextCycle}");
         }
+    }
+
+    private void NavigateToRecovery()
+    {
+        NavManager.NavigateTo("/analytics/recovery");
     }
 }

@@ -5,6 +5,7 @@
 @inject LocalDbService ProgramService
 @inject NavigationManager NavManager
 @inject TopBarBridge TopBar
+@inject RecoveryService RecService
 @inject IJSRuntime JS
 
 @if (_workout == null)
@@ -67,6 +68,11 @@ else
             <CnsLoadCard Title="Estimated CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" WarningMessage="Severe CNS Fatigue! This program may overtax your nervous system." CssClass="m-0" />
         </div>
 
+        <!-- ESTIMATED MUSCLE IMPACT -->
+        <div class="section-margin">
+            <MuscleFatigueList Fatigues="_estimatedMuscleFatigues" Title="Estimated Muscle Impact" EmptyMessage="No muscle impact configured." />
+        </div>
+
 
         <!-- Exercises List -->
         <section class="exercises-section">
@@ -104,10 +110,12 @@ else
     [Parameter] public int Id { get; set; }
     [SupplyParameterFromQuery] public int? Cycle { get; set; }
     private Workout? _workout;
+    private List<MuscleFatigueInfo>? _estimatedMuscleFatigues;
 
     private decimal TotalCnsLoad => _workout?.Items?.Sum(i => CalculateItemCnsLoad(i)) ?? 0;
     private decimal CnsThreshold = 150m;
     private decimal PreferredRIR = 2.0m;
+    private User? _currentUser;
 
     private decimal CalculateItemCnsLoad(WorkoutItem item)
     {
@@ -136,11 +144,11 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var user = await ProgramService.GetUserAsync();
-        if (user != null)
+        _currentUser = await ProgramService.GetUserAsync();
+        if (_currentUser != null)
         {
-            CnsThreshold = user.WorkoutSettings.CnsThreshold;
-            PreferredRIR = user.WorkoutSettings.PreferredRIR;
+            CnsThreshold = _currentUser.WorkoutSettings.CnsThreshold;
+            PreferredRIR = _currentUser.WorkoutSettings.PreferredRIR;
         }
 
         _workout = await ProgramService.GetWorkoutByIdAsync(Id);
@@ -148,6 +156,7 @@ else
         if (_workout != null)
         {
             TopBar.SetDetailMode(_workout.Name);
+            CalculateEstimatedMuscleImpact();
         }
     }
 
@@ -158,7 +167,49 @@ else
         if (_workout != null)
         {
             TopBar.SetDetailMode(_workout.Name);
+            CalculateEstimatedMuscleImpact();
         }
+    }
+
+    private void CalculateEstimatedMuscleImpact()
+    {
+        if (_workout?.Items == null || _currentUser == null) return;
+
+        var allExercises = _workout.Items
+            .Where(i => i.Exercise != null)
+            .Select(i => i.Exercise!)
+            .GroupBy(e => e.Id)
+            .Select(g => g.First())
+            .ToList();
+
+        var dummyLogs = new List<WorkoutLog>();
+
+        foreach (var item in _workout.Items)
+        {
+            if (item.ExerciseId <= 0) continue;
+
+            int reps = _currentUser.WorkoutSettings.PreferredMaxReps; // Default to preferred max
+            if (!string.IsNullOrWhiteSpace(item.RepsRange))
+            {
+                var parts = item.RepsRange.Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length > 0 && int.TryParse(parts.Last().Trim(), out int parsedRep))
+                {
+                    reps = parsedRep;
+                }
+            }
+
+            for (int i = 0; i < item.Sets; i++)
+            {
+                dummyLogs.Add(new WorkoutLog
+                {
+                    ExerciseId = item.ExerciseId,
+                    Reps = reps,
+                    RIR = (int)_currentUser.WorkoutSettings.PreferredRIR
+                });
+            }
+        }
+
+        _estimatedMuscleFatigues = RecService.CalculateMuscleFatigue(dummyLogs, allExercises, true);
     }
 
 

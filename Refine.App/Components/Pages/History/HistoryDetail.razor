@@ -4,6 +4,7 @@
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
 @inject TopBarBridge TopBar
+@inject RecoveryService RecService
 @inject IJSRuntime JS
 @implements IDisposable
 
@@ -51,7 +52,11 @@ else
         }
     </div>
 
-    <CnsLoadCard CurrentLoad="TotalActualCnsLoad" CnsThreshold="CnsThreshold" />
+    <CnsLoadCard CurrentLoad="TotalActualCnsLoad" CnsThreshold="CnsThreshold"/>
+
+    <div class="mt-4">
+        <MuscleFatigueList Fatigues="_workoutFatigues" Title="Muscle Impact" EmptyMessage="No muscle volume recorded."/>
+    </div>
 
     <div class="history-section mt-4 pb-5">
         <h5 class="font-headline fw-bold mb-3">Exercises</h5>
@@ -142,6 +147,7 @@ else
     }
 
     private List<ExerciseHistoryGroup>? _logsGrouped;
+    private List<MuscleFatigueInfo>? _workoutFatigues;
     private decimal CnsThreshold = 150m;
     private decimal PreferredRIR = 2.0m;
 
@@ -204,6 +210,8 @@ else
             .Select(ex => ex!.PrimaryMuscleCategory!.ToUpper())
             .Distinct()
             .ToList();
+
+        _workoutFatigues = RecService.CalculateMuscleFatigue(logs, allExercises, true);
     }
 
     public void Dispose()

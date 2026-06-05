@@ -16,9 +16,7 @@
                 <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">%</span>
             </div>
         </div>
-        <div style="width: 100%; background-color: var(--color-surface-container-highest); height: 6px; border-radius: 9999px; overflow: hidden; margin-top: auto;">
-            <div style="background-color: @dynamicColor; width: @(percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%; height: 100%; border-radius: 9999px;"></div>
-        </div>
+        <RfProgressBar Percentage="@percentage" CssStyle="margin-top: auto;" />
         @if (CurrentLoad >= CnsThreshold)
         {
             <div class="mt-2 small d-flex align-items-center gap-1" style="color: @dynamicColor;">

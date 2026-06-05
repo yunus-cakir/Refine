@@ -37,6 +37,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<MainPage>();
 
         builder.Services.AddSingleton<AnalyticsService>();
+        builder.Services.AddSingleton<RecoveryService>();
         builder.Services.AddSingleton<HomeStateService>();
 
         // Kullanıcı Servisi (Home.razor'ın çökme sebebi muhtemelen buydu)

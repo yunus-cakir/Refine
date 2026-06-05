@@ -1,0 +1,61 @@
+@using Refine.App.Services
+
+@if (Type == ProgressBarType.Linear)
+{
+    <div style="width: 100%; background-color: var(--color-surface-container-highest); height: @Height; border-radius: 9999px; overflow: hidden; @CssStyle">
+        <div style="background-color: @BarColor; width: @(Math.Min(100, Percentage).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%; height: 100%; border-radius: 9999px; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+    </div>
+}
+else if (Type == ProgressBarType.Circular)
+{
+    <div style="position: relative; width: @Size; height: @Size; @CssStyle">
+        <!-- Simple Circular Progress SVG -->
+        <svg viewBox="0 0 36 36" style="width: 100%; height: 100%;">
+            <path stroke="var(--color-surface-container-highest)" stroke-width="4" fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            <path stroke="@BarColor" stroke-width="4" stroke-dasharray="@(Math.Min(100, Percentage).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)), 100" fill="none" stroke-linecap="round"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style="transition: stroke-dasharray 0.3s ease, stroke 0.3s ease;" />
+        </svg>
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            @if (ChildContent != null)
+            {
+                @ChildContent(BarColor)
+            }
+            else
+            {
+                <span class="font-headline" style="font-size: @FontSize; font-weight: bold; color: @BarColor;">@Percentage.ToString("0")%</span>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    public enum ProgressBarType
+    {
+        Linear,
+        Circular
+    }
+
+    [Parameter] public ProgressBarType Type { get; set; } = ProgressBarType.Linear;
+    [Parameter] public decimal Percentage { get; set; }
+    [Parameter] public string Height { get; set; } = "6px";
+    [Parameter] public string Size { get; set; } = "140px";
+    [Parameter] public string FontSize { get; set; } = "36px";
+    [Parameter] public string CssStyle { get; set; } = "";
+    
+    // Set to true when high percentages are 'Good' (e.g., Overall Recovery), false when 'Bad' (e.g., Fatigue/Load)
+    [Parameter] public bool InvertColorLogic { get; set; } = false; 
+
+    // Passes the evaluated BarColor to child content if custom text is desired
+    [Parameter] public RenderFragment<string>? ChildContent { get; set; }
+
+    public string BarColor => GetDynamicColor(Percentage, InvertColorLogic);
+
+    public static string GetDynamicColor(decimal percentage, bool invert = false)
+    {
+        // For recovery (invert = true), 100% is Green, 0% is Red/Purple
+        // For fatigue (invert = false), 0% is Green, 100% is Red/Purple
+        decimal val = invert ? 100m - percentage : percentage;
+        return CnsHelper.GetCnsColor(val);
+    }
+}

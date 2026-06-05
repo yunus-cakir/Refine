@@ -4,7 +4,7 @@
 }
 else
 {
-    <div class="rf-card-half">
+    <div class="rf-card-half" @onclick="OnClick" style="cursor: pointer;">
         <div class="rf-flex-row rf-items-center" style="gap: 8px; color: var(--color-on-surface-variant);">
             <span class="material-symbols-outlined" style="font-size: 18px;">favorite</span>
             <span class="font-label" style="font-size: 11px; text-transform: uppercase;">RECOVERY</span>
@@ -22,4 +22,5 @@ else
 @code {
     [Parameter] public bool IsLoading { get; set; }
     [Parameter] public int Value { get; set; } = 84;
+    [Parameter] public EventCallback OnClick { get; set; }
 }

@@ -10,18 +10,21 @@ namespace Refine.App.Services
     {
         private readonly LocalDbService _dbService;
         private readonly AnalyticsService _analyticsService;
+        private readonly RecoveryService _recoveryService;
 
         public bool IsUserLoaded { get; private set; } = false;
         public bool IsProgramsLoaded { get; private set; } = false;
         public bool IsTopExerciseLoaded { get; private set; } = false;
         public bool IsStreakLoaded { get; private set; } = false;
         public bool IsUpNextLoaded { get; private set; } = false;
+        public bool IsRecoveryLoaded { get; private set; } = false;
 
         public bool IsLoaded =>
-            IsUserLoaded && IsProgramsLoaded && IsTopExerciseLoaded && IsStreakLoaded && IsUpNextLoaded;
+            IsUserLoaded && IsProgramsLoaded && IsTopExerciseLoaded && IsStreakLoaded && IsUpNextLoaded && IsRecoveryLoaded;
 
         public User? User { get; private set; }
         public List<WorkoutProgram>? Programs { get; private set; }
+        public RecoveryState RecoveryState { get; private set; } = new();
 
         public Exercise? TopExercise { get; private set; }
         public List<ChartDataPoint> TopExerciseDataPoints { get; private set; } = new();
@@ -41,10 +44,11 @@ namespace Refine.App.Services
         public event Action? OnStateChanged;
 
 
-        public HomeStateService(LocalDbService dbService, AnalyticsService analyticsService)
+        public HomeStateService(LocalDbService dbService, AnalyticsService analyticsService, RecoveryService recoveryService)
         {
             _dbService = dbService;
             _analyticsService = analyticsService;
+            _recoveryService = recoveryService;
 
             _dbService.OnDatabaseChanged += HandleDatabaseChanged;
         }
@@ -81,6 +85,7 @@ namespace Refine.App.Services
                 IsTopExerciseLoaded = false;
                 IsStreakLoaded = false;
                 IsUpNextLoaded = false;
+                IsRecoveryLoaded = false;
                 NotifyStateChanged();
             }
 
@@ -140,10 +145,28 @@ namespace Refine.App.Services
                 var allLogs = await _dbService.GetAllLogsAsync();
                 _ = LoadTopExerciseAsync(allLogs);
                 _ = LoadStreakAsync(allLogs);
+                _ = LoadRecoveryAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"HATA Analytics: {ex.Message}");
+            }
+        }
+
+        private async Task LoadRecoveryAsync()
+        {
+            try
+            {
+                RecoveryState = await _recoveryService.CalculateRecoveryAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"HATA Recovery: {ex.Message}");
+            }
+            finally
+            {
+                IsRecoveryLoaded = true;
+                NotifyStateChanged();
             }
         }
 

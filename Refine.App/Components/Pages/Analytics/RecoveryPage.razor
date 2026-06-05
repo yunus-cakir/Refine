@@ -1,0 +1,73 @@
+@page "/analytics/recovery"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject TopBarBridge TopBar
+@inject HomeStateService StateService
+@inject NavigationManager NavManager
+
+<div class="font-body min-h-screen" style="background-color: var(--color-background); color: var(--color-on-surface); padding-bottom: 24px;">
+    <!-- Main Content -->
+    <main class="rf-flex-col" style="gap: 24px; padding: 16px;">
+        @if (!StateService.IsRecoveryLoaded)
+        {
+            <div class="skeleton-box" style="height: 200px; border-radius: 16px;"></div>
+            <div class="skeleton-box" style="height: 150px; border-radius: 16px;"></div>
+            <div class="skeleton-box" style="height: 200px; border-radius: 16px;"></div>
+        }
+        else
+        {
+            var state = StateService.RecoveryState;
+            var score = state.OverallRecoveryScore;
+
+            <section class="rf-card" style="align-items: center; justify-content: center; text-align: center; padding: 32px 16px;">
+                <RfProgressBar Type="RfProgressBar.ProgressBarType.Circular" Percentage="@score" InvertColorLogic="true" Size="140px" FontSize="36px" CssStyle="margin: 0 auto 16px auto;" />
+                <h2 class="font-headline" style="font-size: 20px; font-weight: bold; margin-bottom: 4px;">Overall Recovery</h2>
+                <p class="font-body" style="color: var(--color-on-surface-variant); font-size: 14px;">
+                    @(state.EstimatedRecoveryHours > 0 ? $"Ready in ~{state.EstimatedRecoveryHours} hours" : "Fully Recovered")
+                </p>
+            </section>
+
+            <!-- CNS Load Chart -->
+            <section class="rf-card">
+                <h3 class="font-label" style="font-size: 12px; text-transform: uppercase; color: var(--color-on-surface-variant); margin-bottom: 16px;">Systemic Load (7 Days)</h3>
+
+                <div style="display: flex; gap: 8px; align-items: flex-end; height: 100px;">
+                    @foreach (var point in state.CnsHistory)
+                    {
+                        var maxValue = Math.Max(state.CnsHistory.Max(p => p.Value), (double)state.CnsThreshold * 0.4); // Scale nicely even if values are low
+                        var heightPct = (int)(maxValue > 0 ? Math.Min(100, Math.Max(5, (point.Value / maxValue) * 100)) : 5);
+                        
+                        var loadPct = state.CnsThreshold > 0 ? (decimal)(point.Value / (double)state.CnsThreshold) * 100m : 0m;
+                        // White for minimal load (< 5%), otherwise use the shared palette (higher load = red/purple)
+                        var barColor = loadPct < 5m ? "#ffffff" : RfProgressBar.GetDynamicColor(loadPct, false);
+
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; cursor: @(point.LatestWorkoutId.HasValue ? "pointer" : "default");"
+                             @onclick="() => OnBarTapped(point)">
+                            <div style="width: 100%; background-color: @barColor; border-radius: 4px; height: @(heightPct)%; min-height: 4px; transition: background-color 0.3s ease;"></div>
+                            <span style="font-size: 10px; color: var(--color-on-surface-variant);">@point.Date.ToString("dd")</span>
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <!-- Muscle Fatigue -->
+            <MuscleFatigueList Fatigues="state.MuscleFatigues" />
+        }
+    </main>
+</div>
+
+@code {
+
+    protected override void OnInitialized()
+    {
+        TopBar.SetDetailMode("Recovery");
+    }
+
+    private void OnBarTapped(ChartDataPoint point)
+    {
+        if (point.LatestWorkoutId.HasValue && point.LatestWorkoutTicks.HasValue)
+        {
+            NavManager.NavigateTo($"/history/detail/{point.LatestWorkoutId.Value}/{point.LatestWorkoutTicks.Value}");
+        }
+    }
+}
