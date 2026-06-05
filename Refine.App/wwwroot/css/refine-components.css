@@ -4,8 +4,7 @@
 
 /* Typography Utilities (Replacing Tailwind text-*, font-* where needed) */
 .font-headline {
-    /* font-family: 'Space Grotesk', sans-serif; */
-    font-family: 'Inter', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .font-body {

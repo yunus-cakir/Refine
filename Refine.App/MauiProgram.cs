@@ -15,7 +15,7 @@ public static class MauiProgram
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialFilled");
-                fonts.AddFont("MaterialIconsOutlined-Regular.otf", "MaterialOutlined");
+                fonts.AddFont("MaterialSymbolsOutlined.ttf", "MaterialOutlined");
             });
 
         // --- KRİTİK BÖLÜM: SERVİS KAYITLARI ---
