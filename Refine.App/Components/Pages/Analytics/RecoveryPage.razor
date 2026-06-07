@@ -29,7 +29,10 @@
 
             <!-- CNS Load Chart -->
             <section class="rf-card">
-                <h3 class="font-label" style="font-size: 12px; text-transform: uppercase; color: var(--color-on-surface-variant); margin-bottom: 16px;">Systemic Load (7 Days)</h3>
+                <div class="rf-flex-row rf-items-center" style="gap: 8px; margin-bottom: 16px; margin-top: 4px;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">neurology</span>
+                    <h3 class="font-label" style="font-size: 13px; text-transform: uppercase; margin: 0;">Systemic Load (7 Days)</h3>
+                </div>
 
                 <div style="display: flex; gap: 8px; align-items: flex-end; height: 100px;">
                     @foreach (var point in state.CnsHistory)

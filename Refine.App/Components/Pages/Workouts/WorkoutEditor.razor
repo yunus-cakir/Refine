@@ -16,7 +16,7 @@
         <div class="refine-dropdown-item position-relative" style="cursor: pointer;">
             <div class="d-flex align-items-center gap-2 w-100">
                 <span class="material-symbols-outlined text-[20px]">content_copy</span>
-                <span>Copy From Another...</span>
+                <span>Import Workout</span>
             </div>
             <select class="position-absolute top-0 start-0 w-100 h-100" style="opacity: 0; cursor: pointer; appearance: none;" @onchange="OnWorkoutSelected">
                 <option value="0" disabled selected>Import Workout</option>
@@ -248,7 +248,7 @@
             _allExercises = await DbService.GetExercisesAsync();
             _allWorkouts = await DbService.GetAllWorkoutsWithProgramAsync();
 
-            if (EditorState.IsActive && EditorState.DraftWorkout != null && 
+            if (EditorState.IsActive && EditorState.DraftWorkout != null &&
                 EditorState.DraftWorkout.Id == WorkoutId && EditorState.DraftWorkout.WorkoutProgramId == ProgramId)
             {
                 // Restore from in-memory draft
@@ -274,6 +274,7 @@
                         _workout.Order = maxOrder + 1;
                     }
                 }
+
                 EditorState.IsActive = true;
                 EditorState.DraftWorkout = _workout;
             }
@@ -297,6 +298,7 @@
                         });
                     }
                 }
+
                 SelectionState.Clear();
             }
 
@@ -341,7 +343,7 @@
         // Save current draft to memory and prepare return state
         EditorState.DraftWorkout = _workout;
         EditorState.IsActive = true;
-        
+
         SelectionState.ReturnUrl = $"/workouts/edit/{ProgramId}/{WorkoutId}";
         SelectionState.SelectedIds.Clear();
         SelectionState.IsActive = false;

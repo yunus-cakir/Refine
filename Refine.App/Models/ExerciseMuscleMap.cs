@@ -17,6 +17,8 @@ public class ExerciseMuscleMap
     // Etki Çarpanı (Örn: 1.0 = Ana Kas, 0.5 = İkincil Kas)
     public double ImpactMultiplier { get; set; }
 
+    public ActivationType ActivationType { get; set; }
+
     [ManyToOne(CascadeOperations = CascadeOperation.CascadeRead)]
     public MuscleGroup MuscleGroup { get; set; }
 }
