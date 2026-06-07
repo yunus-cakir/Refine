@@ -1,5 +1,5 @@
 .workout-detail-container {
-    padding: 24px 0 40px;
+    padding: 4px 0 40px;
     max-width: 640px;
     margin: 0 auto;
     width: 100%;
@@ -7,6 +7,10 @@
 
 .section-margin {
     margin-bottom: 32px;
+}
+
+.target-muscles-section.section-margin {
+    margin-bottom: 16px;
 }
 
 .target-muscles-title {
@@ -106,8 +110,22 @@
     justify-content: center;
 }
 
+.button-container.section-margin {
+    margin-bottom: 16px;
+}
+
+.button-container .rf-button-secondary {
+    padding: 12px 24px;
+    box-shadow: none;
+}
+
+.button-container .rf-button-secondary:hover {
+    box-shadow: none;
+}
+
 /* CNS Progress Specific */
-.cns-container {
+.cns-container.section-margin {
+    margin-bottom: 16px;
 }
 
 .cns-header {

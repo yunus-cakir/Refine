@@ -30,7 +30,8 @@ else
     <div class="workout-detail-container">
 
         <!-- Target Muscles -->
-        <section class="section-margin">
+        <section class="section-margin target-muscles-section">
+            <h2 class="font-headline" style="font-size: 32px; font-weight: bold; color: var(--color-primary); margin: 0 0 16px 0;">@_workout.Name</h2>
             <h2 class="font-body target-muscles-title">Target Muscles</h2>
             <div class="muscle-badges-container">
                 @if (_workout.Items != null)
@@ -60,6 +61,7 @@ else
         <div class="button-container section-margin">
             <button class="rf-button-secondary" @onclick="StartWorkout">
                 START WORKOUT
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
             </button>
         </div>
 
@@ -69,12 +71,13 @@ else
         </div>
 
         <!-- ESTIMATED MUSCLE IMPACT -->
-        <div class="section-margin">
+        <div class="section-margin" style="margin-bottom: 16px;">
             <MuscleFatigueList Fatigues="_estimatedMuscleFatigues" Title="Estimated Muscle Impact" EmptyMessage="No muscle impact configured." />
         </div>
 
 
         <!-- Exercises List -->
+        <div class="rf-section-label">Exercises</div>
         <section class="exercises-section">
             @if (_workout.Items != null)
             {
@@ -155,7 +158,7 @@ else
 
         if (_workout != null)
         {
-            TopBar.SetDetailMode(_workout.Name);
+            TopBar.SetDetailMode("Workout");
             CalculateEstimatedMuscleImpact();
         }
     }
@@ -166,7 +169,7 @@ else
 
         if (_workout != null)
         {
-            TopBar.SetDetailMode(_workout.Name);
+            TopBar.SetDetailMode("Workout");
             CalculateEstimatedMuscleImpact();
         }
     }

@@ -15,6 +15,16 @@
     font-family: 'Lexend', sans-serif;
 }
 
+.rf-section-label {
+    color: var(--color-on-surface-variant);
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+    display: block;
+}
+
 .color-primary {
     color: #c3f400;
 }
