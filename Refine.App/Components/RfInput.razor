@@ -1,6 +1,6 @@
 @typeparam TValue
 
-<div class="mb-4 animate-fade-in" style="@(Delay > 0 ? $"animation-delay: {Delay.ToString(System.Globalization.CultureInfo.InvariantCulture)}s;" : "")">
+<div class="@(string.IsNullOrEmpty(WrapperClass) ? "mb-4" : WrapperClass) animate-fade-in" style="@(Delay > 0 ? $"animation-delay: {Delay.ToString(System.Globalization.CultureInfo.InvariantCulture)}s;" : "")">
     @if (!string.IsNullOrEmpty(Title))
     {
         <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">@Title</div>
@@ -15,6 +15,7 @@
 </div>
 
 @code {
+    [Parameter] public string? WrapperClass { get; set; }
     [Parameter] public string? Title { get; set; }
     [Parameter] public string? Icon { get; set; }
     [Parameter] public string? Placeholder { get; set; }

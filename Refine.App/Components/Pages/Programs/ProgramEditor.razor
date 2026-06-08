@@ -29,11 +29,12 @@
         <EditForm Model="@_program" OnValidSubmit="SaveProgram">
             <DataAnnotationsValidator/>
 
-            <RfInput Title="Program Name" Icon="fitness_center" Placeholder="e.g. 5x5 Power" @bind-Value="_program.Name"/>
+            <RfInput Title="Program Name" Icon="fitness_center" Placeholder="e.g. 5x5 Power" WrapperClass="mb-2" @bind-Value="_program.Name"/>
 
-            <div class="row g-2 animate-fade-in" style="animation-delay: 0.05s;">
+            <div class="row g-2 mb-2 animate-fade-in" style="animation-delay: 0.05s;">
                 <div class="col-6">
                     <RfDropdown TValue="string"
+                                WrapperClass="mb-0"
                                 Title="Level"
                                 Placeholder="Select Level"
                                 SheetTitle="SELECT LEVEL"
@@ -42,6 +43,7 @@
                 </div>
                 <div class="col-6">
                     <RfDropdown TValue="string"
+                                WrapperClass="mb-0"
                                 Title="Goal"
                                 Placeholder="Select Goal"
                                 SheetTitle="SELECT GOAL"
@@ -51,6 +53,7 @@
             </div>
 
             <RfDropdown TValue="string"
+                        WrapperClass="mb-2"
                         Title="Environment"
                         Icon="location_on"
                         Placeholder="Select Environment"

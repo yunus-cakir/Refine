@@ -1,0 +1,38 @@
+
+<button class="card-menu-btn" @onclick="ToggleMenu" @onclick:stopPropagation="true" @onclick:preventDefault="true">
+    <span class="material-symbols-outlined">more_vert</span>
+</button>
+
+@if (IsMenuOpen)
+{
+    <div class="card-dropdown-menu" @onclick:stopPropagation="true" @onclick:preventDefault="true">
+        @ChildContent
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public int Id { get; set; }
+
+    [Parameter, EditorRequired]
+    public int? ActiveMenuId { get; set; }
+
+    [Parameter]
+    public EventCallback<int?> ActiveMenuIdChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public RenderFragment ChildContent { get; set; } = default!;
+
+    private bool IsMenuOpen => ActiveMenuId == Id;
+
+    private async Task ToggleMenu()
+    {
+        var newId = IsMenuOpen ? (int?)null : Id;
+        await ActiveMenuIdChanged.InvokeAsync(newId);
+    }
+
+    private async Task CloseMenu()
+    {
+        await ActiveMenuIdChanged.InvokeAsync(null);
+    }
+}

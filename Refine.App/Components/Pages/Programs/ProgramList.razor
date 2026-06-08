@@ -29,19 +29,44 @@
     }
     else
     {
+        @if (_activeCardMenuId.HasValue)
+        {
+            <div class="fixed inset-0 z-40" @onclick="() => _activeCardMenuId = null"></div>
+        }
+
         <div class="rf-flex-col" style="gap: 16px; padding-bottom: 80px;">
             @foreach (var program in _programs)
             {
-                <div class="refine-card" style="position: relative; overflow: hidden; padding: 0;">
+                <div class="refine-card" style="position: relative; overflow: @(_activeCardMenuId == program.Id ? "visible" : "hidden"); padding: 0; z-index: @(_activeCardMenuId == program.Id ? "45" : "1");">
                     <!-- Highlight border -->
-                    <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: var(--color-primary-fixed);"></div>
+                    <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: @(_selectedProgramId == program.Id ? "var(--color-primary-fixed)" : "#ffffff"); border-top-left-radius: inherit; border-bottom-left-radius: inherit;"></div>
 
-                    <button class="refine-icon-btn"
-                            style="position: absolute; top: 16px; right: 16px; z-index: 20; width: 32px; height: 32px; border-color: transparent;"
-                            @onclick="() => DeleteProgram(program)"
-                            @onclick:stopPropagation="true">
-                        <span class="material-symbols-outlined" style="font-size: 18px; color: var(--color-error);">delete</span>
-                    </button>
+                    <div style="position: absolute; top: 12px; right: 12px; z-index: 20;">
+                        <RfCardMenu Id="program.Id" @bind-ActiveMenuId="_activeCardMenuId">
+                            @if (_selectedProgramId != program.Id)
+                            {
+                                <button class="card-dropdown-item" @onclick="() => SelectProgram(program)" @onclick:preventDefault @onclick:stopPropagation>
+                                    <span class="material-symbols-outlined">radio_button_unchecked</span>
+                                    Make Selected
+                                </button>
+                            }
+                            else
+                            {
+                                <div class="card-dropdown-item" style="color: var(--color-primary-fixed); opacity: 0.8; cursor: default;">
+                                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                    Selected Program
+                                </div>
+                            }
+                            <a class="card-dropdown-item" href="@($"/programs/edit/{program.Id}")" @onclick:stopPropagation>
+                                <span class="material-symbols-outlined">edit</span>
+                                Edit Program
+                            </a>
+                            <button class="card-dropdown-item delete-btn" @onclick="() => DeleteProgram(program)" @onclick:preventDefault @onclick:stopPropagation>
+                                <span class="material-symbols-outlined">close</span>
+                                Delete Program
+                            </button>
+                        </RfCardMenu>
+                    </div>
 
                     <NavLink href="@($"/programs/{program.Id}")" style="display: block; padding: 20px 20px 20px 24px; text-decoration: none;">
                         <div style="padding-right: 40px;">
@@ -65,6 +90,8 @@
 
 @code {
     private List<WorkoutProgram>? _programs;
+    private int? _activeCardMenuId;
+    private int? _selectedProgramId;
 
     protected override void OnInitialized()
     {
@@ -78,11 +105,30 @@
 
     private async Task LoadData()
     {
-        _programs = await ProgramService.GetAllProgramsAsync();
+        var allPrograms = await ProgramService.GetAllProgramsAsync();
+        var selected = await ProgramService.GetSelectedWorkoutProgramAsync();
+        _selectedProgramId = selected?.Id;
+
+        if (allPrograms != null)
+        {
+            _programs = allPrograms.OrderByDescending(p => p.Id == _selectedProgramId).ToList();
+        }
+        else
+        {
+            _programs = null;
+        }
+    }
+
+    private async Task SelectProgram(WorkoutProgram program)
+    {
+        _activeCardMenuId = null;
+        await ProgramService.SetSelectedWorkoutProgramAsync(program.Id);
+        await LoadData();
     }
 
     private async Task DeleteProgram(WorkoutProgram program)
     {
+        _activeCardMenuId = null;
         bool confirm = await UiHelper.ShowConfirm("Programı Sil",
             $"'{program.Name}' programını silmek istediğine emin misin?",
             "Evet, Sil", "Vazgeç");
@@ -95,8 +141,8 @@
     }
 
 
-
     public void Dispose()
     {
     }
+
 }

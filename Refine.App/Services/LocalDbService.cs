@@ -290,6 +290,8 @@ public class LocalDbService
 
         if (workout.Id != 0)
         {
+            await _connection!.UpdateAsync(workout);
+
             if (workout.Items != null)
             {
                 var newItems = workout.Items.Where(i => i.Id == 0).ToList();
@@ -299,19 +301,39 @@ public class LocalDbService
                     {
                         item.WorkoutId = workout.Id;
                     }
-                    await _connection!.InsertAllAsync(newItems);
+                    await _connection.InsertAllAsync(newItems);
                 }
                 
                 var existingItems = workout.Items.Where(i => i.Id != 0).ToList();
                 if (existingItems.Any())
                 {
-                    await _connection!.UpdateAllAsync(existingItems);
+                    await _connection.UpdateAllAsync(existingItems);
+                }
+
+                var dbItems = await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == workout.Id).ToListAsync();
+                var currentItemIds = existingItems.Select(i => i.Id).ToList();
+                var itemsToDelete = dbItems.Where(i => !currentItemIds.Contains(i.Id)).ToList();
+                if (itemsToDelete.Any())
+                {
+                    foreach (var delItem in itemsToDelete)
+                    {
+                        await _connection.DeleteAsync(delItem);
+                    }
                 }
             }
-            await _connection!.UpdateWithChildrenAsync(workout);
         }
         else
-            await _connection!.InsertWithChildrenAsync(workout, recursive: true);
+        {
+            await _connection!.InsertAsync(workout);
+            if (workout.Items != null && workout.Items.Any())
+            {
+                foreach (var item in workout.Items)
+                {
+                    item.WorkoutId = workout.Id;
+                }
+                await _connection.InsertAllAsync(workout.Items);
+            }
+        }
 
         NotifyDatabaseChanged();
     }

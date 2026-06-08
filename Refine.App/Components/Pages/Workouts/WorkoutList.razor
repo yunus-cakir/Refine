@@ -1,4 +1,4 @@
-@page "/workouts"
+﻿@page "/workouts"
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService DbService
@@ -16,16 +16,16 @@
         </button>
     </div>
 }
-
 @if (_activeCardMenuId.HasValue)
 {
     <div class="fixed inset-0 z-40" @onclick="CloseCardMenu"></div>
 }
 
+
 <div class="workout-detail-container">
     @if (_isLoading)
     {
-        <RfSpinner IsLoading="true" />
+        <RfSpinner IsLoading="true"/>
     }
     else if (_selectedProgram == null)
     {
@@ -85,26 +85,18 @@
 
                         @if (_workoutHasLog.TryGetValue(workout.Id, out bool hl) && hl)
                         {
-                            <!-- Three dots menu button -->
-                            <button class="card-menu-btn" @onclick="() => ToggleCardMenu(workout.Id)" @onclick:stopPropagation="true">
-                                <span class="material-symbols-outlined">more_vert</span>
-                            </button>
-
-                            @if (_activeCardMenuId == workout.Id)
-                            {
-                                <div class="card-dropdown-menu" @onclick:stopPropagation="true">
-                                    <button class="card-dropdown-item"
-                                            @onclick="() => GoToHistoryDetail(workout.Id, targetCycle)">
-                                        <span class="material-symbols-outlined">visibility</span>
-                                        View Workout Log
-                                    </button>
-                                    <button class="card-dropdown-item delete-btn"
-                                            @onclick="() => ConfirmDeleteLog(workout.Id, targetCycle)">
-                                        <span class="material-symbols-outlined">delete</span>
-                                        Delete Workout Log
-                                    </button>
-                                </div>
-                            }
+                            <RfCardMenu Id="workout.Id" @bind-ActiveMenuId="_activeCardMenuId">
+                                <button class="card-dropdown-item"
+                                        @onclick="() => GoToHistoryDetail(workout.Id, targetCycle)">
+                                    <span class="material-symbols-outlined">view_day</span>
+                                    View Workout Log
+                                </button>
+                                <button class="card-dropdown-item delete-btn"
+                                        @onclick="() => ConfirmDeleteLog(workout.Id, targetCycle)">
+                                    <span class="material-symbols-outlined">close</span>
+                                    Delete Workout Log
+                                </button>
+                            </RfCardMenu>
                         }
 
                         <a href="@($"/workouts/detail/{workout.Id}?cycle={targetCycle}")" class="rf-card-bordered-content">
@@ -270,17 +262,6 @@
         _isLoading = false;
     }
 
-    private void ToggleCardMenu(int workoutId)
-    {
-        if (_activeCardMenuId == workoutId)
-        {
-            _activeCardMenuId = null;
-        }
-        else
-        {
-            _activeCardMenuId = workoutId;
-        }
-    }
 
     private void CloseCardMenu()
     {
@@ -361,7 +342,6 @@
     {
         NavManager.NavigateTo("/programs");
     }
-
 
 
     private void ToggleTopBarMenu()

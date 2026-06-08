@@ -359,6 +359,80 @@
     background-color: rgba(255, 255, 255, 0.05);
 }
 
+/* Card Menu & Dropdown Menu Styles */
+.card-menu-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-on-surface-variant);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.card-menu-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--color-primary);
+}
+
+.card-dropdown-menu {
+    position: absolute;
+    top: 48px;
+    right: 12px;
+    z-index: 50;
+    width: 200px;
+    background-color: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); /* added better shadow for floating effect */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-dropdown-item {
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 14px;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    color: var(--color-on-surface);
+    text-decoration: none; /* in case it's an anchor tag */
+}
+
+.card-dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-on-surface);
+}
+
+.card-dropdown-item.delete-btn {
+    color: #ffb4ab; /* error color var(--color-error) */
+}
+
+.card-dropdown-item.delete-btn:hover {
+    background-color: rgba(255, 180, 171, 0.08);
+}
+
+.card-dropdown-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 /* Inputs */
 .refine-input-label {
     font-size: 11px;
@@ -803,4 +877,19 @@ input::-webkit-inner-spin-button {
 .loader-container {
     text-align: center;
     margin-top: 40px;
+}
+
+/* --- Global Dropdown Scroll Lock --- */
+body:has(.fixed.inset-0),
+body:has(.bottom-sheet-backdrop:not(.closing)) {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    touch-action: none !important;
+    padding-right: var(--scrollbar-width, 0px) !important;
+}
+
+/* Allow scrolling inside the dropdowns if content exceeds height */
+.refine-dropdown, .bottom-sheet, .card-dropdown-menu {
+    touch-action: auto !important;
+    overscroll-behavior: contain !important;
 }

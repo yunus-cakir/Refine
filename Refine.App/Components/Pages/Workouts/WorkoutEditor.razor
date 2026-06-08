@@ -7,6 +7,7 @@
 @inject IJSRuntime JS
 @inject WorkoutEditorState EditorState
 @inject SelectionStateService SelectionState
+@inject RecoveryService RecService
 @implements IDisposable
 
 @if (_showTopBarMenu)
@@ -36,7 +37,7 @@
     </div>
 }
 
-<div class="page-container py-4 px-0 min-h-screen">
+<div class="page-container pt-1 pb-4 px-0 min-h-screen">
     @if (_isLoading)
     {
         <RfSpinner IsLoading="true"/>
@@ -47,18 +48,23 @@
             <DataAnnotationsValidator/>
 
 
-            <RfInput Title="Workout Title" Icon="fitness_center" Placeholder="e.g. Push Day" @bind-Value="_workout.Name"/>
+            <RfInput Title="Workout Title" Icon="fitness_center" Placeholder="e.g. Push Day" WrapperClass="mb-2" @bind-Value="_workout.Name"/>
 
-            <RfInput Title="Workout Description" Icon="description" Placeholder="e.g. Chest and Shoulders focus..." Delay="0.05" @bind-Value="_workout.Description"/>
+            <RfInput Title="Workout Description" Icon="description" Placeholder="e.g. Chest and Shoulders focus..." Delay="0.05" WrapperClass="mb-2" @bind-Value="_workout.Description"/>
 
             @if (ProgramId != 0)
             {
-                <RfInput Title="Order" Icon="format_list_numbered" Type="number" Delay="0.1" @bind-Value="_workout.Order"/>
+                <RfInput Title="Order" Icon="format_list_numbered" Type="number" Delay="0.1" WrapperClass="mb-2" @bind-Value="_workout.Order"/>
             }
 
             <!-- CNS LOAD -->
-            <div class="animate-fade-in" style="animation-delay: 0.15s;">
-                <CnsLoadCard Title="Estimated CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" WarningMessage="High CNS fatigue!"/>
+            <div class="animate-fade-in mt-4" style="animation-delay: 0.15s;">
+                <CnsLoadCard Title="Estimated CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" WarningMessage="High CNS fatigue!" CssClass="mb-2"/>
+            </div>
+
+            <!-- ESTIMATED MUSCLE IMPACT -->
+            <div class="animate-fade-in" style="animation-delay: 0.18s; margin-bottom: 16px;">
+                <MuscleFatigueList Fatigues="_estimatedMuscleFatigues" Title="Estimated Muscle Impact" EmptyMessage="No muscle impact configured." />
             </div>
 
             <!-- Add Exercise -->
@@ -158,11 +164,11 @@
                                 <div class="d-flex flex-column align-items-start ms-3">
                                     <div class="text-on-surface-variant small mb-1 text-uppercase fw-bold text-start" style="letter-spacing: 0.1em; font-size: 10px;">Sets</div>
                                     <div class="d-flex align-items-center justify-content-between bg-dark rounded-pill px-1 py-1" style="border: 1px solid rgba(255,255,255,0.05); min-width: 120px;">
-                                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 32px; height: 32px; background: rgba(255,255,255,0.1);" @onclick="() => { if(item.Sets > 1) item.Sets--; }">
+                                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 32px; height: 32px; background: rgba(255,255,255,0.1);" @onclick="() => DecrementSets(item)">
                                             <span class="material-symbols-outlined" style="font-size: 18px;">remove</span>
                                         </button>
-                                        <input type="number" class="form-control bg-transparent text-white text-center border-0 fw-bold p-0" style="width: 40px; box-shadow: none;" @bind="item.Sets"/>
-                                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-dark" style="width: 32px; height: 32px; background: #C3F400;" @onclick="() => item.Sets++">
+                                        <input type="number" class="form-control bg-transparent text-white text-center border-0 fw-bold p-0" style="width: 40px; box-shadow: none;" @bind="item.Sets" @bind:after="RecalculateEstimatedMuscleImpact"/>
+                                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-dark" style="width: 32px; height: 32px; background: #C3F400;" @onclick="() => IncrementSets(item)">
                                             <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
                                         </button>
                                     </div>
@@ -206,6 +212,9 @@
     private decimal PreferredRIR = 2.0m;
     private int PreferredSetCount = 3;
 
+    private User? _currentUser;
+    private List<MuscleFatigueInfo>? _estimatedMuscleFatigues;
+
     private decimal CalculateItemCnsLoad(WorkoutItem item)
     {
         decimal baseScore = item.Exercise?.CnsFatigueScore ?? 0m;
@@ -237,12 +246,12 @@
         _isLoading = true;
         try
         {
-            var user = await DbService.GetUserAsync();
-            if (user != null)
+            _currentUser = await DbService.GetUserAsync();
+            if (_currentUser != null)
             {
-                CnsThreshold = user.WorkoutSettings.CnsThreshold;
-                PreferredRIR = user.WorkoutSettings.PreferredRIR;
-                PreferredSetCount = user.WorkoutSettings.PreferredSetCount;
+                CnsThreshold = _currentUser.WorkoutSettings.CnsThreshold;
+                PreferredRIR = _currentUser.WorkoutSettings.PreferredRIR;
+                PreferredSetCount = _currentUser.WorkoutSettings.PreferredSetCount;
             }
 
             _allExercises = await DbService.GetExercisesAsync();
@@ -302,6 +311,7 @@
                 SelectionState.Clear();
             }
 
+            RecalculateEstimatedMuscleImpact();
             TopBar.SetDetailMode(WorkoutId == 0 ? "New Workout" : "Edit Workout");
         }
         finally
@@ -373,6 +383,7 @@
         }
 
         _selectedWorkoutToCopy = 0;
+        RecalculateEstimatedMuscleImpact();
     }
 
     private async Task OnWorkoutSelected(ChangeEventArgs e)
@@ -395,6 +406,7 @@
         {
             i.Order = newOrder++;
         }
+        RecalculateEstimatedMuscleImpact();
     }
 
     private void MoveItemUp(WorkoutItem item)
@@ -431,6 +443,61 @@
     {
         EditorState.Clear();
         await JS.InvokeVoidAsync("history.back");
+    }
+
+    private void DecrementSets(WorkoutItem item)
+    {
+        if (item.Sets > 1)
+        {
+            item.Sets--;
+            RecalculateEstimatedMuscleImpact();
+        }
+    }
+
+    private void IncrementSets(WorkoutItem item)
+    {
+        item.Sets++;
+        RecalculateEstimatedMuscleImpact();
+    }
+
+    private void RecalculateEstimatedMuscleImpact()
+    {
+        if (_workout?.Items == null || _currentUser == null)
+        {
+            _estimatedMuscleFatigues = new List<MuscleFatigueInfo>();
+            return;
+        }
+
+        var allExercises = _workout.Items
+            .Where(i => i.Exercise != null)
+            .Select(i => i.Exercise!)
+            .GroupBy(e => e.Id)
+            .Select(g => g.First())
+            .ToList();
+
+        var dummyLogs = new List<WorkoutLog>();
+
+        int minReps = _currentUser.WorkoutSettings.PreferredMinReps;
+        int maxReps = _currentUser.WorkoutSettings.PreferredMaxReps;
+        int reps = (minReps + maxReps) / 2;
+        int rir = (int)_currentUser.WorkoutSettings.PreferredRIR;
+
+        foreach (var item in _workout.Items)
+        {
+            if (item.ExerciseId <= 0) continue;
+
+            for (int i = 0; i < item.Sets; i++)
+            {
+                dummyLogs.Add(new WorkoutLog
+                {
+                    ExerciseId = item.ExerciseId,
+                    Reps = reps,
+                    RIR = rir
+                });
+            }
+        }
+
+        _estimatedMuscleFatigues = RecService.CalculateMuscleFatigue(dummyLogs, allExercises, true);
     }
 
 }

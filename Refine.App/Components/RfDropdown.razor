@@ -1,7 +1,7 @@
 @typeparam TValue
 @using Refine.App.Models
 
-<div class="mb-4 @(Delay > 0 ? "animate-fade-in" : "")" style="@(Delay > 0 ? $"animation-delay: {Delay}s;" : "")">
+<div class="@(string.IsNullOrEmpty(WrapperClass) ? "mb-4" : WrapperClass) @(Delay > 0 ? "animate-fade-in" : "")" style="@(Delay > 0 ? $"animation-delay: {Delay.ToString(System.Globalization.CultureInfo.InvariantCulture)}s;" : "")">
     @if (!string.IsNullOrEmpty(Title))
     {
         <div class="text-on-surface-variant small mb-2 text-uppercase fw-bold" style="letter-spacing: 0.15em; font-size: 11px;">@Title</div>
@@ -11,8 +11,10 @@
         {
             <span class="material-symbols-outlined input-icon">@Icon</span>
         }
-        <div class="profile-input d-flex align-items-center" style="color: @(EqualityComparer<TValue>.Default.Equals(Value, default) || string.IsNullOrEmpty(Value?.ToString()) ? "rgba(255,255,255,0.35)" : "#ffffff") !important;">
-            @(EqualityComparer<TValue>.Default.Equals(Value, default) || string.IsNullOrEmpty(Value?.ToString()) ? Placeholder : GetDisplayValue(Value))
+        <div class="profile-input d-flex align-items-center" style="color: @(EqualityComparer<TValue>.Default.Equals(Value, default) || string.IsNullOrEmpty(Value?.ToString()) ? "rgba(255,255,255,0.35)" : "#ffffff") !important; flex-grow: 1; min-width: 0; overflow: hidden;">
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; width: 100%;">
+                @(EqualityComparer<TValue>.Default.Equals(Value, default) || string.IsNullOrEmpty(Value?.ToString()) ? Placeholder : GetDisplayValue(Value))
+            </span>
         </div>
         <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 20px;">expand_more</span>
     </div>
@@ -50,6 +52,7 @@
 }
 
 @code {
+    [Parameter] public string? WrapperClass { get; set; }
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public string Icon { get; set; } = "";
     [Parameter] public string Placeholder { get; set; } = "Select";

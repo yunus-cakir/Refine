@@ -66,9 +66,13 @@
                 }
             });
         };
+
+        // Calculate scrollbar width for preventing layout shifts when locking scroll
+        function updateScrollbarWidth() {
+            document.documentElement.style.setProperty('--scrollbar-width', (window.innerWidth - document.documentElement.clientWidth) + 'px');
+        }
+        window.addEventListener('resize', updateScrollbarWidth);
+        updateScrollbarWidth();
     </script>
 </body>
-
-</body>
-
 </html>
