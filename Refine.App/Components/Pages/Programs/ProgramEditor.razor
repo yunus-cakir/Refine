@@ -1,4 +1,4 @@
-@page "/programs/edit/{Id:int}"
+﻿@page "/programs/edit/{Id:int}"
 @using Refine.App.Models
 @using Refine.App.Services
 
@@ -6,6 +6,7 @@
 @inject NavigationManager NavManager
 @inject IJSRuntime JSRuntime
 @inject TopBarBridge TopBar
+@inject IPopupService PopupService
 @implements IDisposable
 
 @if (_showTopBarMenu)
@@ -39,7 +40,7 @@
                                 Placeholder="Select Level"
                                 SheetTitle="SELECT LEVEL"
                                 @bind-Value="_program.Level"
-                                Options="_levelOptions" />
+                                Options="_levelOptions"/>
                 </div>
                 <div class="col-6">
                     <RfDropdown TValue="string"
@@ -48,7 +49,7 @@
                                 Placeholder="Select Goal"
                                 SheetTitle="SELECT GOAL"
                                 @bind-Value="_program.Goal"
-                                Options="_goalOptions" />
+                                Options="_goalOptions"/>
                 </div>
             </div>
 
@@ -60,7 +61,7 @@
                         SheetTitle="SELECT ENVIRONMENT"
                         Delay="0.1"
                         @bind-Value="_program.Environment"
-                        Options="_environmentOptions" />
+                        Options="_environmentOptions"/>
 
             <div class="mt-4 px-1 pb-4 animate-fade-in" style="animation-delay: 0.15s;">
                 <button type="submit" class="rf-button-primary w-100">
@@ -225,14 +226,22 @@
     }
 
 
-
     private async Task DeleteWorkout(Workout w)
     {
-        bool confirm = await UiHelper.ShowConfirm("Delete",
-            "Are you sure you want to delete this workout from the program?",
-            "Yes", "No");
+        var result = await PopupService.ShowAsync(new PopupOptions
+        {
+            Title = "Delete Workout",
+            Description = $"Delete '{w.Name}'?",
+            Icon = "close",
+            Mode = PopupMode.Confirmation,
+            CustomButtons = new List<PopupButton>
+            {
+                new() { Text = "Delete", ActionId = PopupResult.ConfirmedAction, Type = PopupButtonType.Destructive },
+                new() { Text = "Cancel", ActionId = PopupResult.RejectedAction, Type = PopupButtonType.Ghost }
+            }
+        });
 
-        if (confirm)
+        if (result.IsConfirmed)
         {
             await DbService.DeleteWorkoutAsync(w.Id);
             await LoadProgramData();

@@ -4,6 +4,7 @@
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
 @inject TopBarBridge TopBar
+@inject IPopupService PopupService
 @implements IDisposable
 
 @if (_showTopBarMenu)
@@ -285,14 +286,20 @@
     private async Task ConfirmDeleteLog(int workoutId, int cycle)
     {
         CloseCardMenu();
-        bool confirm = await UiHelper.ShowConfirm(
-            "Delete Workout Log",
-            "Are you sure you want to delete the workout log for this session? This will reset your progress for this workout in this cycle.",
-            "Delete",
-            "Cancel"
-        );
+        var result = await PopupService.ShowAsync(new PopupOptions
+        {
+            Title = "Delete Workout Log?",
+            Description = "Progress for this workout will be reset.",
+            Icon = "close",
+            Mode = PopupMode.Confirmation,
+            CustomButtons = new List<PopupButton>
+            {
+                new() { Text = "Delete", ActionId = PopupResult.ConfirmedAction, Type = PopupButtonType.Destructive },
+                new() { Text = "Cancel", ActionId = PopupResult.RejectedAction, Type = PopupButtonType.Ghost }
+            }
+        });
 
-        if (confirm)
+        if (result.IsConfirmed)
         {
             await DbService.DeleteWorkoutLogAsync(workoutId, cycle);
             await LoadData();

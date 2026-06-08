@@ -4,6 +4,7 @@
 @inject LocalDbService ProgramService
 @inject NavigationManager NavManager
 @inject TopBarBridge TopBar
+@inject IPopupService PopupService
 @implements IDisposable
 
 <div class="workout-detail-container">
@@ -267,11 +268,20 @@
     private async Task DeleteWorkout(Workout workout)
     {
         CloseCardMenu();
-        bool confirm = await UiHelper.ShowConfirm("Sil",
-            $"{workout.Name} silinsin mi?",
-            "Evet", "Hayır");
+        var result = await PopupService.ShowAsync(new PopupOptions
+        {
+            Title = "Delete Workout",
+            Description = $"Delete '{workout.Name}'?",
+            Icon = "close",
+            Mode = PopupMode.Confirmation,
+            CustomButtons = new List<PopupButton>
+            {
+                new() { Text = "Delete", ActionId = PopupResult.ConfirmedAction, Type = PopupButtonType.Destructive },
+                new() { Text = "Cancel", ActionId = PopupResult.RejectedAction, Type = PopupButtonType.Ghost }
+            }
+        });
 
-        if (confirm)
+        if (result.IsConfirmed)
         {
             await ProgramService.DeleteWorkoutAsync(workout.Id);
             await OnParametersSetAsync();

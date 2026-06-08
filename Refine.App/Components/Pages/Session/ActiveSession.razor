@@ -13,7 +13,7 @@
 @inject HomeStateService StateService
 @implements IDisposable
 
-<NavigationLock OnBeforeInternalNavigation="HandleInternalNavigation" ConfirmExternalNavigation="false" />
+<NavigationLock OnBeforeInternalNavigation="HandleInternalNavigation" ConfirmExternalNavigation="false"/>
 
 
 <style>
@@ -21,11 +21,12 @@
     .hide-scrollbar::-webkit-scrollbar {
         display: none;
     }
+
     .hide-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
-    
+
     /* Ensure the main page is full screen */
     .active-session-page {
         height: 100dvh;
@@ -72,12 +73,12 @@ else
                 var item = _exercises[i];
                 var currentIndex = i; // local copy for closure
                 var currentLogs = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).OrderBy(l => l.SetNumber).ToList();
-                
+
                 int currentSet = _currentSetIndex.GetValueOrDefault(item.ExerciseId, 1);
                 var activeLog = currentLogs.FirstOrDefault(l => l.SetNumber == currentSet);
-                
+
                 // Fallback (shouldn't happen with proper init)
-                if(activeLog == null) 
+                if (activeLog == null)
                 {
                     activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, WorkoutId = WorkoutId, SetNumber = currentSet, Date = _targetDate, FormRating = 3, IsCompleted = false, IsSaved = false, Cycle = Cycle ?? _currentProgramCycle };
                     _activeLogs.Add(activeLog);
@@ -87,7 +88,7 @@ else
                 var history = GetHistoryLog(item.ExerciseId, currentSet);
 
                 <section id="exercise-@currentIndex" class="snap-section" style="height: 100%; width: 100%; scroll-snap-align: start; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 16px 16px 24px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    
+
                     <!-- Dynamic Background Placeholder -->
                     <div style='position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAGAu4maGWtgwQhZmOumfz5XSAYrxdnzesrRWFY9xyJ12jwXfZHkPX1c8v5QbbuhQb-n7R8fHgk5sRiK6NPhOT9DItBi1Yh6IdsUaJHXHRYMWmcIaiS3WLlP8wcL3L1HaU-gJJ8-b0yMK0NgFTHLV4-RVa1y7dLGmfBdodiHamEaDRSaPb3lCm4hIgg0ZZsNfsbiJ-9hTrSSGtyLMId6nKrK4oM-SoX6nS3Bjq62IE95EvIkxr1j4tldy_FbwB4hGs3aMRv9cUyQA");'></div>
                     <div style="position: absolute; inset: 0; z-index: 0; background: linear-gradient(to bottom, rgba(18,20,20,0.95), rgba(18,20,20,0.5), rgba(18,20,20,0.95));"></div>
@@ -134,7 +135,7 @@ else
 
                     <!-- Bottom Sets Panel (Single Set View) -->
                     <div class="refine-active-card" style="margin-bottom: 8px;">
-                        
+
                         <!-- Inputs Grid -->
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 8px;">
                             <!-- Weight -->
@@ -143,7 +144,7 @@ else
                                 <input type="number" inputmode="decimal"
                                        class="rf-input-number"
                                        placeholder="@(history?.Weight.ToString() ?? "-")"
-                                       @bind="activeLog.Weight" />
+                                       @bind="activeLog.Weight"/>
                             </div>
                             <!-- Reps -->
                             <div class="rf-flex-col rf-items-center">
@@ -151,7 +152,7 @@ else
                                 <input type="number" inputmode="numeric"
                                        class="rf-input-number"
                                        placeholder="@(history?.Reps.ToString() ?? "-")"
-                                       @bind="activeLog.Reps" />
+                                       @bind="activeLog.Reps"/>
                             </div>
                             <!-- RIR -->
                             <div class="rf-flex-col rf-items-center">
@@ -159,7 +160,7 @@ else
                                 <input type="number" inputmode="numeric"
                                        class="rf-input-number"
                                        placeholder="@(history?.RIR.ToString() ?? "-")"
-                                       @bind="activeLog.RIR" />
+                                       @bind="activeLog.RIR"/>
                             </div>
                         </div>
 
@@ -239,22 +240,22 @@ else
             <div class="exit-modal-icon-box">
                 <span class="material-symbols-outlined" style="font-size: 36px; color: #ffb4ab;">warning</span>
             </div>
-            
+
             <h3 class="font-headline exit-modal-title">Exit Workout?</h3>
-            
+
             <div class="rf-flex-col" style="gap: 12px;">
                 <!-- Return to Workout (Primary) -->
                 <button class="exit-modal-btn exit-modal-btn-primary" @onclick="CancelExit">
                     <span class="material-symbols-outlined">fitness_center</span>
                     <span>RETURN TO WORKOUT</span>
                 </button>
-                
+
                 <!-- Save & Quit (Inverse) -->
                 <button class="exit-modal-btn exit-modal-btn-inverse" @onclick="SaveAndExitAsync">
                     <span class="material-symbols-outlined">check</span>
                     <span>SAVE & QUIT</span>
                 </button>
-                
+
                 <!-- Discard & Quit (Red Ghost) -->
                 <button class="exit-modal-btn exit-modal-btn-ghost" @onclick="DiscardAndExitAsync">
                     <span class="material-symbols-outlined">delete_forever</span>
@@ -275,15 +276,14 @@ else
     [SupplyParameterFromQuery(Name = "resuming")]
     public bool IsResuming { get; set; }
 
-    [SupplyParameterFromQuery]
-    public int? Cycle { get; set; }
+    [SupplyParameterFromQuery] public int? Cycle { get; set; }
 
     private Workout? _workout;
     private int _currentProgramCycle = 1;
     private List<WorkoutItem> _exercises = new();
     private List<WorkoutLog> _activeLogs = new();
     private Dictionary<int, List<WorkoutLog>> _historyData = new();
-    
+
     private bool _showToast = false;
     private int? _openMenuId = null;
     private Dictionary<int, int> _currentSetIndex = new();
@@ -347,9 +347,9 @@ else
                 if (existingLogs.Any())
                 {
                     _activeLogs = existingLogs.OrderBy(l => l.SetNumber).ToList();
-                    
+
                     int activeCycle = Cycle ?? _currentProgramCycle;
-                    foreach(var log in _activeLogs)
+                    foreach (var log in _activeLogs)
                     {
                         if (log.Cycle <= 0 || log.Cycle != activeCycle)
                         {
@@ -387,7 +387,7 @@ else
             }
 
             // Init current sets
-            foreach(var item in _exercises)
+            foreach (var item in _exercises)
             {
                 var logsForExercise = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).OrderBy(l => l.SetNumber).ToList();
                 var firstUncompletedLog = logsForExercise.FirstOrDefault(l => !l.Weight.HasValue || !l.Reps.HasValue);
@@ -581,7 +581,7 @@ else
         {
             // Move to next set
             _currentSetIndex[exerciseId]++;
-            
+
             // Just in case the user went above planned sets (e.g. they added more)
             var exists = _activeLogs.Any(l => l.ExerciseId == exerciseId && l.SetNumber == _currentSetIndex[exerciseId]);
             if (!exists)
@@ -607,13 +607,14 @@ else
         {
             return _historyData[exerciseId].FirstOrDefault(l => l.SetNumber == setNumber);
         }
+
         return null;
     }
 
     private void CopyAllPreviousData()
     {
         if (_exercises == null || !_exercises.Any()) return;
-        
+
         foreach (var item in _exercises)
         {
             if (!_historyData.ContainsKey(item.ExerciseId)) continue;
@@ -650,7 +651,9 @@ else
             {
                 await JSRuntime.InvokeVoidAsync("localStorage.removeItem", $"active_session_slide_{WorkoutId}");
             }
-            catch {}
+            catch
+            {
+            }
 
             foreach (var log in _activeLogs)
             {
@@ -702,6 +705,7 @@ else
             await InvokeAsync(StateHasChanged);
             return true;
         }
+
         return true;
     }
 
@@ -734,7 +738,7 @@ else
             // Edit Mode: Update (Upsert) logs
             await DbService.UpdateSessionLogsAsync(_activeLogs);
             await StateService.LoadDataAsync(showSkeleton: false);
-            
+
             if (!string.IsNullOrEmpty(_pendingTargetLocation))
             {
                 NavManager.NavigateTo(_pendingTargetLocation);
@@ -749,7 +753,7 @@ else
             // Active Mode: Save/Insert logs
             await DbService.SaveWorkoutLogsAsync(_activeLogs);
             await StateService.LoadDataAsync(showSkeleton: false);
-            
+
             if (!string.IsNullOrEmpty(_pendingTargetLocation))
             {
                 NavManager.NavigateTo(_pendingTargetLocation);
@@ -770,7 +774,9 @@ else
         {
             await JSRuntime.InvokeVoidAsync("localStorage.removeItem", $"active_session_slide_{WorkoutId}");
         }
-        catch {}
+        catch
+        {
+        }
 
         if (!string.IsNullOrEmpty(_pendingTargetLocation))
         {
@@ -799,7 +805,7 @@ else
     {
         // Save current progress as draft so we don't lose entered values when we return
         await DbService.UpdateSessionLogsAsync(_activeLogs);
-        
+
         _allowNavigation = true;
         NavManager.NavigateTo($"/analytics/detail/{exerciseId}?name={Uri.EscapeDataString(exerciseName)}");
     }
@@ -810,4 +816,5 @@ else
         TopBar.OnRightActionTapped -= HandleRightAction;
         NavBridge.OnHardwareBackRequested -= HandleHardwareBack;
     }
+
 }

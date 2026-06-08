@@ -45,6 +45,7 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<WorkoutEditorState>();
         builder.Services.AddSingleton<SelectionStateService>();
+        builder.Services.AddScoped<IPopupService, PopupService>();
 
         // Eğer kullanıyorsan diğer servisler:
         // builder.Services.AddSingleton<ExerciseService>();

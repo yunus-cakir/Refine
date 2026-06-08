@@ -1,0 +1,152 @@
+@using Refine.App.Models
+@using Refine.App.Services
+@inject IPopupService PopupService
+@implements IDisposable
+
+@if (_options != null)
+{
+    <div class="popup-overlay">
+        <div class="popup-container @(_options.Style == PopupStyle.Large ? "style-large" : "style-standard")">
+            
+            @if (_options.Style == PopupStyle.Large && !string.IsNullOrEmpty(_options.Icon))
+            {
+                <div class="popup-icon-box @GetIconClass()">
+                    <span class="material-symbols-outlined">@_options.Icon</span>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(_options.Title))
+            {
+                @if (_options.Style == PopupStyle.Standard && !string.IsNullOrEmpty(_options.Icon))
+                {
+                    <div class="popup-title-row">
+                        <span class="material-symbols-outlined popup-small-icon @GetSmallIconClass()">@_options.Icon</span>
+                        <div class="popup-title m-0">@_options.Title</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="popup-title">@_options.Title</div>
+                }
+            }
+
+            @if (!string.IsNullOrEmpty(_options.Description))
+            {
+                <div class="popup-body">@_options.Description</div>
+            }
+
+            @if (_options.Parameters != null && _options.Parameters.Any())
+            {
+                <div class="popup-parameters">
+                    @foreach (var param in _options.Parameters)
+                    {
+                        <div class="popup-param-row">
+                            <span class="popup-param-key">@param.Key</span>
+                            <span class="popup-param-value">@param.Value</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="popup-actions">
+                @if (_options.CustomButtons != null && _options.CustomButtons.Any())
+                {
+                    @foreach (var btn in _options.CustomButtons)
+                    {
+                        <button type="button" class="@GetButtonClass(btn.Type)" @onclick="() => HandleAction(btn.ActionId)">
+                            @if (_options.Style == PopupStyle.Large && !string.IsNullOrEmpty(btn.Icon))
+                            {
+                                <span class="material-symbols-outlined btn-icon" style="font-size: 18px; margin-right: 4px;">@btn.Icon</span>
+                            }
+                            @btn.Text
+                        </button>
+                    }
+                }
+                else
+                {
+                    @if (_options.Mode == PopupMode.Confirmation)
+                    {
+                        <button type="button" class="popup-btn popup-btn-primary" @onclick='() => HandleAction(PopupResult.ConfirmedAction)'>
+                            @_options.ConfirmText
+                        </button>
+                        <button type="button" class="popup-btn popup-btn-ghost" @onclick='() => HandleAction(PopupResult.RejectedAction)'>
+                            @_options.RejectText
+                        </button>
+                    }
+                    else if (_options.Mode == PopupMode.SingleAction)
+                    {
+                        <button type="button" class="popup-btn popup-btn-primary" @onclick='() => HandleAction(PopupResult.ConfirmedAction)'>
+                            @_options.ConfirmText
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private PopupOptions? _options;
+
+    protected override void OnInitialized()
+    {
+        PopupService.OnShow += ShowPopup;
+        PopupService.OnHide += HidePopup;
+    }
+
+    private void ShowPopup(PopupOptions options)
+    {
+        _options = options;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HidePopup()
+    {
+        _options = null;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleAction(string actionId)
+    {
+        if (PopupService is PopupService service)
+        {
+            service.Resolve(new PopupResult(actionId));
+        }
+    }
+
+    private string GetButtonClass(PopupButtonType type)
+    {
+        return type switch
+        {
+            PopupButtonType.Primary => "popup-btn popup-btn-primary",
+            PopupButtonType.Secondary => "popup-btn popup-btn-secondary",
+            PopupButtonType.Destructive => "popup-btn popup-btn-destructive",
+            PopupButtonType.Ghost => "popup-btn popup-btn-ghost",
+            _ => "popup-btn popup-btn-secondary"
+        };
+    }
+
+    private string GetIconClass()
+    {
+        if (_options?.Icon == "warning" || _options?.Icon == "error" || _options?.Icon == "delete" || _options?.Icon == "delete_forever" || _options?.Icon == "close")
+        {
+            return ""; // default destructive colors
+        }
+        return "icon-info"; // info colors
+    }
+
+    private string GetSmallIconClass()
+    {
+        if (_options?.Icon == "warning" || _options?.Icon == "error" || _options?.Icon == "delete" || _options?.Icon == "delete_forever" || _options?.Icon == "close")
+        {
+            return "popup-icon-danger"; 
+        }
+        return "popup-icon-info"; 
+    }
+
+    public void Dispose()
+    {
+        PopupService.OnShow -= ShowPopup;
+        PopupService.OnHide -= HidePopup;
+    }
+}
