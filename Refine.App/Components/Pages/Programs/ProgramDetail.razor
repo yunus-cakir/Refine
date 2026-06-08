@@ -99,11 +99,11 @@
                                     </h3>
 
                                     <RfCardMenu Id="workout.Id" @bind-ActiveMenuId="_activeCardMenuId">
-                                        <a class="card-dropdown-item" href="@($"/workouts/edit/{Id}/{workout.Id}")">
+                                        <button class="card-dropdown-item" @onclick="() => EditWorkoutItem(workout)" @onclick:preventDefault @onclick:stopPropagation>
                                             <span class="material-symbols-outlined">edit</span>
                                             Edit Workout
-                                        </a>
-                                        <button class="card-dropdown-item delete-btn" @onclick="() => DeleteWorkout(workout)">
+                                        </button>
+                                        <button class="card-dropdown-item delete-btn" @onclick="() => DeleteWorkout(workout)" @onclick:preventDefault @onclick:stopPropagation>
                                             <span class="material-symbols-outlined">close</span>
                                             Delete Workout
                                         </button>
@@ -306,6 +306,11 @@
         {
             NavManager.NavigateTo($"/programs/edit/{_program.Id}");
         }
+    }
+
+    private void EditWorkoutItem(Workout workout)
+    {
+        NavManager.NavigateTo($"/workouts/edit/{Id}/{workout.Id}");
     }
 
     private void HandleRightAction()

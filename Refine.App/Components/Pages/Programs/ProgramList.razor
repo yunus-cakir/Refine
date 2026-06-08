@@ -58,10 +58,10 @@
                                     Selected Program
                                 </div>
                             }
-                            <a class="card-dropdown-item" href="@($"/programs/edit/{program.Id}")" @onclick:stopPropagation>
+                            <button class="card-dropdown-item" @onclick="() => EditProgramItem(program)" @onclick:preventDefault @onclick:stopPropagation>
                                 <span class="material-symbols-outlined">edit</span>
                                 Edit Program
-                            </a>
+                            </button>
                             <button class="card-dropdown-item delete-btn" @onclick="() => DeleteProgram(program)" @onclick:preventDefault @onclick:stopPropagation>
                                 <span class="material-symbols-outlined">close</span>
                                 Delete Program
@@ -125,6 +125,11 @@
         _activeCardMenuId = null;
         await ProgramService.SetSelectedWorkoutProgramAsync(program.Id);
         await LoadData();
+    }
+
+    private void EditProgramItem(WorkoutProgram program)
+    {
+        NavManager.NavigateTo($"/programs/edit/{program.Id}");
     }
 
     private async Task DeleteProgram(WorkoutProgram program)
