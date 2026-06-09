@@ -12,7 +12,7 @@
     </main>
 </div>
 
-<RfPopup />
+<RfPopup/>
 
 <style>
     .page {
@@ -26,8 +26,10 @@
     /* İçerik kapsayıcısı için maksimum genişlik (Tablet/Desktop için iyi olur) */
     .content {
         width: 100%;
-        max-width: 600px; /* Çok geniş ekranlarda yayılmasın */
-        margin: 0 auto; /* Ortala */
+        max-width: 600px;
+        /* Çok geniş ekranlarda yayılmasın */
+        margin: 0 auto;
+        /* Ortala */
         padding: 16px;
     }
 
@@ -40,6 +42,7 @@
 </style>
 
 @code {
+
     protected override void OnInitialized()
     {
         NavBridge.OnNavigate += HandleNavigation;
@@ -109,4 +112,5 @@
         NavManager.LocationChanged -= OnLocationChanged;
         TopBar.OnDefaultBackRequested -= HandleDefaultBack;
     }
+
 }

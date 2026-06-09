@@ -1,0 +1,123 @@
+@using Refine.App.Models
+
+@if (IsVisible)
+{
+    if (IsSticky)
+    {
+        <div class="px-1 pb-4 @WrapperClass" style="position: sticky; bottom: 0; background-color: transparent; z-index: 10; margin-top: 16px; @WrapperStyle">
+            @RenderButton()
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(WrapperClass) || !string.IsNullOrWhiteSpace(WrapperStyle))
+        {
+            <div class="@WrapperClass" style="@WrapperStyle">
+                @RenderButton()
+            </div>
+        }
+        else
+        {
+            @RenderButton()
+        }
+    }
+}
+
+@code {
+    [Parameter] public RfButtonType ButtonType { get; set; } = RfButtonType.Primary;
+    [Parameter] public bool IsSticky { get; set; } = false;
+    [Parameter] public bool ShowIcon { get; set; } = true;
+    [Parameter] public RfIconPosition IconPosition { get; set; } = RfIconPosition.Start;
+    [Parameter] public bool HasShadow { get; set; } = false;
+    
+    [Parameter] public bool IsVisible { get; set; } = true;
+    [Parameter] public string WrapperClass { get; set; } = "";
+    [Parameter] public string WrapperStyle { get; set; } = "";
+    [Parameter] public string CustomButtonClass { get; set; } = "";
+    [Parameter] public string Type { get; set; } = "submit";
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public string LoadingText { get; set; } = "LOADING...";
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? Text { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    private string GetButtonClass()
+    {
+        string baseClass = ButtonType switch
+        {
+            RfButtonType.Secondary => "rf-button-secondary",
+            RfButtonType.Outlined => "rf-button-outlined",
+            RfButtonType.Inverted => "rf-button-inverse",
+            RfButtonType.Disabled => "rf-button-disabled",
+            _ => "rf-button-primary"
+        };
+
+        if (HasShadow || IsSticky)
+        {
+            baseClass += " has-shadow";
+        }
+
+        if (!string.IsNullOrWhiteSpace(CustomButtonClass))
+        {
+            baseClass += $" {CustomButtonClass}";
+        }
+
+        if (IsSticky)
+        {
+            baseClass += " w-100";
+        }
+
+        return baseClass;
+    }
+
+    private async Task HandleClick(MouseEventArgs e)
+    {
+        if (Disabled || IsLoading || ButtonType == RfButtonType.Disabled) return;
+        
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync(e);
+        }
+    }
+
+    private RenderFragment RenderButton() => __builder =>
+    {
+        <button type="@Type" 
+                class="@GetButtonClass()" 
+                disabled="@(Disabled || IsLoading || ButtonType == RfButtonType.Disabled)" 
+                @onclick="HandleClick">
+            @if (ChildContent != null)
+            {
+                @ChildContent
+            }
+            else
+            {
+                @if (IsLoading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="width: 1rem; height: 1rem; border-width: 0.15em;"></span>
+                    <span>@LoadingText</span>
+                }
+                else
+                {
+                    @if (ShowIcon && IconPosition == RfIconPosition.Start && !string.IsNullOrWhiteSpace(Icon))
+                    {
+                        <span class="material-symbols-outlined" style="font-size: 20px;">@Icon</span>
+                    }
+                    
+                    @if (!string.IsNullOrWhiteSpace(Text))
+                    {
+                        <span>@Text</span>
+                    }
+                    
+                    @if (ShowIcon && IconPosition == RfIconPosition.End && !string.IsNullOrWhiteSpace(Icon))
+                    {
+                        <span class="material-symbols-outlined" style="font-size: 20px;">@Icon</span>
+                    }
+                }
+            }
+        </button>
+    };
+}

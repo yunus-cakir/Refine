@@ -7,42 +7,41 @@
 @inject IPopupService PopupService
 @implements IDisposable
 
-<div class="workout-detail-container">
-    <div class="rf-flex-row rf-justify-between rf-items-center" style="margin-bottom: 24px;">
-        <a href="/programs/edit/0" class="rf-button-inverse" style="padding: 8px 16px; border-radius: 9999px; font-size: 12px; display: flex; align-items: center; gap: 8px; text-decoration: none;">
-            <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
-            NEW
-        </a>
-    </div>
+@if (_programs == null)
+{
+    <RfSpinner IsLoading="true"/>
+}
+else
+{
+    <div class="workout-detail-container animate-fade-in">
+        <div class="rf-flex-row rf-justify-between rf-items-center" style="margin-bottom: 24px;">
+            <a href="/programs/edit/0" class="rf-button-inverse" style="padding: 8px 16px; border-radius: 9999px; font-size: 12px; display: flex; align-items: center; gap: 8px; text-decoration: none;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+                NEW
+            </a>
+        </div>
 
-    @if (_programs == null)
-    {
-        <div class="loader-container">
-            <span class="material-symbols-outlined animate-spin" style="color: var(--color-primary-fixed); font-size: 32px;">progress_activity</span>
-        </div>
-    }
-    else if (_programs.Count == 0)
-    {
-        <div class="rf-flex-col rf-items-center" style="gap: 16px; margin-top: 48px; text-align: center; opacity: 0.5;">
-            <span class="material-symbols-outlined" style="font-size: 48px; color: var(--color-on-surface-variant);">event_note</span>
-            <p class="font-body" style="color: var(--color-on-surface-variant);">Henüz kayıtlı bir program yok.</p>
-        </div>
-    }
-    else
-    {
-        @if (_activeCardMenuId.HasValue)
+        @if (_programs.Count == 0)
         {
-            <div class="fixed inset-0 z-40" @onclick="() => _activeCardMenuId = null"></div>
+            <div class="rf-flex-col rf-items-center" style="gap: 16px; margin-top: 48px; text-align: center; opacity: 0.5;">
+                <span class="material-symbols-outlined" style="font-size: 48px; color: var(--color-on-surface-variant);">event_note</span>
+                <p class="font-body" style="color: var(--color-on-surface-variant);">Henüz kayıtlı bir program yok.</p>
+            </div>
         }
-
-        <div class="rf-flex-col" style="gap: 16px; padding-bottom: 80px;">
-            @foreach (var program in _programs)
+        else
+        {
+            @if (_activeCardMenuId.HasValue)
             {
-                <div class="refine-card" style="position: relative; overflow: @(_activeCardMenuId == program.Id ? "visible" : "hidden"); padding: 0; z-index: @(_activeCardMenuId == program.Id ? "45" : "1");">
-                    <!-- Highlight border -->
-                    <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: @(_selectedProgramId == program.Id ? "var(--color-primary-fixed)" : "#ffffff"); border-top-left-radius: inherit; border-bottom-left-radius: inherit;"></div>
+                <div class="fixed inset-0 z-40" @onclick="() => _activeCardMenuId = null"></div>
+            }
 
-                    <div style="position: absolute; top: 12px; right: 12px; z-index: 20;">
+            <div class="rf-flex-col" style="gap: 16px; padding-bottom: 80px;">
+                @foreach (var program in _programs)
+                {
+                    <div class="refine-card" style="position: relative; overflow: @(_activeCardMenuId == program.Id ? "visible" : "hidden"); padding: 0; z-index: @(_activeCardMenuId == program.Id ? "45" : "1");">
+                        <!-- Highlight border -->
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: @(_selectedProgramId == program.Id ? "var(--color-primary-fixed)" : "#ffffff"); border-top-left-radius: inherit; border-bottom-left-radius: inherit;"></div>
+
                         <RfCardMenu Id="program.Id" @bind-ActiveMenuId="_activeCardMenuId">
                             @if (_selectedProgramId != program.Id)
                             {
@@ -67,27 +66,27 @@
                                 Delete Program
                             </button>
                         </RfCardMenu>
-                    </div>
 
-                    <NavLink href="@($"/programs/{program.Id}")" style="display: block; padding: 20px 20px 20px 24px; text-decoration: none;">
-                        <div style="padding-right: 40px;">
-                            <h5 class="font-headline" style="color: var(--color-primary); font-size: 20px; font-weight: bold; margin-bottom: 8px;">@program.Name</h5>
+                        <NavLink href="@($"/programs/{program.Id}")" style="display: block; padding: 20px 20px 20px 24px; text-decoration: none;">
+                            <div style="padding-right: 40px;">
+                                <h5 class="font-headline" style="color: var(--color-primary); font-size: 20px; font-weight: bold; margin-bottom: 8px;">@program.Name</h5>
 
-                            <div class="rf-flex-row rf-items-center" style="gap: 8px; margin-bottom: 16px;">
-                                <span class="refine-badge">@program.Level.ToUpper()</span>
+                                <div class="rf-flex-row rf-items-center" style="gap: 8px; margin-bottom: 16px;">
+                                    <span class="refine-badge">@program.Level.ToUpper()</span>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="rf-flex-row rf-items-center font-label" style="gap: 8px; font-size: 11px; color: var(--color-on-surface-variant); text-transform: uppercase; letter-spacing: 0.1em; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px; margin-top: 4px;">
-                            <span class="material-symbols-outlined" style="font-size: 16px;">emoji_events</span>
-                            @program.Goal
-                        </div>
-                    </NavLink>
-                </div>
-            }
-        </div>
-    }
-</div>
+                            <div class="rf-flex-row rf-items-center font-label" style="gap: 8px; font-size: 11px; color: var(--color-on-surface-variant); text-transform: uppercase; letter-spacing: 0.1em; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px; margin-top: 4px;">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">emoji_events</span>
+                                @program.Goal
+                            </div>
+                        </NavLink>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
 
 @code {
     private List<WorkoutProgram>? _programs;
@@ -112,7 +111,11 @@
 
         if (allPrograms != null)
         {
-            _programs = allPrograms.OrderByDescending(p => p.Id == _selectedProgramId).ToList();
+            _programs = allPrograms
+                .OrderByDescending(p => p.Id == _selectedProgramId)
+                .ThenByDescending(p => p.Cycle)
+                .ThenBy(p => p.Name)
+                .ToList();
         }
         else
         {

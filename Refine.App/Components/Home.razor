@@ -40,25 +40,27 @@
         </section>
 
         <!-- Bento Grid: Stats & Analytics -->
-        <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
-            <!-- Recovery Metric -->
-            <RecoveryCard IsLoading="!StateService.IsRecoveryLoaded" Value="StateService.RecoveryState.OverallRecoveryScore" OnClick="NavigateToRecovery" />
+        <section class="rf-flex-col" style="gap: 16px;">
+            <div class="rf-dashboard-row">
+                <!-- Recovery Metric -->
+                <RecoveryCard WidthWeight="1" IsLoading="!StateService.IsRecoveryLoaded" Value="StateService.RecoveryState.OverallRecoveryScore" OnClick="NavigateToRecovery" />
 
-            <!-- Streak Metric -->
-            <StreakCard 
-                IsLoading="!StateService.IsStreakLoaded"
-                CompletedDays="StateService.StreakCompletedDays"
-                TotalDays="StateService.StreakTotalDays"
-                Ratio="StateService.StreakRatio" />
+                <!-- Streak Metric -->
+                <StreakCard WidthWeight="1"
+                    IsLoading="!StateService.IsStreakLoaded"
+                    CompletedDays="StateService.StreakCompletedDays"
+                    TotalDays="StateService.StreakTotalDays"
+                    Ratio="StateService.StreakRatio" />
+            </div>
 
             @if (!StateService.IsTopExerciseLoaded)
             {
-                <div class="rf-card skeleton-box" style="grid-column: span 2 / span 2; height: 160px; border: none; box-shadow: none;"></div>
+                <div class="rf-card skeleton-box" style="width: 100%; height: 160px; border: none; box-shadow: none;"></div>
             }
             else if (StateService.TopExercise != null)
             {
                 <ExerciseSparklineChart 
-                    style="grid-column: span 2 / span 2;"
+                    style="width: 100%;"
                     ExerciseId="StateService.TopExercise.Id"
                     ExerciseName="@StateService.TopExercise.Name"
                     LastTrained="StateService.TopExerciseLastTrained"

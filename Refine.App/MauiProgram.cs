@@ -13,6 +13,7 @@ public static class MauiProgram
             .UseMauiApp<App>()
             .ConfigureFonts(fonts =>
             {
+                fonts.AddFont("Inter-Variable.ttf", "Inter");
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialFilled");
                 fonts.AddFont("MaterialSymbolsOutlined.ttf", "MaterialOutlined");

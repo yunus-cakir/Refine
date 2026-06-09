@@ -10,12 +10,11 @@
 
 @if (_logsGrouped == null)
 {
-    <div class="loader-container">
-        <div class="spinner-border" style="color: var(--color-primary-container);"></div>
-    </div>
+    <RfSpinner IsLoading="true" />
 }
 else
 {
+<div class="animate-fade-in">
     @if (_showTopBarMenu)
     {
         <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999; background: transparent;" @onclick="ToggleTopBarMenu"></div>
@@ -105,6 +104,7 @@ else
             </div>
         }
     </div>
+</div>
 }
 
 @code {

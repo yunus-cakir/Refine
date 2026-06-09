@@ -1,43 +1,23 @@
-@if (IsLoading)
-{
-    <div class="rf-card-half skeleton-box" style="height: 140px;"></div>
-}
-else
-{
-    <div class="rf-card-half" style="position: relative; overflow: hidden;">
-        @if (Ratio >= 0.8) {
-            <div style="position: absolute; inset: 0; opacity: 0.1; background: radial-gradient(circle at top left, #c4f000, transparent 70%); pointer-events: none;"></div>
-        }
-        <div class="rf-flex-row rf-items-center" style="gap: 8px; color: @(Ratio >= 0.8 ? "#c4f000" : "var(--color-on-surface-variant)");">
-            <span class="material-symbols-outlined" style="font-size: 18px; font-variation-settings: 'FILL' @(Ratio >= 0.8 ? 1 : 0);">local_fire_department</span>
-            <span class="font-label" style="font-size: 11px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.1em;">STREAK</span>
-        </div>
-        <div class="rf-flex-row" style="align-items: baseline; gap: 8px; z-index: 10; position: relative;">
-            <span class="font-headline" style="font-size: 36px; font-weight: bold; color: var(--color-on-surface);">@CompletedDays</span>
-            <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">/ @TotalDays days</span>
-        </div>
-        
-        @if (Ratio >= 0.8)
-        {
-            <p class="font-label" style="font-size: 10px; color: #c4f000; margin-top: auto; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; z-index: 10; position: relative;">
-                CRUSHING IT!
-            </p>
-        }
-        else
-        {
-            <p class="font-label" style="font-size: 10px; color: transparent; margin-top: auto; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; z-index: 10; position: relative; user-select: none;">
-                KEEP GOING
-            </p>
-        }
-        
-        <div style="width: 100%; background-color: rgba(255,255,255,0.05); height: 6px; border-radius: 9999px; overflow: hidden; margin-top: 4px; z-index: 10; position: relative;">
-            <div style="background-color: @(Ratio >= 0.8 ? "#c4f000" : "var(--color-primary)"); width: @(Math.Min(Ratio * 100, 100).ToString(System.Globalization.CultureInfo.InvariantCulture))%; height: 100%; border-radius: 9999px;"></div>
-        </div>
-    </div>
-}
+<HomeCard
+    WidthWeight="WidthWeight"
+    IsLoading="IsLoading"
+    Icon="local_fire_department"
+    IconFill="Ratio >= 0.8"
+    Title="Streak"
+    TitleColor='@(Ratio >= 0.8 ? "#c4f000" : "var(--color-on-surface-variant)")'
+    PrimaryText="@CompletedDays.ToString()"
+    SecondaryText="@($"/ {TotalDays} days")"
+    Subtitle='@(Ratio >= 0.8 ? "CRUSHING IT!" : "KEEP GOING")'
+    SubtitleColor='@(Ratio >= 0.8 ? "#c4f000" : "transparent")'
+    ShowProgressBar="true"
+    ProgressValue="@(Ratio * 100)"
+    ProgressColor='@(Ratio >= 0.8 ? "#c4f000" : "var(--color-primary)")'
+    ProgressBackgroundColor="rgba(255,255,255,0.05)"
+/>
 
 @code {
     [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public int WidthWeight { get; set; } = 1;
     [Parameter] public int CompletedDays { get; set; }
     [Parameter] public int TotalDays { get; set; }
     [Parameter] public double Ratio { get; set; }

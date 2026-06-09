@@ -1,0 +1,78 @@
+@if (IsLoading)
+{
+    <div class="rf-dashboard-card skeleton-box" style="height: 140px; --card-weight: @WidthWeight;"></div>
+}
+else
+{
+    <div class="rf-dashboard-card" @onclick="OnClick" style="position: relative; overflow: hidden; --card-weight: @WidthWeight; @(OnClick.HasDelegate ? "cursor: pointer;" : "")">
+        @{
+            var gradientColor = !string.IsNullOrEmpty(BackgroundGradientColor) ? BackgroundGradientColor : ProgressColor;
+        }
+        @if (!string.IsNullOrEmpty(gradientColor))
+        {
+            <div style="position: absolute; inset: 0; opacity: 0.1; background: radial-gradient(circle at top left, @gradientColor, transparent 70%); pointer-events: none;"></div>
+        }
+        
+        @if (!string.IsNullOrEmpty(Title) || !string.IsNullOrEmpty(Icon))
+        {
+            <div class="rf-flex-row rf-items-center" style="gap: 8px; color: @TitleColor;">
+                @if (!string.IsNullOrEmpty(Icon))
+                {
+                    <span class="material-symbols-outlined" style="font-size: 18px; font-variation-settings: 'FILL' @(IconFill ? 1 : 0);">@Icon</span>
+                }
+                @if (!string.IsNullOrEmpty(Title))
+                {
+                    <span class="font-label" style="font-size: 11px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.1em;">@Title</span>
+                }
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(PrimaryText) || !string.IsNullOrEmpty(SecondaryText))
+        {
+            <div class="rf-flex-row" style="align-items: baseline; gap: 8px; z-index: 10; position: relative;">
+                @if (!string.IsNullOrEmpty(PrimaryText))
+                {
+                    <span class="font-headline" style="font-size: 36px; font-weight: bold; color: @PrimaryTextColor;">@PrimaryText</span>
+                }
+                @if (!string.IsNullOrEmpty(SecondaryText))
+                {
+                    <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">@SecondaryText</span>
+                }
+            </div>
+        }
+        
+        @if (!string.IsNullOrEmpty(Subtitle))
+        {
+            <p class="font-label" style="font-size: 10px; color: @SubtitleColor; margin-top: auto; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; z-index: 10; position: relative; @(SubtitleColor == "transparent" ? "user-select: none;" : "")">
+                @Subtitle
+            </p>
+        }
+        
+        @if (ShowProgressBar)
+        {
+            <div style="width: 100%; background-color: @ProgressBackgroundColor; height: 6px; border-radius: 9999px; overflow: hidden; margin-top: @(string.IsNullOrEmpty(Subtitle) ? "auto" : "4px"); z-index: 10; position: relative;">
+                <div style="background-color: @ProgressColor; width: @(Math.Min(ProgressValue, 100).ToString(System.Globalization.CultureInfo.InvariantCulture))%; height: 100%; border-radius: 9999px;"></div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public int WidthWeight { get; set; } = 1;
+    [Parameter] public string Icon { get; set; }
+    [Parameter] public bool IconFill { get; set; }
+    [Parameter] public string Title { get; set; }
+    [Parameter] public string TitleColor { get; set; } = "var(--color-on-surface-variant)";
+    [Parameter] public string PrimaryText { get; set; }
+    [Parameter] public string PrimaryTextColor { get; set; } = "var(--color-on-surface)";
+    [Parameter] public string SecondaryText { get; set; }
+    [Parameter] public string Subtitle { get; set; }
+    [Parameter] public string SubtitleColor { get; set; } = "var(--color-on-surface-variant)";
+    [Parameter] public bool ShowProgressBar { get; set; }
+    [Parameter] public double ProgressValue { get; set; }
+    [Parameter] public string ProgressColor { get; set; } = "var(--color-primary)";
+    [Parameter] public string ProgressBackgroundColor { get; set; } = "var(--color-surface-container-highest)";
+    [Parameter] public string BackgroundGradientColor { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+}

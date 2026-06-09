@@ -1,26 +1,21 @@
-@if (IsLoading)
-{
-    <div class="rf-card-half skeleton-box" style="height: 140px;"></div>
-}
-else
-{
-    <div class="rf-card-half" @onclick="OnClick" style="cursor: pointer;">
-        <div class="rf-flex-row rf-items-center" style="gap: 8px; color: var(--color-on-surface-variant);">
-            <span class="material-symbols-outlined" style="font-size: 18px;">favorite</span>
-            <span class="font-label" style="font-size: 11px; text-transform: uppercase;">RECOVERY</span>
-        </div>
-        <div class="rf-flex-row" style="align-items: baseline; gap: 8px;">
-            <span class="font-headline" style="font-size: 36px; font-weight: bold; color: var(--color-tertiary);">@Value</span>
-            <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">%</span>
-        </div>
-        <div style="width: 100%; background-color: var(--color-surface-container-highest); height: 6px; border-radius: 9999px; overflow: hidden; margin-top: auto;">
-            <div style="background-color: var(--color-primary-container); width: @(Value)%; height: 100%; border-radius: 9999px;"></div>
-        </div>
-    </div>
-}
+<HomeCard
+    WidthWeight="WidthWeight"
+    IsLoading="IsLoading"
+    Icon="favorite"
+    Title="Recovery"
+    PrimaryText="@Value.ToString()"
+    PrimaryTextColor="var(--color-tertiary)"
+    SecondaryText="%"
+    ShowProgressBar="true"
+    ProgressValue="@Value"
+    ProgressColor="var(--color-primary-container)"
+    ProgressBackgroundColor="var(--color-surface-container-highest)"
+    OnClick="OnClick"
+/>
 
 @code {
     [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public int WidthWeight { get; set; } = 1;
     [Parameter] public int Value { get; set; } = 84;
     [Parameter] public EventCallback OnClick { get; set; }
 }

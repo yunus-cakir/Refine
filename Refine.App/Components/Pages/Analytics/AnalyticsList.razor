@@ -8,16 +8,14 @@
 @inject TopBarBridge TopBar
 @implements IAsyncDisposable
 
-<div class="analytics-list-container fade-in">
-    @if (isLoading)
-    {
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary-container" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-    }
-    else if (!exerciseViewModels.Any())
+@if (isLoading)
+{
+    <RfSpinner IsLoading="true" />
+}
+else
+{
+<div class="analytics-list-container animate-fade-in">
+    @if (!exerciseViewModels.Any())
     {
         <div class="empty-state mt-5">
             <span class="material-symbols-outlined empty-icon" style="font-size: 48px; opacity: 0.5;">query_stats</span>
@@ -114,6 +112,7 @@
         </div>
     }
 </div>
+}
 
 @code {
     private bool isLoading = true;

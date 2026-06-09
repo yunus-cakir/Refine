@@ -8,7 +8,13 @@
 @inject TopBarBridge TopBar
 @implements IAsyncDisposable
 
-<div class="analytics-container fade-in">
+@if (isLoading)
+{
+    <RfSpinner IsLoading="true" />
+}
+else
+{
+<div class="analytics-container animate-fade-in">
     <!-- Filters Section -->
     <div class="filters-section mb-4">
         <!-- Time Range Selector -->
@@ -56,21 +62,14 @@
 
     <!-- Chart Container -->
     <div class="chart-card">
-        @if (isLoading)
-        {
-            <div class="skeleton-loader">
-                <div class="skeleton-chart-area pulse"></div>
-            </div>
-        }
-        else if (dataPoints == null || !dataPoints.Any())
+        @if (dataPoints == null || !dataPoints.Any())
         {
             <div class="empty-state">
                 <span class="material-symbols-outlined empty-icon">query_stats</span>
                 <p>No data available for the selected filters.</p>
             </div>
         }
-        
-        <div class="canvas-wrapper" style="@(isLoading || (dataPoints == null || !dataPoints.Any()) ? "display:none;" : "display:block;")">
+        <div class="canvas-wrapper" style="@((dataPoints == null || !dataPoints.Any()) ? "display:none;" : "display:block;")">
             <canvas @ref="chartCanvas"></canvas>
         </div>
     </div>
@@ -131,6 +130,7 @@
         }
     </div>
 </div>
+}
 
 @code {
     private List<WorkoutLog> cachedLogs = new();

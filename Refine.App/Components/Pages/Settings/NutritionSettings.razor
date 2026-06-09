@@ -5,18 +5,13 @@
 @inject NavigationManager NavManager
 @inject TopBarBridge TopBar
 
-<div class="page-container py-4 px-0 min-h-screen">
-
-    @if (_user == null)
-    {
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary-container" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-    }
-    else
-    {
+@if (_user == null)
+{
+    <RfSpinner IsLoading="true" />
+}
+else
+{
+<div class="page-container py-4 px-0 min-h-screen animate-fade-in">
         <!-- Placeholder Card -->
         <div class="rf-card animate-fade-in p-4 mb-4 text-center">
             <div class="icon-glow mb-3 mx-auto d-flex align-items-center justify-content-center">
@@ -27,8 +22,8 @@
                 Nutrition parameters, daily target calorie intake, macronutrient distribution, and metabolism types will be fully editable here soon.
             </p>
         </div>
-    }
-</div>
+    </div>
+}
 
 @code {
     private User? _user;

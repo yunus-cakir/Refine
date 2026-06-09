@@ -8,18 +8,18 @@
 
 @if (_sessions == null)
 {
-    <div class="text-center"><div class="spinner-border text-primary"></div></div>
+    <RfSpinner IsLoading="true" />
 }
 else if (!_sessions.Any())
 {
-    <div class="text-center text-muted mt-5">
+    <div class="text-center text-muted mt-5 animate-fade-in">
         <i class="bi bi-clock-history fs-1 d-block mb-3"></i>
         <p>Henüz tamamlanmış antrenman yok.</p>
     </div>
 }
 else
 {
-    <div class="d-flex flex-column gap-3 pb-5">
+    <div class="d-flex flex-column gap-3 pb-5 animate-fade-in">
         @foreach (var session in _sessions)
         {
             <article class="rf-card rf-card-bordered" style="cursor: pointer;" @onclick="() => GoToDetail(session)">

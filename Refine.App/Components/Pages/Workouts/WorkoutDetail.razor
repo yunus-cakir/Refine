@@ -10,9 +10,7 @@
 
 @if (_workout == null)
 {
-    <div class="loader-container">
-        <div class="spinner-border" style="color: var(--color-primary-container);"></div>
-    </div>
+    <RfSpinner IsLoading="true" />
 }
 else
 {
@@ -27,7 +25,7 @@ else
         </div>
     }
 
-    <div class="workout-detail-container">
+    <div class="workout-detail-container animate-fade-in">
 
         <!-- Target Muscles -->
         <section class="section-margin target-muscles-section">

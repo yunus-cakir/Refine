@@ -131,7 +131,7 @@ input::-webkit-inner-spin-button {
     width: 100%;
     box-sizing: border-box;
     text-transform: uppercase;
-    font-family: 'Lexend', sans-serif;
+    font-family: var(--font-display);
     font-weight: bold;
     letter-spacing: 0.1em;
     padding: 0;

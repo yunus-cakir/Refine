@@ -1,0 +1,161 @@
+/* buttons.css - Shared Button Styles */
+
+.refine-icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(12px);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+
+.refine-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.refine-glow-btn,
+.rf-button-primary {
+    width: 100%;
+    background-color: var(--color-primary-container);
+    color: #000;
+    font-size: 14px;
+    padding: 12px 0;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-weight: bold;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+    border: none;
+}
+.rf-button-primary.has-shadow {
+    box-shadow: 0 0 20px rgba(195, 244, 0, 0.2);
+}
+.rf-button-primary.has-shadow:hover {
+    box-shadow: 0 0 30px rgba(195, 244, 0, 0.4);
+}
+.rf-button-primary:active {
+    transform: scale(0.95);
+}
+
+.refine-glow-btn-lg,
+.rf-button-secondary {
+    width: 100%;
+    max-width: 384px;
+    background-color: var(--color-primary-container);
+    color: var(--color-on-primary-fixed);
+    font-size: 14px;
+    padding: 16px 0;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-weight: bold;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+    border: none;
+}
+.rf-button-secondary.has-shadow {
+    box-shadow: 0 0 20px rgba(195, 244, 0, 0.3);
+}
+.rf-button-secondary.has-shadow:hover {
+    box-shadow: 0 0 30px rgba(195, 244, 0, 0.5);
+}
+.rf-button-secondary:active {
+    transform: scale(0.95);
+}
+
+.rf-button-inverse {
+    background-color: transparent;
+    color: var(--color-primary-container);
+    border: 2px solid var(--color-primary-container);
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-family: var(--font-display);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.rf-button-inverse:hover {
+    background-color: rgba(195, 244, 0, 0.1);
+}
+
+.rf-button-outlined {
+    background-color: transparent;
+    color: var(--color-on-surface);
+    border: 2px solid var(--color-on-surface);
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-family: var(--font-display);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.rf-button-outlined:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.rf-button-disabled,
+button:disabled {
+    background-color: #333;
+    color: #666;
+    border: 1px solid #444;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+.rf-button-disabled:hover,
+button:disabled:hover {
+    background-color: #333;
+    box-shadow: none;
+    transform: none;
+}
+
+.refine-ghost-btn {
+    color: var(--color-on-surface-variant);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s ease;
+    font-family: var(--font-display);
+    font-weight: bold;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+.refine-ghost-btn:hover {
+    color: var(--color-primary);
+}
+
+

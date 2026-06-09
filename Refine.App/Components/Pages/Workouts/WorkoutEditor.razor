@@ -44,42 +44,54 @@
     }
     else
     {
-        <EditForm Model="@_workout" OnValidSubmit="SaveWorkout">
+        <EditForm Model="@_workout" OnValidSubmit="SaveWorkout" class="animate-fade-in">
             <DataAnnotationsValidator/>
 
 
-            <RfInput Title="Workout Title" Icon="fitness_center" Placeholder="e.g. Push Day" WrapperClass="mb-2" @bind-Value="_workout.Name"/>
+            <RfInput Title="Title" Icon="fitness_center" Placeholder="e.g. Push Day" WrapperClass="mb-2" @bind-Value="_workout.Name"/>
 
-            <RfInput Title="Workout Description" Icon="description" Placeholder="e.g. Chest and Shoulders focus..." Delay="0.05" WrapperClass="mb-2" @bind-Value="_workout.Description"/>
+            <RfInput Title="Description" Icon="description" Placeholder="e.g. Chest and Shoulders focus..." WrapperClass="mb-2" @bind-Value="_workout.Description"/>
 
             @if (ProgramId != 0)
             {
-                <RfInput Title="Order" Icon="format_list_numbered" Type="number" Delay="0.1" WrapperClass="mb-2" @bind-Value="_workout.Order"/>
+                <RfInput Title="Order" Icon="format_list_numbered" Type="number" WrapperClass="mb-2" @bind-Value="_workout.Order"/>
             }
 
+            <!-- ESTIMATED CALCULATIONS -->
+            <div class="rf-flex-row rf-items-center mt-4" style="margin-bottom: 16px;">
+                <h3 class="font-headline" style="font-size: 20px; color: var(--color-primary); font-weight: 600; margin: 0;">Estimated Calculations</h3>
+            </div>
+
             <!-- CNS LOAD -->
-            <div class="animate-fade-in mt-4" style="animation-delay: 0.15s;">
-                <CnsLoadCard Title="Estimated CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" WarningMessage="High CNS fatigue!" CssClass="mb-2"/>
+            <div>
+                <CnsLoadCard Title="CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" WarningMessage="High CNS fatigue!" CssClass="mb-2"/>
             </div>
 
             <!-- ESTIMATED MUSCLE IMPACT -->
-            <div class="animate-fade-in" style="animation-delay: 0.18s; margin-bottom: 16px;">
-                <MuscleFatigueList Fatigues="_estimatedMuscleFatigues" Title="Estimated Muscle Impact" EmptyMessage="No muscle impact configured." />
+            <div style="margin-bottom: 16px;">
+                <MuscleFatigueList Fatigues="_estimatedMuscleFatigues" Title="Muscle Impact" EmptyMessage="No muscle impact configured."/>
             </div>
 
-            <!-- Add Exercise -->
-            <div class="d-flex mb-4 animate-fade-in" style="animation-delay: 0.2s;">
-                <button type="button" class="rf-button-primary w-100 fw-bold d-flex justify-content-center align-items-center gap-2" @onclick="GoToExerciseSelection" style="border-radius: 12px; height: 50px;">
-                    <span class="material-symbols-outlined">add</span>
-                    ADD EXERCISE
+            <!-- Section Header: Exercises & Add Exercise Button -->
+            <div class="rf-flex-row rf-items-center rf-justify-between" style="margin-top: 8px; margin-bottom: 16px;">
+                <div class="rf-flex-col" style="gap: 4px;">
+                    <h3 class="font-headline" style="font-size: 20px; color: var(--color-primary); font-weight: 600; margin: 0;">
+                        @($"{_workout.Items?.Count ?? 0} Exercises")
+                    </h3>
+                    <span class="font-label" style="font-size: 12px; color: var(--color-on-surface-variant); letter-spacing: 0.05em; font-weight: bold;">
+                        Total of @(_workout.Items?.Sum(i => i.Sets) ?? 0) Sets
+                    </span>
+                </div>
+
+                <button type="button" class="rf-button-primary add-exercise-btn" style="width: auto; height: 32px; padding: 0 12px; border-radius: 16px; display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 11px; font-weight: bold; letter-spacing: 0.05em;" @onclick="GoToExerciseSelection">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                    <span>ADD</span>
                 </button>
             </div>
 
-            <div class="rf-section-label animate-fade-in" style="animation-delay: 0.25s;">Exercises</div>
-
             @if (_workout.Items.Any())
             {
-                <div class="d-flex flex-column gap-3 mb-5 animate-fade-in" style="animation-delay: 0.3s;">
+                <div class="d-flex flex-column gap-3 mb-2">
                     @foreach (var item in _workout.Items.OrderBy(i => i.Order))
                     {
                         <div class="rf-card d-flex flex-column gap-2 exercise-card" style="padding: 12px 16px;">
@@ -181,17 +193,12 @@
             }
             else
             {
-                <div class="text-center py-4 rounded mb-4 animate-fade-in" style="border: 1px dashed rgba(255,255,255,0.2); color: rgba(255,255,255,0.4); animation-delay: 0.3s;">
+                <div class="text-center py-4 rounded mb-2" style="border: 1px dashed rgba(255,255,255,0.2); color: rgba(255,255,255,0.4);">
                     No exercises added yet.
                 </div>
             }
 
-            <div class="mt-4 px-1 pb-4 animate-fade-in" style="animation-delay: 0.4s;">
-                <button type="submit" class="rf-button-primary w-100">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">check</span>
-                    SAVE WORKOUT
-                </button>
-            </div>
+            <RfButton IsSticky="true" Icon="check" Text="SAVE WORKOUT"/>
         </EditForm>
     }
 </div>
@@ -406,6 +413,7 @@
         {
             i.Order = newOrder++;
         }
+
         RecalculateEstimatedMuscleImpact();
     }
 

@@ -54,7 +54,11 @@ public class LocalDbService
                         MetabolismType = "normal",
                         AppSettings = new AppSettings { Language = "en", UnitSystem = "metric", Theme = "dark" },
                         WorkoutSettings = new WorkoutSettings
-                            { PreferredMinReps = 8, PreferredMaxReps = 12, PreferredRepRange = "8-12", PreferredRIR = 2.0m, AutoCopyWeight = true, AutoCopyReps = true, AutoCopyRIR = true, AutoCopyFormRating = true }
+                        {
+                            PreferredMinReps = 8, PreferredMaxReps = 12, PreferredRepRange = "8-12",
+                            PreferredRIR = 2.0m, AutoCopyWeight = true, AutoCopyReps = true, AutoCopyRIR = true,
+                            AutoCopyFormRating = true
+                        }
                     };
                     await _connection.InsertWithChildrenAsync(newUser);
 
@@ -90,6 +94,13 @@ public class LocalDbService
                 if (mockProgramExists == 0)
                 {
                     await SeedMockProgramAsync();
+                }
+
+                var agirsaglamExists =
+                    await _connection.Table<WorkoutProgram>().Where(p => p.Name == "Ağırsağlam's 5x5").CountAsync();
+                if (agirsaglamExists == 0)
+                {
+                    await SeedAgirsaglam5x5ProgramAsync();
                 }
 
                 _isInitialized = true;
@@ -131,7 +142,10 @@ public class LocalDbService
             if (user.WorkoutSettings == null)
             {
                 user.WorkoutSettings = new WorkoutSettings
-                    { PreferredMinReps = 8, PreferredMaxReps = 12, PreferredRepRange = "8-12", PreferredRIR = 2.0m, AutoCopyWeight = true, AutoCopyReps = true, AutoCopyRIR = true, AutoCopyFormRating = true };
+                {
+                    PreferredMinReps = 8, PreferredMaxReps = 12, PreferredRepRange = "8-12", PreferredRIR = 2.0m,
+                    AutoCopyWeight = true, AutoCopyReps = true, AutoCopyRIR = true, AutoCopyFormRating = true
+                };
                 needsUpdate = true;
             }
 
@@ -205,13 +219,15 @@ public class LocalDbService
         if (!exerciseList.Any()) return;
 
         var exerciseIds = exerciseList.Select(e => e.Id).ToList();
-        var mappings = await _connection!.Table<ExerciseMuscleMap>().Where(m => exerciseIds.Contains(m.ExerciseId)).ToListAsync();
+        var mappings = await _connection!.Table<ExerciseMuscleMap>().Where(m => exerciseIds.Contains(m.ExerciseId))
+            .ToListAsync();
 
         var muscleGroupIds = mappings.Select(m => m.MuscleGroupId).Distinct().ToList();
         var muscleGroups = new List<MuscleGroup>();
         if (muscleGroupIds.Any())
         {
-            muscleGroups = await _connection.Table<MuscleGroup>().Where(mg => muscleGroupIds.Contains(mg.Id)).ToListAsync();
+            muscleGroups = await _connection.Table<MuscleGroup>().Where(mg => muscleGroupIds.Contains(mg.Id))
+                .ToListAsync();
         }
 
         var mgDict = muscleGroups.ToDictionary(mg => mg.Id);
@@ -228,6 +244,7 @@ public class LocalDbService
                         map.MuscleGroup = mg;
                     }
                 }
+
                 ex.MuscleMaps = exMaps;
             }
             else
@@ -301,16 +318,18 @@ public class LocalDbService
                     {
                         item.WorkoutId = workout.Id;
                     }
+
                     await _connection.InsertAllAsync(newItems);
                 }
-                
+
                 var existingItems = workout.Items.Where(i => i.Id != 0).ToList();
                 if (existingItems.Any())
                 {
                     await _connection.UpdateAllAsync(existingItems);
                 }
 
-                var dbItems = await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == workout.Id).ToListAsync();
+                var dbItems = await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == workout.Id)
+                    .ToListAsync();
                 var currentItemIds = existingItems.Select(i => i.Id).ToList();
                 var itemsToDelete = dbItems.Where(i => !currentItemIds.Contains(i.Id)).ToList();
                 if (itemsToDelete.Any())
@@ -331,6 +350,7 @@ public class LocalDbService
                 {
                     item.WorkoutId = workout.Id;
                 }
+
                 await _connection.InsertAllAsync(workout.Items);
             }
         }
@@ -376,6 +396,7 @@ public class LocalDbService
             exercises = await _connection.Table<Exercise>().Where(e => exerciseIds.Contains(e.Id)).ToListAsync();
             await PopulateExerciseMuscleMapsAsync(exercises);
         }
+
         var exDict = exercises.ToDictionary(e => e.Id);
 
         var itemsByWorkout = items.GroupBy(i => i.WorkoutId).ToDictionary(g => g.Key, g => g.ToList());
@@ -391,6 +412,7 @@ public class LocalDbService
                         item.Exercise = ex;
                     }
                 }
+
                 w.Items = wItems.OrderBy(i => i.Order).ToList();
             }
             else
@@ -745,12 +767,14 @@ public class LocalDbService
         await Init();
         var workouts = await _connection!.Table<Workout>().ToListAsync();
 
-        var programIds = workouts.Where(w => w.WorkoutProgramId != 0).Select(w => w.WorkoutProgramId).Distinct().ToList();
+        var programIds = workouts.Where(w => w.WorkoutProgramId != 0).Select(w => w.WorkoutProgramId).Distinct()
+            .ToList();
         var programs = new List<WorkoutProgram>();
         if (programIds.Any())
         {
             programs = await _connection.Table<WorkoutProgram>().Where(p => programIds.Contains(p.Id)).ToListAsync();
         }
+
         var programDict = programs.ToDictionary(p => p.Id);
 
         var items = await _connection.Table<WorkoutItem>().ToListAsync();
@@ -762,6 +786,7 @@ public class LocalDbService
             exercises = await _connection.Table<Exercise>().Where(e => exerciseIds.Contains(e.Id)).ToListAsync();
             await PopulateExerciseMuscleMapsAsync(exercises);
         }
+
         var exDict = exercises.ToDictionary(e => e.Id);
 
         var itemsByWorkout = items.GroupBy(i => i.WorkoutId).ToDictionary(g => g.Key, g => g.ToList());
@@ -782,6 +807,7 @@ public class LocalDbService
                         item.Exercise = ex;
                     }
                 }
+
                 workout.Items = wItems.OrderBy(i => i.Order).ToList();
             }
             else
@@ -789,6 +815,7 @@ public class LocalDbService
                 workout.Items = new List<WorkoutItem>();
             }
         }
+
         return workouts;
     }
 
@@ -806,16 +833,19 @@ public class LocalDbService
                 var items = new List<WorkoutItem>();
                 if (workoutIds.Any())
                 {
-                    items = await _connection.Table<WorkoutItem>().Where(i => workoutIds.Contains(i.WorkoutId)).ToListAsync();
+                    items = await _connection.Table<WorkoutItem>().Where(i => workoutIds.Contains(i.WorkoutId))
+                        .ToListAsync();
                 }
 
                 var exerciseIds = items.Select(i => i.ExerciseId).Distinct().ToList();
                 var exercises = new List<Exercise>();
                 if (exerciseIds.Any())
                 {
-                    exercises = await _connection.Table<Exercise>().Where(e => exerciseIds.Contains(e.Id)).ToListAsync();
+                    exercises = await _connection.Table<Exercise>().Where(e => exerciseIds.Contains(e.Id))
+                        .ToListAsync();
                     await PopulateExerciseMuscleMapsAsync(exercises);
                 }
+
                 var exDict = exercises.ToDictionary(e => e.Id);
 
                 var itemsByWorkout = items.GroupBy(i => i.WorkoutId).ToDictionary(g => g.Key, g => g.ToList());
@@ -831,6 +861,7 @@ public class LocalDbService
                                 item.Exercise = ex;
                             }
                         }
+
                         w.Items = wItems.OrderBy(i => i.Order).ToList();
                     }
                     else
@@ -841,6 +872,7 @@ public class LocalDbService
 
                 program.Workouts = workouts.OrderBy(w => w.Order).ToList();
             }
+
             return program;
         }
         catch
@@ -863,9 +895,11 @@ public class LocalDbService
                 var exercises = new List<Exercise>();
                 if (exerciseIds.Any())
                 {
-                    exercises = await _connection.Table<Exercise>().Where(e => exerciseIds.Contains(e.Id)).ToListAsync();
+                    exercises = await _connection.Table<Exercise>().Where(e => exerciseIds.Contains(e.Id))
+                        .ToListAsync();
                     await PopulateExerciseMuscleMapsAsync(exercises);
                 }
+
                 var exDict = exercises.ToDictionary(e => e.Id);
 
                 foreach (var item in items)
@@ -878,6 +912,7 @@ public class LocalDbService
 
                 workout.Items = items.OrderBy(i => i.Order).ToList();
             }
+
             return workout;
         }
         catch
@@ -992,7 +1027,8 @@ public class LocalDbService
             },
             new Exercise
             {
-                Name = "Incline Dumbbell Press", Difficulty = "Intermediate", Equipment = "Dumbbell", ImageUrl = "incline_press.png",
+                Name = "Incline Dumbbell Press", Difficulty = "Intermediate", Equipment = "Dumbbell",
+                ImageUrl = "incline_press.png",
                 CnsFatigueScore = 5.5m
             },
             new Exercise
@@ -1002,8 +1038,175 @@ public class LocalDbService
             },
             new Exercise
             {
-                Name = "Hyperextension", Difficulty = "Beginner", Equipment = "Bodyweight", ImageUrl = "hyperextension.png",
+                Name = "Hyperextension", Difficulty = "Beginner", Equipment = "Bodyweight",
+                ImageUrl = "hyperextension.png",
                 CnsFatigueScore = 4.5m
+            },
+            new Exercise
+            {
+                Name = "Plate Loaded Chest Press", Difficulty = "Intermediate", Equipment = "Machine",
+                ImageUrl = "chest_press.png",
+                CnsFatigueScore = 5.0m
+            },
+            new Exercise
+            {
+                Name = "Smith Machine Low Incline Press", Difficulty = "Intermediate", Equipment = "Machine",
+                ImageUrl = "smith_incline_press.png",
+                CnsFatigueScore = 5.5m
+            },
+            new Exercise
+            {
+                Name = "Chest Fly Machine", Difficulty = "Beginner", Equipment = "Machine",
+                ImageUrl = "chest_fly_machine.png",
+                CnsFatigueScore = 3.5m
+            },
+            new Exercise
+            {
+                Name = "Shoulder Press Machine", Difficulty = "Beginner", Equipment = "Machine",
+                ImageUrl = "shoulder_press_machine.png",
+                CnsFatigueScore = 4.5m
+            },
+            new Exercise
+            {
+                Name = "Overhead Rope Extension", Difficulty = "Beginner", Equipment = "Cable",
+                ImageUrl = "overhead_rope_extension.png",
+                CnsFatigueScore = 3.5m
+            },
+            new Exercise
+            {
+                Name = "Lat Pulldown", Difficulty = "Beginner", Equipment = "Machine", ImageUrl = "lat_pulldown.png",
+                CnsFatigueScore = 4.5m
+            },
+            new Exercise
+            {
+                Name = "Plate Loaded Wide Grip Row", Difficulty = "Intermediate", Equipment = "Machine",
+                ImageUrl = "wide_grip_row.png",
+                CnsFatigueScore = 5.0m
+            },
+            new Exercise
+            {
+                Name = "Cable Row", Difficulty = "Beginner", Equipment = "Cable", ImageUrl = "cable_row.png",
+                CnsFatigueScore = 4.5m
+            },
+            new Exercise
+            {
+                Name = "Cable Curl", Difficulty = "Beginner", Equipment = "Cable", ImageUrl = "cable_curl.png",
+                CnsFatigueScore = 3.0m
+            },
+            new Exercise
+            {
+                Name = "Hammer Curl", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "hammer_curl.png",
+                CnsFatigueScore = 3.5m
+            },
+            new Exercise
+            {
+                Name = "Reverse Barbell Curl", Difficulty = "Intermediate", Equipment = "Barbell",
+                ImageUrl = "reverse_barbell_curl.png",
+                CnsFatigueScore = 3.5m
+            },
+            new Exercise
+            {
+                Name = "Leg Press", Difficulty = "Beginner", Equipment = "Machine", ImageUrl = "leg_press.png",
+                CnsFatigueScore = 6.5m
+            },
+            new Exercise
+            {
+                Name = "Smith Machine Squat", Difficulty = "Intermediate", Equipment = "Machine",
+                ImageUrl = "smith_squat.png",
+                CnsFatigueScore = 7.0m
+            },
+            new Exercise
+            {
+                Name = "Leg Extension", Difficulty = "Beginner", Equipment = "Machine", ImageUrl = "leg_extension.png",
+                CnsFatigueScore = 4.0m
+            },
+            new Exercise
+            {
+                Name = "Seated Leg Curl", Difficulty = "Beginner", Equipment = "Machine",
+                ImageUrl = "seated_leg_curl.png",
+                CnsFatigueScore = 4.0m
+            },
+            new Exercise
+            {
+                Name = "Cable Rear Delt Fly", Difficulty = "Beginner", Equipment = "Cable",
+                ImageUrl = "cable_rear_delt_fly.png",
+                CnsFatigueScore = 3.0m
+            },
+            new Exercise
+            {
+                Name = "Close Grip Lat Pulldown", Difficulty = "Beginner", Equipment = "Machine",
+                ImageUrl = "close_grip_lat_pulldown.png",
+                CnsFatigueScore = 4.5m
+            },
+            new Exercise
+            {
+                Name = "Dips", Difficulty = "Intermediate", Equipment = "Bodyweight", ImageUrl = "dips.png",
+                CnsFatigueScore = 5.0m
+            },
+            new Exercise
+            {
+                Name = "Front Squat", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "front_squat.png",
+                CnsFatigueScore = 8.0m
+            },
+            new Exercise
+            {
+                Name = "Bulgarian Split Squat", Difficulty = "Intermediate", Equipment = "Dumbbell",
+                ImageUrl = "bulgarian_split_squat.png",
+                CnsFatigueScore = 6.5m
+            },
+            new Exercise
+            {
+                Name = "Incline Barbell Bench Press", Difficulty = "Intermediate", Equipment = "Barbell",
+                ImageUrl = "incline_barbell_bench.png",
+                CnsFatigueScore = 6.0m
+            },
+            new Exercise
+            {
+                Name = "Close Grip Bench Press", Difficulty = "Intermediate", Equipment = "Barbell",
+                ImageUrl = "close_grip_bench.png",
+                CnsFatigueScore = 5.5m
+            },
+            new Exercise
+            {
+                Name = "Chin Up", Difficulty = "Intermediate", Equipment = "Bodyweight", ImageUrl = "chinup.png",
+                CnsFatigueScore = 5.5m
+            },
+            new Exercise
+            {
+                Name = "Weighted Pull Up", Difficulty = "Advanced", Equipment = "Bodyweight",
+                ImageUrl = "weighted_pullup.png",
+                CnsFatigueScore = 7.0m
+            },
+            new Exercise
+            {
+                Name = "Seated Dumbbell Press", Difficulty = "Intermediate", Equipment = "Dumbbell",
+                ImageUrl = "seated_dumbbell_press.png",
+                CnsFatigueScore = 5.5m
+            },
+            new Exercise
+            {
+                Name = "Push Press", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "push_press.png",
+                CnsFatigueScore = 8.0m
+            },
+            new Exercise
+            {
+                Name = "Romanian Deadlift", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "rdl.png",
+                CnsFatigueScore = 7.5m
+            },
+            new Exercise
+            {
+                Name = "Sumo Deadlift", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "sumo_deadlift.png",
+                CnsFatigueScore = 9.0m
+            },
+            new Exercise
+            {
+                Name = "Pendlay Row", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "pendlay_row.png",
+                CnsFatigueScore = 7.0m
+            },
+            new Exercise
+            {
+                Name = "T-Bar Row", Difficulty = "Intermediate", Equipment = "Machine", ImageUrl = "tbar_row.png",
+                CnsFatigueScore = 6.5m
             }
         };
 
@@ -1025,158 +1228,867 @@ public class LocalDbService
                 ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
             },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Upper Chest"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Front Delts"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Triceps Long Head"), ImpactMultiplier = 0.15, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Triceps Short Heads"), ImpactMultiplier = 0.35, ActivationType = ActivationType.Secondary },
-
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.7, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.2, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Stabilizer },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Inner Thigh"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Stabilizer },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Stabilizer },
-
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.8, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.4, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 0.4, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Upper Traps"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Stabilizer },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Stabilizer },
-
-            new ExerciseMuscleMap
             {
-                ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Front Delts"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
-            },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Side Delts"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Upper Chest"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Triceps Long Head"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Triceps Short Heads"), ImpactMultiplier = 0.7, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Upper Traps"), ImpactMultiplier = 0.7, ActivationType = ActivationType.Secondary },
-
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Rear Delts"), ImpactMultiplier = 0.4, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.15, ActivationType = ActivationType.Synergist },
-
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.8, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Stabilizer },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Rear Delts"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.15, ActivationType = ActivationType.Synergist },
-
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Dumbbell Curl"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Dumbbell Curl"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.2, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap
-                { ExerciseId = GetExId("Dumbbell Curl"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.2, ActivationType = ActivationType.Synergist },
-
-            new ExerciseMuscleMap
-            {
-                ExerciseId = GetExId("Triceps Pushdown"), MuscleGroupId = GetMusId("Triceps Long Head"), ImpactMultiplier = 0.25, ActivationType = ActivationType.Synergist
+                ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Upper Chest"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
             },
             new ExerciseMuscleMap
             {
-                ExerciseId = GetExId("Triceps Pushdown"), MuscleGroupId = GetMusId("Triceps Short Heads"), ImpactMultiplier = 0.75, ActivationType = ActivationType.Primary
+                ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Front Delts"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Triceps Long Head"),
+                ImpactMultiplier = 0.15, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Bench Press"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.35, ActivationType = ActivationType.Secondary
             },
 
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
+            {
+                ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary },
+            {
+                ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.7,
+                ActivationType = ActivationType.Primary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.2, ActivationType = ActivationType.Synergist },
+            {
+                ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Inner Thigh"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist },
+            {
+                ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Stabilizer
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Inner Thigh"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Stabilizer
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Squat"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Stabilizer
+            },
 
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Plank"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
+            {
+                ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Plank"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
+            {
+                ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Primary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Plank"), MuscleGroupId = GetMusId("Obliques"), ImpactMultiplier = 0.4, ActivationType = ActivationType.Secondary },
+            {
+                ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Secondary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Plank"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 0.2, ActivationType = ActivationType.Stabilizer },
+            {
+                ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Upper Traps"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Stabilizer
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Deadlift"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Stabilizer
+            },
 
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Lateral Raise"), MuscleGroupId = GetMusId("Side Delts"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
+            {
+                ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Front Delts"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Lateral Raise"), MuscleGroupId = GetMusId("Upper Traps"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
+            {
+                ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Side Delts"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Upper Chest"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Triceps Long Head"),
+                ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.7, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Overhead Press"), MuscleGroupId = GetMusId("Upper Traps"), ImpactMultiplier = 0.7,
+                ActivationType = ActivationType.Secondary
+            },
 
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Incline Dumbbell Press"), MuscleGroupId = GetMusId("Upper Chest"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
+            {
+                ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Incline Dumbbell Press"), MuscleGroupId = GetMusId("Mid/Lower Chest"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist },
+            {
+                ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Incline Dumbbell Press"), MuscleGroupId = GetMusId("Front Delts"), ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary },
+            {
+                ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Incline Dumbbell Press"), MuscleGroupId = GetMusId("Triceps Long Head"), ImpactMultiplier = 0.15, ActivationType = ActivationType.Secondary },
+            {
+                ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Rear Delts"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Synergist
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Incline Dumbbell Press"), MuscleGroupId = GetMusId("Triceps Short Heads"), ImpactMultiplier = 0.35, ActivationType = ActivationType.Secondary },
+            {
+                ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Pull Up"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.15,
+                ActivationType = ActivationType.Synergist
+            },
 
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Face Pull"), MuscleGroupId = GetMusId("Rear Delts"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
+            {
+                ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Face Pull"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary },
+            {
+                ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Secondary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Face Pull"), MuscleGroupId = GetMusId("Upper Traps"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
+            {
+                ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Face Pull"), MuscleGroupId = GetMusId("Rotator Cuff"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Secondary },
+            {
+                ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Stabilizer
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Rear Delts"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Barbell Row"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.15,
+                ActivationType = ActivationType.Synergist
+            },
 
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Hyperextension"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
+            {
+                ExerciseId = GetExId("Dumbbell Curl"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Hyperextension"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.8, ActivationType = ActivationType.Secondary },
+            {
+                ExerciseId = GetExId("Dumbbell Curl"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
             new ExerciseMuscleMap
-                { ExerciseId = GetExId("Hyperextension"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.8, ActivationType = ActivationType.Secondary }
+            {
+                ExerciseId = GetExId("Dumbbell Curl"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Triceps Pushdown"), MuscleGroupId = GetMusId("Triceps Long Head"),
+                ImpactMultiplier = 0.25, ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Triceps Pushdown"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.75, ActivationType = ActivationType.Primary
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.6,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Lunges"), MuscleGroupId = GetMusId("Inner Thigh"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Synergist
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plank"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plank"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plank"), MuscleGroupId = GetMusId("Obliques"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plank"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Stabilizer
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Lateral Raise"), MuscleGroupId = GetMusId("Side Delts"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Lateral Raise"), MuscleGroupId = GetMusId("Upper Traps"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Incline Dumbbell Press"), MuscleGroupId = GetMusId("Upper Chest"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Incline Dumbbell Press"), MuscleGroupId = GetMusId("Mid/Lower Chest"),
+                ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Incline Dumbbell Press"), MuscleGroupId = GetMusId("Front Delts"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Incline Dumbbell Press"), MuscleGroupId = GetMusId("Triceps Long Head"),
+                ImpactMultiplier = 0.15, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Incline Dumbbell Press"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.35, ActivationType = ActivationType.Secondary
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Face Pull"), MuscleGroupId = GetMusId("Rear Delts"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Face Pull"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.6,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Face Pull"), MuscleGroupId = GetMusId("Upper Traps"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Face Pull"), MuscleGroupId = GetMusId("Rotator Cuff"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Secondary
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Hyperextension"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Hyperextension"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Hyperextension"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Secondary
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plate Loaded Chest Press"), MuscleGroupId = GetMusId("Mid/Lower Chest"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plate Loaded Chest Press"), MuscleGroupId = GetMusId("Upper Chest"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plate Loaded Chest Press"), MuscleGroupId = GetMusId("Front Delts"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plate Loaded Chest Press"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.4, ActivationType = ActivationType.Secondary
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Machine Low Incline Press"), MuscleGroupId = GetMusId("Upper Chest"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Machine Low Incline Press"), MuscleGroupId = GetMusId("Mid/Lower Chest"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Machine Low Incline Press"), MuscleGroupId = GetMusId("Front Delts"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Machine Low Incline Press"),
+                MuscleGroupId = GetMusId("Triceps Short Heads"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Secondary
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Chest Fly Machine"), MuscleGroupId = GetMusId("Mid/Lower Chest"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Chest Fly Machine"), MuscleGroupId = GetMusId("Upper Chest"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Chest Fly Machine"), MuscleGroupId = GetMusId("Front Delts"),
+                ImpactMultiplier = 0.2, ActivationType = ActivationType.Synergist
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Shoulder Press Machine"), MuscleGroupId = GetMusId("Front Delts"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Shoulder Press Machine"), MuscleGroupId = GetMusId("Side Delts"),
+                ImpactMultiplier = 0.4, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Shoulder Press Machine"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Shoulder Press Machine"), MuscleGroupId = GetMusId("Upper Chest"),
+                ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Overhead Rope Extension"), MuscleGroupId = GetMusId("Triceps Long Head"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Overhead Rope Extension"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.4, ActivationType = ActivationType.Secondary
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Lat Pulldown"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Lat Pulldown"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Lat Pulldown"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Lat Pulldown"), MuscleGroupId = GetMusId("Rear Delts"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Synergist
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plate Loaded Wide Grip Row"), MuscleGroupId = GetMusId("Upper Back"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plate Loaded Wide Grip Row"), MuscleGroupId = GetMusId("Lats"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plate Loaded Wide Grip Row"), MuscleGroupId = GetMusId("Rear Delts"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Plate Loaded Wide Grip Row"), MuscleGroupId = GetMusId("Biceps"),
+                ImpactMultiplier = 0.4, ActivationType = ActivationType.Synergist
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Row"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Row"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Row"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Stabilizer
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Curl"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Curl"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Hammer Curl"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Hammer Curl"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.6,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Hammer Curl"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Secondary
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Reverse Barbell Curl"), MuscleGroupId = GetMusId("Forearms"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Reverse Barbell Curl"), MuscleGroupId = GetMusId("Brachialis"),
+                ImpactMultiplier = 0.8, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Reverse Barbell Curl"), MuscleGroupId = GetMusId("Biceps"),
+                ImpactMultiplier = 0.4, ActivationType = ActivationType.Synergist
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Press"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Press"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.6,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Press"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Machine Squat"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Machine Squat"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.7,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Machine Squat"), MuscleGroupId = GetMusId("Hamstrings"),
+                ImpactMultiplier = 0.2, ActivationType = ActivationType.Synergist
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Extension"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Seated Leg Curl"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Seated Leg Curl"), MuscleGroupId = GetMusId("Calves"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Rear Delt Fly"), MuscleGroupId = GetMusId("Rear Delts"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Rear Delt Fly"), MuscleGroupId = GetMusId("Upper Back"),
+                ImpactMultiplier = 0.4, ActivationType = ActivationType.Secondary
+            },
+
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Close Grip Lat Pulldown"), MuscleGroupId = GetMusId("Lats"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Close Grip Lat Pulldown"), MuscleGroupId = GetMusId("Biceps"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Close Grip Lat Pulldown"), MuscleGroupId = GetMusId("Upper Back"),
+                ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist
+            },
+
+            // Dips
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Dips"), MuscleGroupId = GetMusId("Mid/Lower Chest"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Dips"), MuscleGroupId = GetMusId("Triceps Short Heads"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Dips"), MuscleGroupId = GetMusId("Front Delts"), ImpactMultiplier = 0.6,
+                ActivationType = ActivationType.Secondary
+            },
+
+            // Front Squat
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Front Squat"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Front Squat"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.6,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Front Squat"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Stabilizer
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Front Squat"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Stabilizer
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Front Squat"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Stabilizer
+            },
+
+            // Bulgarian Split Squat
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Bulgarian Split Squat"), MuscleGroupId = GetMusId("Quads"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Bulgarian Split Squat"), MuscleGroupId = GetMusId("Glutes"),
+                ImpactMultiplier = 0.8, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Bulgarian Split Squat"), MuscleGroupId = GetMusId("Hamstrings"),
+                ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist
+            },
+
+            // Incline Barbell Bench Press
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Incline Barbell Bench Press"), MuscleGroupId = GetMusId("Upper Chest"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Incline Barbell Bench Press"), MuscleGroupId = GetMusId("Mid/Lower Chest"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Incline Barbell Bench Press"), MuscleGroupId = GetMusId("Front Delts"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Incline Barbell Bench Press"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.4, ActivationType = ActivationType.Secondary
+            },
+
+            // Close Grip Bench Press
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Close Grip Bench Press"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Close Grip Bench Press"), MuscleGroupId = GetMusId("Mid/Lower Chest"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Close Grip Bench Press"), MuscleGroupId = GetMusId("Front Delts"),
+                ImpactMultiplier = 0.4, ActivationType = ActivationType.Synergist
+            },
+
+            // Chin Up
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Chin Up"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Chin Up"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Chin Up"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Synergist
+            },
+
+            // Weighted Pull Up
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Weighted Pull Up"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Weighted Pull Up"), MuscleGroupId = GetMusId("Upper Back"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Weighted Pull Up"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+
+            // Seated Dumbbell Press
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Seated Dumbbell Press"), MuscleGroupId = GetMusId("Front Delts"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Seated Dumbbell Press"), MuscleGroupId = GetMusId("Side Delts"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Seated Dumbbell Press"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary
+            },
+
+            // Push Press
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Push Press"), MuscleGroupId = GetMusId("Front Delts"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Push Press"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Push Press"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Synergist
+            },
+
+            // Romanian Deadlift
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Romanian Deadlift"), MuscleGroupId = GetMusId("Hamstrings"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Romanian Deadlift"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Romanian Deadlift"), MuscleGroupId = GetMusId("Lower Back"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+
+            // Sumo Deadlift
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Sumo Deadlift"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Sumo Deadlift"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Sumo Deadlift"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.6,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Sumo Deadlift"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Stabilizer
+            },
+
+            // Pendlay Row
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Pendlay Row"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Pendlay Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Pendlay Row"), MuscleGroupId = GetMusId("Lower Back"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Stabilizer
+            },
+
+            // T-Bar Row
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("T-Bar Row"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("T-Bar Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("T-Bar Row"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Synergist
+            }
         };
         await _connection.InsertAllAsync(mappings);
 
@@ -1186,7 +2098,7 @@ public class LocalDbService
         {
             Name = "Start Strong",
             Level = "Beginner",
-            Goal = "Foundation Strength",
+            Goal = "Strength",
             TargetMuscles = "Full Body",
             Environment = "Gym"
         };
@@ -1216,7 +2128,9 @@ public class LocalDbService
 
         // Program 1 - Day B
         var p1_w2 = new Workout
-            { WorkoutProgramId = program1.Id, Name = "Full Body B", Order = 2, Description = "Pull and shoulder focused." };
+        {
+            WorkoutProgramId = program1.Id, Name = "Full Body B", Order = 2, Description = "Pull and shoulder focused."
+        };
         await _connection.InsertAsync(p1_w2);
         await _connection.InsertAllAsync(new[]
         {
@@ -1238,7 +2152,7 @@ public class LocalDbService
         {
             Name = "Classic PPL",
             Level = "Intermediate",
-            Goal = "Hypertrophy (Muscle Mass)",
+            Goal = "Hypertrophy",
             TargetMuscles = "Split",
             Environment = "Gym"
         };
@@ -1298,6 +2212,203 @@ public class LocalDbService
             new WorkoutItem
                 { WorkoutId = p2_legs.Id, ExerciseId = GetExId("Plank"), Sets = 3, RepsRange = "60s", Order = 3 }
         });
+
+        // --- 4. PROGRAM 3: Güray's Hypertrophy Max ---
+        var program3 = new WorkoutProgram
+        {
+            Name = "Güray's Hypertrophy Max",
+            Level = "Advanced",
+            Goal = "Hypertrophy",
+            TargetMuscles = "Split",
+            Environment = "Gym"
+        };
+        await _connection.InsertAsync(program3);
+
+        // Day 1: Push / Chest & Shoulders
+        var p3_day1 = new Workout
+            { WorkoutProgramId = program3.Id, Name = "Day 1", Order = 1, Description = "Chest, Shoulders, Triceps" };
+        await _connection.InsertAsync(p3_day1);
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+            {
+                WorkoutId = p3_day1.Id, ExerciseId = GetExId("Plate Loaded Chest Press"), Sets = 2, RepsRange = "8-12",
+                Order = 1
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day1.Id, ExerciseId = GetExId("Smith Machine Low Incline Press"), Sets = 2,
+                RepsRange = "8-12", Order = 2
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day1.Id, ExerciseId = GetExId("Chest Fly Machine"), Sets = 1, RepsRange = "10-15",
+                Order = 3
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day1.Id, ExerciseId = GetExId("Shoulder Press Machine"), Sets = 2, RepsRange = "8-12",
+                Order = 4
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day1.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 3, RepsRange = "12-15", Order = 5
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day1.Id, ExerciseId = GetExId("Triceps Pushdown"), Sets = 2, RepsRange = "10-15",
+                Order = 6
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day1.Id, ExerciseId = GetExId("Overhead Rope Extension"), Sets = 2, RepsRange = "10-15",
+                Order = 7
+            }
+        });
+
+        // Day 2: Pull / Back & Biceps
+        var p3_day2 = new Workout
+            { WorkoutProgramId = program3.Id, Name = "Day 2", Order = 2, Description = "Back, Biceps" };
+        await _connection.InsertAsync(p3_day2);
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+            {
+                WorkoutId = p3_day2.Id, ExerciseId = GetExId("Lat Pulldown"), Sets = 2, RepsRange = "8-12", Order = 1
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day2.Id, ExerciseId = GetExId("Plate Loaded Wide Grip Row"), Sets = 3,
+                RepsRange = "8-12", Order = 2
+            },
+            new WorkoutItem
+                { WorkoutId = p3_day2.Id, ExerciseId = GetExId("Cable Row"), Sets = 1, RepsRange = "10-15", Order = 3 },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day2.Id, ExerciseId = GetExId("Dumbbell Curl"), Sets = 2, RepsRange = "10-15", Order = 4
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day2.Id, ExerciseId = GetExId("Cable Curl"), Sets = 2, RepsRange = "10-15", Order = 5
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day2.Id, ExerciseId = GetExId("Hammer Curl"), Sets = 2, RepsRange = "10-15", Order = 6
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day2.Id, ExerciseId = GetExId("Reverse Barbell Curl"), Sets = 2, RepsRange = "10-15",
+                Order = 7
+            }
+        });
+
+        // Day 3: Legs
+        var p3_day3 = new Workout
+            { WorkoutProgramId = program3.Id, Name = "Day 3", Order = 3, Description = "Quads, Hamstrings, Glutes" };
+        await _connection.InsertAsync(p3_day3);
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+                { WorkoutId = p3_day3.Id, ExerciseId = GetExId("Leg Press"), Sets = 2, RepsRange = "8-12", Order = 1 },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day3.Id, ExerciseId = GetExId("Smith Machine Squat"), Sets = 2, RepsRange = "8-12",
+                Order = 2
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day3.Id, ExerciseId = GetExId("Leg Extension"), Sets = 2, RepsRange = "12-15", Order = 3
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day3.Id, ExerciseId = GetExId("Seated Leg Curl"), Sets = 3, RepsRange = "10-15",
+                Order = 4
+            }
+        });
+
+        // Day 4: Shoulders & Chest & Triceps
+        var p3_day4 = new Workout
+            { WorkoutProgramId = program3.Id, Name = "Day 4", Order = 4, Description = "Shoulders, Chest, Triceps" };
+        await _connection.InsertAsync(p3_day4);
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+            {
+                WorkoutId = p3_day4.Id, ExerciseId = GetExId("Shoulder Press Machine"), Sets = 2, RepsRange = "8-12",
+                Order = 1
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day4.Id, ExerciseId = GetExId("Lateral Raise"), Sets = 3, RepsRange = "12-15", Order = 2
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day4.Id, ExerciseId = GetExId("Smith Machine Low Incline Press"), Sets = 2,
+                RepsRange = "8-12", Order = 3
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day4.Id, ExerciseId = GetExId("Chest Fly Machine"), Sets = 2, RepsRange = "10-15",
+                Order = 4
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day4.Id, ExerciseId = GetExId("Cable Rear Delt Fly"), Sets = 2, RepsRange = "12-15",
+                Order = 5
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day4.Id, ExerciseId = GetExId("Triceps Pushdown"), Sets = 2, RepsRange = "10-15",
+                Order = 6
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day4.Id, ExerciseId = GetExId("Overhead Rope Extension"), Sets = 2, RepsRange = "10-15",
+                Order = 7
+            }
+        });
+
+        // Day 5: Back & Biceps & Legs
+        var p3_day5 = new Workout
+            { WorkoutProgramId = program3.Id, Name = "Day 5", Order = 5, Description = "Back, Biceps, Legs" };
+        await _connection.InsertAsync(p3_day5);
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem
+            {
+                WorkoutId = p3_day5.Id, ExerciseId = GetExId("Plate Loaded Wide Grip Row"), Sets = 3,
+                RepsRange = "8-12", Order = 1
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day5.Id, ExerciseId = GetExId("Close Grip Lat Pulldown"), Sets = 3, RepsRange = "8-12",
+                Order = 2
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day5.Id, ExerciseId = GetExId("Cable Curl"), Sets = 2, RepsRange = "10-15", Order = 3
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day5.Id, ExerciseId = GetExId("Hammer Curl"), Sets = 2, RepsRange = "10-15", Order = 4
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day5.Id, ExerciseId = GetExId("Reverse Barbell Curl"), Sets = 2, RepsRange = "10-15",
+                Order = 5
+            },
+            new WorkoutItem
+                { WorkoutId = p3_day5.Id, ExerciseId = GetExId("Leg Press"), Sets = 2, RepsRange = "8-12", Order = 6 },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day5.Id, ExerciseId = GetExId("Leg Extension"), Sets = 2, RepsRange = "12-15", Order = 7
+            },
+            new WorkoutItem
+            {
+                WorkoutId = p3_day5.Id, ExerciseId = GetExId("Seated Leg Curl"), Sets = 1, RepsRange = "10-15",
+                Order = 8
+            }
+        });
     }
 
     private async Task SeedMockProgramAsync()
@@ -1343,7 +2454,9 @@ public class LocalDbService
             new Exercise
                 { Name = "Calf Raise", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 3.5m },
             new Exercise
-                { Name = "Seated Machine Row", Difficulty = "Intermediate", Equipment = "Machine", CnsFatigueScore = 6.0m },
+            {
+                Name = "Seated Machine Row", Difficulty = "Intermediate", Equipment = "Machine", CnsFatigueScore = 6.0m
+            },
             new Exercise
             {
                 Name = "One Arm Cable Row", Difficulty = "Intermediate", Equipment = "Cable", CnsFatigueScore = 5.0m
@@ -1353,7 +2466,9 @@ public class LocalDbService
             new Exercise
                 { Name = "Russian Twist", Difficulty = "Beginner", Equipment = "Bodyweight", CnsFatigueScore = 3.0m },
             new Exercise
-                { Name = "Hip Abductor Machine", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 3.0m }
+            {
+                Name = "Hip Abductor Machine", Difficulty = "Beginner", Equipment = "Machine", CnsFatigueScore = 3.0m
+            }
         };
 
         var dbExercises = await _connection.Table<Exercise>().ToListAsync();
@@ -1371,69 +2486,297 @@ public class LocalDbService
 
         var mockMappings = new List<ExerciseMuscleMap>
         {
-            new ExerciseMuscleMap { ExerciseId = GetExId("Cable Lat Pull Over"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Cable Lat Pull Over"), MuscleGroupId = GetMusId("Triceps Long Head"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Smith Incline Bench Press"), MuscleGroupId = GetMusId("Upper Chest"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Smith Incline Bench Press"), MuscleGroupId = GetMusId("Mid/Lower Chest"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Smith Incline Bench Press"), MuscleGroupId = GetMusId("Front Delts"), ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Smith Incline Bench Press"), MuscleGroupId = GetMusId("Triceps Long Head"), ImpactMultiplier = 0.15, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Smith Incline Bench Press"), MuscleGroupId = GetMusId("Triceps Short Heads"), ImpactMultiplier = 0.35, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Fly Machine"), MuscleGroupId = GetMusId("Mid/Lower Chest"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Fly Machine"), MuscleGroupId = GetMusId("Front Delts"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Fly Machine"), MuscleGroupId = GetMusId("Upper Chest"), ImpactMultiplier = 0.2, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Front Delts"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Side Delts"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Upper Chest"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Triceps Long Head"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Triceps Short Heads"), ImpactMultiplier = 0.7, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Upper Traps"), ImpactMultiplier = 0.7, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Triceps Kickback"), MuscleGroupId = GetMusId("Triceps Long Head"), ImpactMultiplier = 0.1, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Triceps Kickback"), MuscleGroupId = GetMusId("Triceps Short Heads"), ImpactMultiplier = 0.9, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Ab Crunch"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 0.7, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Ab Crunch"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Leg Raise"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Leg Raise"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 0.7, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Leg Press"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Leg Press"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Leg Press"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.2, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Leg Press"), MuscleGroupId = GetMusId("Inner Thigh"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Leg Extension"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Leg Curl"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Leg Curl"), MuscleGroupId = GetMusId("Calves"), ImpactMultiplier = 0.2, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Rear Delt Machine Fly"), MuscleGroupId = GetMusId("Rear Delts"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Rear Delt Machine Fly"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.4, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Rear Delt Machine Fly"), MuscleGroupId = GetMusId("Rotator Cuff"), ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Hammer Curl"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.3, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Hammer Curl"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.8, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Hammer Curl"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Barbell Curl"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Barbell Curl"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.2, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Barbell Curl"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.2, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Calf Raise"), MuscleGroupId = GetMusId("Calves"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.8, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Rear Delts"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.15, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Upper Back"), ImpactMultiplier = 0.8, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Rear Delts"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.15, ActivationType = ActivationType.Synergist },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Cable Lateral Raise"), MuscleGroupId = GetMusId("Side Delts"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Cable Lateral Raise"), MuscleGroupId = GetMusId("Upper Traps"), ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Russian Twist"), MuscleGroupId = GetMusId("Obliques"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Russian Twist"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 0.4, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Russian Twist"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 0.4, ActivationType = ActivationType.Secondary },
-            new ExerciseMuscleMap { ExerciseId = GetExId("Hip Abductor Machine"), MuscleGroupId = GetMusId("Outer Thigh"), ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary }
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Lat Pull Over"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Lat Pull Over"), MuscleGroupId = GetMusId("Triceps Long Head"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Incline Bench Press"), MuscleGroupId = GetMusId("Upper Chest"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Incline Bench Press"), MuscleGroupId = GetMusId("Mid/Lower Chest"),
+                ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Incline Bench Press"), MuscleGroupId = GetMusId("Front Delts"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Incline Bench Press"), MuscleGroupId = GetMusId("Triceps Long Head"),
+                ImpactMultiplier = 0.15, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Smith Incline Bench Press"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.35, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Fly Machine"), MuscleGroupId = GetMusId("Mid/Lower Chest"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Fly Machine"), MuscleGroupId = GetMusId("Front Delts"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Fly Machine"), MuscleGroupId = GetMusId("Upper Chest"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Front Delts"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Side Delts"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Upper Chest"),
+                ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Triceps Long Head"),
+                ImpactMultiplier = 0.3, ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.7, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Shoulder Machine"), MuscleGroupId = GetMusId("Upper Traps"),
+                ImpactMultiplier = 0.7, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Triceps Kickback"), MuscleGroupId = GetMusId("Triceps Long Head"),
+                ImpactMultiplier = 0.1, ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Triceps Kickback"), MuscleGroupId = GetMusId("Triceps Short Heads"),
+                ImpactMultiplier = 0.9, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Ab Crunch"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 0.7,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Ab Crunch"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Raise"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Raise"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 0.7,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Press"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Press"), MuscleGroupId = GetMusId("Glutes"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Press"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Press"), MuscleGroupId = GetMusId("Inner Thigh"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Extension"), MuscleGroupId = GetMusId("Quads"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Curl"), MuscleGroupId = GetMusId("Hamstrings"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Leg Curl"), MuscleGroupId = GetMusId("Calves"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Rear Delt Machine Fly"), MuscleGroupId = GetMusId("Rear Delts"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Rear Delt Machine Fly"), MuscleGroupId = GetMusId("Upper Back"),
+                ImpactMultiplier = 0.4, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Rear Delt Machine Fly"), MuscleGroupId = GetMusId("Rotator Cuff"),
+                ImpactMultiplier = 0.6, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Hammer Curl"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.3,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Hammer Curl"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.8,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Hammer Curl"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.6,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Barbell Curl"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Barbell Curl"), MuscleGroupId = GetMusId("Brachialis"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Barbell Curl"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.2,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Calf Raise"), MuscleGroupId = GetMusId("Calves"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Upper Back"),
+                ImpactMultiplier = 0.8, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Rear Delts"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Forearms"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Seated Machine Row"), MuscleGroupId = GetMusId("Brachialis"),
+                ImpactMultiplier = 0.15, ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Lats"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Biceps"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Upper Back"),
+                ImpactMultiplier = 0.8, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Rear Delts"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Forearms"), ImpactMultiplier = 0.5,
+                ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("One Arm Cable Row"), MuscleGroupId = GetMusId("Brachialis"),
+                ImpactMultiplier = 0.15, ActivationType = ActivationType.Synergist
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Lateral Raise"), MuscleGroupId = GetMusId("Side Delts"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Cable Lateral Raise"), MuscleGroupId = GetMusId("Upper Traps"),
+                ImpactMultiplier = 0.5, ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Russian Twist"), MuscleGroupId = GetMusId("Obliques"), ImpactMultiplier = 1.0,
+                ActivationType = ActivationType.Primary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Russian Twist"), MuscleGroupId = GetMusId("Upper Abs"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Russian Twist"), MuscleGroupId = GetMusId("Lower Abs"), ImpactMultiplier = 0.4,
+                ActivationType = ActivationType.Secondary
+            },
+            new ExerciseMuscleMap
+            {
+                ExerciseId = GetExId("Hip Abductor Machine"), MuscleGroupId = GetMusId("Outer Thigh"),
+                ImpactMultiplier = 1.0, ActivationType = ActivationType.Primary
+            }
         };
 
         var existingMappings = await _connection.Table<ExerciseMuscleMap>().ToListAsync();
-        var newMappings = mockMappings.Where(m => 
-            m.ExerciseId != 0 && 
-            m.MuscleGroupId != 0 && 
+        var newMappings = mockMappings.Where(m =>
+            m.ExerciseId != 0 &&
+            m.MuscleGroupId != 0 &&
             !existingMappings.Any(em => em.ExerciseId == m.ExerciseId && em.MuscleGroupId == m.MuscleGroupId)
         ).ToList();
 
@@ -1544,7 +2887,10 @@ public class LocalDbService
             new WorkoutItem
                 { WorkoutId = w3.Id, ExerciseId = GetExId("Pull Up"), Sets = 2, RepsRange = "Failure", Order = 3 },
             new WorkoutItem
-                { WorkoutId = w3.Id, ExerciseId = GetExId("Seated Machine Row"), Sets = 2, RepsRange = "Failure", Order = 4 },
+            {
+                WorkoutId = w3.Id, ExerciseId = GetExId("Seated Machine Row"), Sets = 2, RepsRange = "Failure",
+                Order = 4
+            },
             new WorkoutItem
             {
                 WorkoutId = w3.Id, ExerciseId = GetExId("One Arm Cable Row"), Sets = 2, RepsRange = "Failure", Order = 5
@@ -1559,7 +2905,9 @@ public class LocalDbService
                 Order = 7
             },
             new WorkoutItem
-                { WorkoutId = w3.Id, ExerciseId = GetExId("Triceps Pushdown"), Sets = 2, RepsRange = "Failure", Order = 8 },
+            {
+                WorkoutId = w3.Id, ExerciseId = GetExId("Triceps Pushdown"), Sets = 2, RepsRange = "Failure", Order = 8
+            },
             new WorkoutItem
                 { WorkoutId = w3.Id, ExerciseId = GetExId("Ab Crunch"), Sets = 2, RepsRange = "Failure", Order = 9 },
             new WorkoutItem
@@ -1643,6 +2991,60 @@ public class LocalDbService
         }
 
         await _connection.InsertAllAsync(logs);
+    }
+
+    private async Task SeedAgirsaglam5x5ProgramAsync()
+    {
+        var dbExercises = await _connection!.Table<Exercise>().ToListAsync();
+        int GetExId(string name) => dbExercises.FirstOrDefault(e => e.Name == name)?.Id ?? 0;
+
+        var program = new WorkoutProgram
+        {
+            Name = "Ağırsağlam's 5x5",
+            Level = "Intermediate",
+            Goal = "Strength",
+            TargetMuscles = "Full Body",
+            Environment = "Gym",
+            Cycle = 0,
+            LastCycleUpdateDate = DateTime.Now
+        };
+        await _connection.InsertAsync(program);
+
+        // Day 1
+        var w1 = new Workout { WorkoutProgramId = program.Id, Name = "Day 1", Order = 1 };
+        await _connection.InsertAsync(w1);
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Squat"), Sets = 5, RepsRange = "5", Order = 1 },
+            new WorkoutItem
+                { WorkoutId = w1.Id, ExerciseId = GetExId("Bench Press"), Sets = 5, RepsRange = "5", Order = 2 },
+            new WorkoutItem { WorkoutId = w1.Id, ExerciseId = GetExId("Pull Up"), Sets = 5, RepsRange = "5", Order = 3 }
+        });
+
+        // Day 2
+        var w2 = new Workout { WorkoutProgramId = program.Id, Name = "Day 2", Order = 2 };
+        await _connection.InsertAsync(w2);
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Squat"), Sets = 5, RepsRange = "5", Order = 1 },
+            new WorkoutItem
+                { WorkoutId = w2.Id, ExerciseId = GetExId("Overhead Press"), Sets = 5, RepsRange = "5", Order = 2 },
+            new WorkoutItem
+                { WorkoutId = w2.Id, ExerciseId = GetExId("Deadlift"), Sets = 1, RepsRange = "5", Order = 3 },
+            new WorkoutItem { WorkoutId = w2.Id, ExerciseId = GetExId("Dips"), Sets = 5, RepsRange = "5", Order = 4 }
+        });
+
+        // Day 3
+        var w3 = new Workout { WorkoutProgramId = program.Id, Name = "Day 3", Order = 3 };
+        await _connection.InsertAsync(w3);
+        await _connection.InsertAllAsync(new[]
+        {
+            new WorkoutItem { WorkoutId = w3.Id, ExerciseId = GetExId("Squat"), Sets = 5, RepsRange = "5", Order = 1 },
+            new WorkoutItem
+                { WorkoutId = w3.Id, ExerciseId = GetExId("Bench Press"), Sets = 5, RepsRange = "5", Order = 2 },
+            new WorkoutItem
+                { WorkoutId = w3.Id, ExerciseId = GetExId("Barbell Row"), Sets = 5, RepsRange = "5", Order = 3 }
+        });
     }
 }
 

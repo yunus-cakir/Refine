@@ -6,17 +6,13 @@
 @inject NavigationManager NavManager
 @inject TopBarBridge TopBar
 
+@if (_user == null)
+{
+    <RfSpinner IsLoading="true" />
+}
+else
+{
 <div class="page-container py-4 min-h-screen">
-    @if (_user == null)
-    {
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary-container" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-    }
-    else
-    {
         <div class="animate-fade-in">
             <!-- Top measurement cards: BOY & KILO -->
             <div class="row g-3 mb-4">
@@ -122,8 +118,8 @@
                 </button>
             </div>
         </div>
-    }
-</div>
+    </div>
+}
 
 @code {
     private User? _user;
