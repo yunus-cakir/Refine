@@ -113,7 +113,7 @@ else
         {
             _programs = allPrograms
                 .OrderByDescending(p => p.Id == _selectedProgramId)
-                .ThenByDescending(p => p.Cycle)
+                .ThenByDescending(p => p.Week)
                 .ThenBy(p => p.Name)
                 .ToList();
         }
@@ -126,8 +126,47 @@ else
     private async Task SelectProgram(WorkoutProgram program)
     {
         _activeCardMenuId = null;
-        await ProgramService.SetSelectedWorkoutProgramAsync(program.Id);
-        await LoadData();
+
+        var fullProgram = await ProgramService.GetProgramByIdAsync(program.Id);
+        if (fullProgram == null) return;
+
+        if (fullProgram.Cycle == 0)
+        {
+            fullProgram.Cycle = 1;
+            await ProgramService.SaveWorkoutProgramAsync(fullProgram);
+            await ProgramService.SetSelectedWorkoutProgramAsync(fullProgram.Id);
+            await LoadData();
+        }
+        else
+        {
+            var result = await PopupService.ShowAsync(new PopupOptions
+            {
+                Title = $"Resume Cycle {fullProgram.Cycle}?",
+                Description = "Starting a new cycle will reset your current streak.",
+                Icon = "refresh",
+                Mode = PopupMode.Confirmation,
+                CustomButtons = new List<PopupButton>
+                {
+                    new() { Text = "Continue", ActionId = PopupResult.ConfirmedAction, Type = PopupButtonType.Primary },
+                    new() { Text = "Start New Cycle", ActionId = "start_new", Type = PopupButtonType.Secondary },
+                    new() { Text = "Cancel", ActionId = PopupResult.RejectedAction, Type = PopupButtonType.Ghost }
+                }
+            });
+
+            if (result.IsConfirmed || result.ActionId == "start_new")
+            {
+                if (result.ActionId == "start_new")
+                {
+                    fullProgram.Cycle++;
+                    fullProgram.Week = 1;
+                    fullProgram.LastWeekUpdateDate = DateTime.Now;
+                    await ProgramService.SaveWorkoutProgramAsync(fullProgram);
+                }
+
+                await ProgramService.SetSelectedWorkoutProgramAsync(fullProgram.Id);
+                await LoadData();
+            }
+        }
     }
 
     private void EditProgramItem(WorkoutProgram program)

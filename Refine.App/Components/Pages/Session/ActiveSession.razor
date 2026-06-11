@@ -75,10 +75,9 @@ else
                 int currentSet = _currentSetIndex.GetValueOrDefault(item.ExerciseId, 1);
                 var activeLog = currentLogs.FirstOrDefault(l => l.SetNumber == currentSet);
 
-                // Fallback (shouldn't happen with proper init)
                 if (activeLog == null)
                 {
-                    activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, WorkoutId = WorkoutId, SetNumber = currentSet, Date = _targetDate, FormRating = 3, IsCompleted = false, IsSaved = false, Cycle = Cycle ?? _currentProgramCycle };
+                    activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, WorkoutId = WorkoutId, SetNumber = currentSet, Date = _targetDate, FormRating = 3, IsCompleted = false, IsSaved = false, Week = Week ?? _currentProgramWeek };
                     _activeLogs.Add(activeLog);
                     currentLogs.Add(activeLog);
                 }
@@ -274,9 +273,11 @@ else
     [SupplyParameterFromQuery(Name = "resuming")]
     public bool IsResuming { get; set; }
 
+    [SupplyParameterFromQuery] public int? Week { get; set; }
     [SupplyParameterFromQuery] public int? Cycle { get; set; }
 
     private Workout? _workout;
+    private int _currentProgramWeek = 1;
     private int _currentProgramCycle = 1;
     private List<WorkoutItem> _exercises = new();
     private List<WorkoutLog> _activeLogs = new();
@@ -311,6 +312,7 @@ else
             var program = await DbService.GetProgramByIdAsync(_workout.WorkoutProgramId);
             if (program != null)
             {
+                _currentProgramWeek = program.Week;
                 _currentProgramCycle = program.Cycle;
             }
 
@@ -346,9 +348,14 @@ else
                 {
                     _activeLogs = existingLogs.OrderBy(l => l.SetNumber).ToList();
 
+                    int activeWeek = Week ?? _currentProgramWeek;
                     int activeCycle = Cycle ?? _currentProgramCycle;
                     foreach (var log in _activeLogs)
                     {
+                        if (log.Week <= 0 || log.Week != activeWeek)
+                        {
+                            log.Week = activeWeek;
+                        }
                         if (log.Cycle <= 0 || log.Cycle != activeCycle)
                         {
                             log.Cycle = activeCycle;
@@ -377,6 +384,7 @@ else
                                 FormRating = 3,
                                 IsCompleted = false,
                                 IsSaved = false,
+                                Week = Week ?? _currentProgramWeek,
                                 Cycle = Cycle ?? _currentProgramCycle
                             });
                         }
@@ -593,7 +601,7 @@ else
                     FormRating = 3,
                     IsCompleted = false,
                     IsSaved = false,
-                    Cycle = Cycle ?? _currentProgramCycle
+                    Week = Week ?? _currentProgramWeek
                 });
             }
         }

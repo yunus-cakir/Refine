@@ -26,7 +26,7 @@ public class WorkoutSettings
     public bool AutoCopyRIR { get; set; } = true;
     public bool AutoCopyFormRating { get; set; } = true;
     public decimal CnsThreshold { get; set; } = 150m;
-    public string CycleLength { get; set; } = "Weekly";
+    public string WeekLength { get; set; } = "Weekly";
 }
 
 public class User

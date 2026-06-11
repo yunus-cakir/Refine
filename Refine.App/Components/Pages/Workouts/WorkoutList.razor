@@ -1,4 +1,4 @@
-﻿@page "/workouts"
+@page "/workouts"
 @using Refine.App.Models
 @using Refine.App.Services
 @inject LocalDbService DbService
@@ -66,9 +66,9 @@ else
 
 
             <div class="rf-flex-col" style="gap: 16px; padding-bottom: 80px;">
-                @{ int targetCycle = _selectedTab == 0 ? (_selectedProgram.Cycle - 1) : (_selectedTab == 2 ? (_selectedProgram.Cycle + 1) : _selectedProgram.Cycle); }
+                @{ int targetWeek = _selectedTab == 0 ? (_selectedProgram.Week - 1) : (_selectedTab == 2 ? (_selectedProgram.Week + 1) : _selectedProgram.Week); }
 
-                @if (targetCycle < 1)
+                @if (targetWeek < 1)
                 {
                     <div class="rf-flex-col rf-items-center" style="gap: 16px; margin-top: 24px; text-align: center;">
                         <span class="material-symbols-outlined" style="font-size: 48px; color: var(--color-on-surface-variant); opacity: 0.5;">directions_run</span>
@@ -90,19 +90,19 @@ else
                             {
                                 <RfCardMenu Id="workout.Id" @bind-ActiveMenuId="_activeCardMenuId">
                                     <button class="card-dropdown-item"
-                                            @onclick="() => GoToHistoryDetail(workout.Id, targetCycle)">
+                                            @onclick="() => GoToHistoryDetail(workout.Id, targetWeek, _selectedProgram.Cycle)">
                                         <span class="material-symbols-outlined">view_day</span>
                                         View Workout Log
                                     </button>
                                     <button class="card-dropdown-item delete-btn"
-                                            @onclick="() => ConfirmDeleteLog(workout.Id, targetCycle)">
+                                            @onclick="() => ConfirmDeleteLog(workout.Id, targetWeek, _selectedProgram.Cycle)">
                                         <span class="material-symbols-outlined">close</span>
                                         Delete Workout Log
                                     </button>
                                 </RfCardMenu>
                             }
 
-                            <a href="@($"/workouts/detail/{workout.Id}?cycle={targetCycle}")" class="rf-card-bordered-content">
+                            <a href="@($"/workouts/detail/{workout.Id}?week={targetWeek}")" class="rf-card-bordered-content">
                                 <h3 class="font-headline" style="color: @(isCompleted ? "var(--color-primary-fixed)" : (workout.Id == _upNextWorkoutId ? "#ffffff" : "var(--color-on-surface-variant)")); font-size: 20px; font-weight: bold; margin-top: 0; margin-bottom: 8px; padding-right: 24px; @(isSkipped ? "text-decoration: line-through; opacity: 0.85;" : "")">
                                     @workout.Name
                                 </h3>
@@ -138,7 +138,7 @@ else
                                     }
                                     else if (workout.Id == _upNextWorkoutId)
                                     {
-                                        <div @onclick="() => StartWorkoutSession(workout.Id, targetCycle)" @onclick:stopPropagation="true" class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: #ffffff; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;">
+                                        <div @onclick="() => StartWorkoutSession(workout.Id, targetWeek, _selectedProgram.Cycle)" @onclick:stopPropagation="true" class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: #ffffff; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;">
                                             @(_isUpNextSaved ? "CONTINUE" : "UP NEXT")
                                             <span class="material-symbols-outlined" style="font-size: 20px; font-variation-settings: 'FILL' 1;">play_circle</span>
                                         </div>
@@ -207,7 +207,7 @@ else
             _showNextButton = false;
             if (lastWorkout != null)
             {
-                _showNextButton = await DbService.HasLogForCycleAsync(lastWorkout.Id, _selectedProgram.Cycle);
+                _showNextButton = await DbService.HasLogForWeekAsync(lastWorkout.Id, _selectedProgram.Week, _selectedProgram.Cycle);
             }
 
             if (!_showNextButton && _selectedTab == 2)
@@ -215,13 +215,13 @@ else
                 _selectedTab = 1;
             }
 
-            int targetCycle = _selectedTab == 0 ? (_selectedProgram.Cycle - 1) : (_selectedTab == 2 ? (_selectedProgram.Cycle + 1) : _selectedProgram.Cycle);
+            int targetWeek = _selectedTab == 0 ? (_selectedProgram.Week - 1) : (_selectedTab == 2 ? (_selectedProgram.Week + 1) : _selectedProgram.Week);
 
             _workoutHasLog.Clear();
             foreach (var w in _selectedProgram.Workouts)
             {
-                _completedWorkouts[w.Id] = await DbService.HasLogForCycleAsync(w.Id, targetCycle);
-                bool hasSaved = await DbService.HasSavedLogForCycleAsync(w.Id, targetCycle);
+                _completedWorkouts[w.Id] = await DbService.HasLogForWeekAsync(w.Id, targetWeek, _selectedProgram.Cycle);
+                bool hasSaved = await DbService.HasSavedLogForWeekAsync(w.Id, targetWeek, _selectedProgram.Cycle);
                 _workoutHasLog[w.Id] = _completedWorkouts[w.Id] || hasSaved;
             }
 
@@ -248,7 +248,7 @@ else
 
                 if (_upNextWorkoutId.HasValue)
                 {
-                    _isUpNextSaved = await DbService.HasSavedLogForCycleAsync(_upNextWorkoutId.Value, targetCycle);
+                    _isUpNextSaved = await DbService.HasSavedLogForWeekAsync(_upNextWorkoutId.Value, targetWeek, _selectedProgram.Cycle);
                 }
                 else
                 {
@@ -272,10 +272,10 @@ else
         _activeCardMenuId = null;
     }
 
-    private async Task GoToHistoryDetail(int workoutId, int cycle)
+    private async Task GoToHistoryDetail(int workoutId, int week, int cycle)
     {
         CloseCardMenu();
-        var date = await DbService.GetWorkoutLogDateAsync(workoutId, cycle);
+        var date = await DbService.GetWorkoutLogDateAsync(workoutId, week, cycle);
         if (date.HasValue)
         {
             NavManager.NavigateTo($"/history/detail/{workoutId}/{date.Value.Ticks}");
@@ -286,7 +286,7 @@ else
         }
     }
 
-    private async Task ConfirmDeleteLog(int workoutId, int cycle)
+    private async Task ConfirmDeleteLog(int workoutId, int week, int cycle)
     {
         CloseCardMenu();
         var result = await PopupService.ShowAsync(new PopupOptions
@@ -304,7 +304,7 @@ else
 
         if (result.IsConfirmed)
         {
-            await DbService.DeleteWorkoutLogAsync(workoutId, cycle);
+            await DbService.DeleteWorkoutLogAsync(workoutId, week, cycle);
             await LoadData();
         }
     }
@@ -316,16 +316,16 @@ else
         await LoadData();
     }
 
-    private async Task StartWorkoutSession(int workoutId, int targetCycle)
+    private async Task StartWorkoutSession(int workoutId, int targetWeek, int cycle)
     {
-        bool exists = await DbService.HasLogForTodayAsync(workoutId, targetCycle);
+        bool exists = await DbService.HasLogForTodayAsync(workoutId, targetWeek, cycle);
         if (exists || (workoutId == _upNextWorkoutId && _isUpNextSaved))
         {
-            NavManager.NavigateTo($"/session/active/{workoutId}?resuming=true&cycle={targetCycle}");
+            NavManager.NavigateTo($"/session/active/{workoutId}?resuming=true&week={targetWeek}");
         }
         else
         {
-            NavManager.NavigateTo($"/session/active/{workoutId}?cycle={targetCycle}");
+            NavManager.NavigateTo($"/session/active/{workoutId}?week={targetWeek}");
         }
     }
 

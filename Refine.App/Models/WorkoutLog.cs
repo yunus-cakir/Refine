@@ -27,7 +27,8 @@ public class WorkoutLog
 
     public string? Note { get; set; }
 
-    public int Cycle { get; set; } = 1;
+    public int Week { get; set; } = 1;
+    public int Cycle { get; set; } = 0;
 
     public bool IsCompleted { get; set; } = false;
     public bool IsSaved { get; set; } = false;

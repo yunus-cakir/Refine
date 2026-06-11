@@ -39,6 +39,9 @@ public class LocalDbService
                 await _connection.CreateTableAsync<User>();
                 await _connection.CreateTableAsync<BiometricLog>();
 
+                try { await _connection.ExecuteAsync("UPDATE WorkoutProgram SET Week = Cycle, LastWeekUpdateDate = LastCycleUpdateDate"); } catch { }
+                try { await _connection.ExecuteAsync("UPDATE WorkoutLog SET Week = Cycle"); } catch { }
+
                 // Varsayılan kullanıcı ve ayarları oluştur (Eğer yoksa)
                 var userCount = await _connection.Table<User>().CountAsync();
                 if (userCount == 0)
@@ -505,7 +508,7 @@ public class LocalDbService
     }
 
     // --- KONTROL ---
-    public async Task<bool> HasLogForTodayAsync(int workoutId, int? cycle = null)
+    public async Task<bool> HasLogForTodayAsync(int workoutId, int? week = null, int? cycle = null)
     {
         await Init();
         var today = DateTime.Now.Date;
@@ -514,6 +517,11 @@ public class LocalDbService
         var query = _connection!.Table<WorkoutLog>()
             .Where(l => l.WorkoutId == workoutId && l.Date >= today && l.Date <= maxDate);
 
+        if (week.HasValue)
+        {
+            query = query.Where(l => l.Week == week.Value);
+        }
+        
         if (cycle.HasValue)
         {
             query = query.Where(l => l.Cycle == cycle.Value);
@@ -553,29 +561,29 @@ public class LocalDbService
         return count > 0;
     }
 
-    public async Task<bool> HasLogForCycleAsync(int workoutId, int cycle)
+    public async Task<bool> HasLogForWeekAsync(int workoutId, int week, int cycle)
     {
         await Init();
         var count = await _connection!.Table<WorkoutLog>()
-            .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle && l.IsCompleted)
+            .Where(l => l.WorkoutId == workoutId && l.Week == week && l.Cycle == cycle && l.IsCompleted)
             .CountAsync();
         return count > 0;
     }
 
-    public async Task<bool> HasSavedLogForCycleAsync(int workoutId, int cycle)
+    public async Task<bool> HasSavedLogForWeekAsync(int workoutId, int week, int cycle)
     {
         await Init();
         var count = await _connection!.Table<WorkoutLog>()
-            .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle && l.IsSaved && !l.IsCompleted)
+            .Where(l => l.WorkoutId == workoutId && l.Week == week && l.Cycle == cycle && l.IsSaved && !l.IsCompleted)
             .CountAsync();
         return count > 0;
     }
 
-    public async Task DeleteWorkoutLogAsync(int workoutId, int cycle)
+    public async Task DeleteWorkoutLogAsync(int workoutId, int week, int cycle)
     {
         await Init();
         var logs = await _connection!.Table<WorkoutLog>()
-            .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle)
+            .Where(l => l.WorkoutId == workoutId && l.Week == week && l.Cycle == cycle)
             .ToListAsync();
         if (logs.Any())
         {
@@ -588,11 +596,11 @@ public class LocalDbService
         }
     }
 
-    public async Task<DateTime?> GetWorkoutLogDateAsync(int workoutId, int cycle)
+    public async Task<DateTime?> GetWorkoutLogDateAsync(int workoutId, int week, int cycle)
     {
         await Init();
         var log = await _connection!.Table<WorkoutLog>()
-            .Where(l => l.WorkoutId == workoutId && l.Cycle == cycle)
+            .Where(l => l.WorkoutId == workoutId && l.Week == week && l.Cycle == cycle)
             .OrderByDescending(l => l.Date)
             .FirstOrDefaultAsync();
         return log?.Date;
@@ -641,10 +649,10 @@ public class LocalDbService
         if (user.SelectedWorkoutProgramId.HasValue && user.SelectedWorkoutProgramId.Value > 0)
         {
             var program = await GetProgramByIdAsync(user.SelectedWorkoutProgramId.Value);
-            if (program != null && user.WorkoutSettings?.CycleLength == "Weekly")
+            if (program != null && user.WorkoutSettings?.WeekLength == "Weekly")
             {
                 var now = DateTime.Now;
-                var lastUpdate = program.LastCycleUpdateDate;
+                var lastUpdate = program.LastWeekUpdateDate;
                 var weekStart = user.AppSettings?.WeekStartDay ?? DayOfWeek.Monday;
 
                 int diff = (7 + (now.DayOfWeek - weekStart)) % 7;
@@ -656,8 +664,8 @@ public class LocalDbService
                 int weeksPassed = (int)Math.Round((currentWeekStart - lastWeekStart).TotalDays / 7.0);
                 if (weeksPassed > 0)
                 {
-                    program.Cycle += weeksPassed;
-                    program.LastCycleUpdateDate = now;
+                    program.Week += weeksPassed;
+                    program.LastWeekUpdateDate = now;
                     await Init();
                     await _connection!.UpdateAsync(program);
                 }
@@ -2792,8 +2800,9 @@ public class LocalDbService
             Goal = "Hypertrophy",
             TargetMuscles = "Full Body",
             Environment = "Gym",
-            Cycle = 14,
-            LastCycleUpdateDate = DateTime.Now
+            Week = 14,
+            Cycle = 1,
+            LastWeekUpdateDate = DateTime.Now
         };
         await _connection.InsertAsync(program);
 
@@ -2981,7 +2990,8 @@ public class LocalDbService
                             Note = "",
                             IsCompleted = true,
                             IsSaved = true,
-                            Cycle = (dayIndex / 7) + 1
+                            Week = (dayIndex / 7) + 1,
+                            Cycle = 1
                         });
                     }
                 }
@@ -3005,8 +3015,8 @@ public class LocalDbService
             Goal = "Strength",
             TargetMuscles = "Full Body",
             Environment = "Gym",
-            Cycle = 0,
-            LastCycleUpdateDate = DateTime.Now
+            Week = 0,
+            LastWeekUpdateDate = DateTime.Now
         };
         await _connection.InsertAsync(program);
 

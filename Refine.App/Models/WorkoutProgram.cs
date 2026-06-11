@@ -13,8 +13,9 @@ public class WorkoutProgram
     public string Goal { get; set; } = "";
     public string TargetMuscles { get; set; } = "";
     public string Environment { get; set; } = "";
-    public int Cycle { get; set; } = 1;
-    public DateTime LastCycleUpdateDate { get; set; } = DateTime.Now;
+    public int Week { get; set; } = 1;
+    public int Cycle { get; set; } = 0;
+    public DateTime LastWeekUpdateDate { get; set; } = DateTime.Now;
 
     [OneToMany(CascadeOperations = CascadeOperation.All)]
     public List<Workout> Workouts { get; set; } = new();

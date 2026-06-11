@@ -39,7 +39,7 @@ namespace Refine.App.Services
         public int UpNextDuration { get; private set; } = 0;
         public string UpNextMuscleGroups { get; private set; } = "";
         public bool UpNextIsSaved { get; private set; } = false;
-        public int UpNextCycle { get; private set; } = 1;
+        public int UpNextWeek { get; private set; } = 1;
 
         public event Action? OnStateChanged;
 
@@ -235,11 +235,14 @@ namespace Refine.App.Services
         {
             try
             {
+                StreakTotalDays = 0;
+                StreakCompletedDays = 0;
+
                 var program = await _dbService.GetSelectedWorkoutProgramAsync();
                 if (program != null && program.Workouts != null)
                 {
                     var workoutIds = program.Workouts.Select(w => w.Id).ToList();
-                    var programLogs = allLogs.Where(l => workoutIds.Contains(l.WorkoutId)).ToList();
+                    var programLogs = allLogs.Where(l => workoutIds.Contains(l.WorkoutId) && l.Cycle == program.Cycle).ToList();
 
                     if (programLogs.Any())
                     {
@@ -274,7 +277,7 @@ namespace Refine.App.Services
 
                     foreach (var w in orderedWorkouts)
                     {
-                        completedWorkouts[w.Id] = await _dbService.HasLogForCycleAsync(w.Id, program.Cycle);
+                        completedWorkouts[w.Id] = await _dbService.HasLogForWeekAsync(w.Id, program.Week, program.Cycle);
                     }
 
                     var completedList = orderedWorkouts
@@ -295,7 +298,7 @@ namespace Refine.App.Services
                         }
                     }
 
-                    UpNextCycle = program.Cycle;
+                    UpNextWeek = program.Week;
                     UpNextIsSaved = false;
 
                     if (UpNextWorkout != null && UpNextWorkout.Items != null)
@@ -320,7 +323,7 @@ namespace Refine.App.Services
                             UpNextMuscleGroups = "GENERAL";
                         }
 
-                        UpNextIsSaved = await _dbService.HasSavedLogForCycleAsync(UpNextWorkout.Id, program.Cycle);
+                        UpNextIsSaved = await _dbService.HasSavedLogForWeekAsync(UpNextWorkout.Id, program.Week, program.Cycle);
                     }
                 }
             }

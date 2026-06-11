@@ -109,7 +109,7 @@ else
 
 @code {
     [Parameter] public int Id { get; set; }
-    [SupplyParameterFromQuery] public int? Cycle { get; set; }
+    [SupplyParameterFromQuery] public int? Week { get; set; }
     private Workout? _workout;
     private List<MuscleFatigueInfo>? _estimatedMuscleFatigues;
 
@@ -244,15 +244,15 @@ else
     private async Task StartWorkout()
     {
         // Bugün için belirtilen cycle'da kayıt var mı kontrol et
-        bool exists = await ProgramService.HasLogForTodayAsync(Id, Cycle);
+        bool exists = await ProgramService.HasLogForTodayAsync(Id, Week);
 
-        string cycleQuery = Cycle.HasValue ? $"&cycle={Cycle.Value}" : "";
-        string baseQuery = Cycle.HasValue ? $"?cycle={Cycle.Value}" : "";
+        string weekQuery = Week.HasValue ? $"&week={Week.Value}" : "";
+        string baseQuery = Week.HasValue ? $"?week={Week.Value}" : "";
 
         if (exists)
         {
             // Varsa: "resuming=true" parametresiyle git
-            NavManager.NavigateTo($"/session/active/{Id}?resuming=true{cycleQuery}");
+            NavManager.NavigateTo($"/session/active/{Id}?resuming=true{weekQuery}");
         }
         else
         {

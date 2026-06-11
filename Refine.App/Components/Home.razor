@@ -107,7 +107,7 @@
     {
         if (StateService.UpNextWorkout != null)
         {
-            NavManager.NavigateTo($"/workouts/detail/{StateService.UpNextWorkout.Id}?cycle={StateService.UpNextCycle}");
+            NavManager.NavigateTo($"/workouts/detail/{StateService.UpNextWorkout.Id}?week={StateService.UpNextWeek}");
         }
     }
 
@@ -115,7 +115,7 @@
     {
         if (StateService.UpNextWorkout != null)
         {
-            NavManager.NavigateTo($"/session/active/{StateService.UpNextWorkout.Id}?cycle={StateService.UpNextCycle}");
+            NavManager.NavigateTo($"/session/active/{StateService.UpNextWorkout.Id}?week={StateService.UpNextWeek}");
         }
     }
 
