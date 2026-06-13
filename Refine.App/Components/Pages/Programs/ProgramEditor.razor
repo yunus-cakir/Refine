@@ -1,4 +1,4 @@
-﻿@page "/programs/edit/{Id:int}"
+@page "/programs/edit/{Id:int}"
 @using Refine.App.Models
 @using Refine.App.Services
 
@@ -7,18 +7,6 @@
 @inject IJSRuntime JSRuntime
 @inject TopBarBridge TopBar
 @inject IPopupService PopupService
-@implements IDisposable
-
-@if (_showTopBarMenu)
-{
-    <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
-    <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
-        <button type="button" class="refine-dropdown-item" @onclick="async () => { ToggleTopBarMenu(); await SaveProgram(); }">
-            <span class="material-symbols-outlined text-[20px]">check</span>
-            Save Program
-        </button>
-    </div>
-}
 
 <div class="page-container py-4 px-0 min-h-screen">
     @if (_isLoading)
@@ -128,7 +116,6 @@
 @code {
     [Parameter] public int Id { get; set; }
     private WorkoutProgram _program = new();
-    private bool _showTopBarMenu = false;
     private bool _isLoading = true;
     private bool _isSelected;
 
@@ -155,10 +142,6 @@
         new() { Value = "Track", Text = "Track", Icon = "sprint" }
     };
 
-    protected override void OnInitialized()
-    {
-        TopBar.OnRightActionTapped += HandleRightAction;
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -188,21 +171,6 @@
         _isSelected = selectedProgram != null && selectedProgram.Id == Id;
     }
 
-    private void ToggleTopBarMenu()
-    {
-        _showTopBarMenu = !_showTopBarMenu;
-    }
-
-    private void HandleRightAction()
-    {
-        ToggleTopBarMenu();
-        InvokeAsync(StateHasChanged);
-    }
-
-    public void Dispose()
-    {
-        TopBar.OnRightActionTapped -= HandleRightAction;
-    }
 
     private async Task SaveProgram()
     {

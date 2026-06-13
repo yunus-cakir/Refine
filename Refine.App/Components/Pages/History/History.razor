@@ -8,7 +8,7 @@
 
 @if (_sessions == null)
 {
-    <RfSpinner IsLoading="true" />
+    <RfSpinner IsLoading="true"/>
 }
 else if (!_sessions.Any())
 {
@@ -44,7 +44,7 @@ else
                         <!-- Stats -->
                         <div class="rf-flex-row rf-items-center font-label" style="gap: 6px; color: var(--color-on-surface-variant); font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
                             <span class="material-symbols-outlined" style="font-size: 16px;">fitness_center</span>
-                            @session.TotalExercises EXERCISES • @session.TotalSets SETS
+                            @session.TotalExercises Exercises • @session.TotalSets Sets
                         </div>
 
                         <!-- Status -->
@@ -60,6 +60,7 @@ else
 }
 
 @code {
+
     // Ekranda göstermek için kullanacağımız yardımcı model (ViewModel)
     private class SessionViewModel
     {
@@ -73,7 +74,6 @@ else
     private List<SessionViewModel>? _sessions;
 
 
-
     protected override async Task OnInitializedAsync()
     {
         TopBar.SetDetailMode("History");
@@ -82,15 +82,15 @@ else
         // 3. Logları GRUPLA: Aynı gün ve aynı antrenman ID'sine sahip olanlar bir seanstır.
         // GroupBy: Date.Date (Sadece gün kısmı) ve WorkoutId
         var grouped = allLogs.GroupBy(l => new { l.Date.Date, l.WorkoutId })
-                             .Select(g => new SessionViewModel
-                             {
-                                 Date = g.Key.Date,
-                                 WorkoutId = g.Key.WorkoutId,
-                                 TotalSets = g.Count(),
-                                 TotalExercises = g.Select(x => x.ExerciseId).Distinct().Count()
-                             })
-                             .OrderByDescending(s => s.Date)
-                             .ToList();
+            .Select(g => new SessionViewModel
+            {
+                Date = g.Key.Date,
+                WorkoutId = g.Key.WorkoutId,
+                TotalSets = g.Count(),
+                TotalExercises = g.Select(x => x.ExerciseId).Distinct().Count()
+            })
+            .OrderByDescending(s => s.Date)
+            .ToList();
 
         // 4. İsimleri Bul (N+1 Sorunu olmaması için basit bir cache mantığı)
         foreach (var session in grouped)

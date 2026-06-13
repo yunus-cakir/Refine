@@ -8,14 +8,14 @@
 @inject TopBarBridge TopBar
 @implements IAsyncDisposable
 
-@if (isLoading)
+@if (isInitialLoad)
 {
     <RfSpinner IsLoading="true" />
 }
 else
 {
 <div class="analytics-list-container animate-fade-in">
-    @if (!exerciseViewModels.Any())
+    @if (_allLogs.Count == 0)
     {
         <div class="empty-state mt-5">
             <span class="material-symbols-outlined empty-icon" style="font-size: 48px; opacity: 0.5;">query_stats</span>
@@ -25,89 +25,63 @@ else
     else
     {
         <!-- Filters Section -->
-        <div class="filters-section mb-4">
-            <!-- Sort Order Selector -->
-            <div class="sorting-selector-container">
-                <label class="sorting-label">Sort By</label>
-                <div class="d-flex align-items-center gap-2">
-                    <div class="sorting-buttons flex-grow-1">
-                        <button class="sorting-btn @(SelectedSort == "Alphabetical" ? "active" : "")" @onclick='() => ChangeSort("Alphabetical")'>
-                            <span class="material-symbols-outlined btn-icon">sort_by_alpha</span>
-                            <span>Alphabetical</span>
-                        </button>
-                        <button class="sorting-btn @(SelectedSort == "ChangeRate" ? "active" : "")" @onclick='() => ChangeSort("ChangeRate")'>
-                            <span class="material-symbols-outlined btn-icon">trending_up</span>
-                            <span>Change Rate</span>
-                        </button>
-                        <button class="sorting-btn @(SelectedSort == "Recent" ? "active" : "")" @onclick='() => ChangeSort("Recent")'>
-                            <span class="material-symbols-outlined btn-icon">schedule</span>
-                            <span>Recent</span>
-                        </button>
-                    </div>
-                    <button class="sort-dir-btn d-flex align-items-center justify-content-center" @onclick="ToggleSortDirection" title="@(IsSortDescending ? "Sort Descending" : "Sort Ascending")">
-                        <span class="material-symbols-outlined" style="font-size: 20px;">
-                            @(IsSortDescending ? "arrow_downward" : "arrow_upward")
-                        </span>
-                    </button>
-                </div>
-            </div>
+        <div class="filters-wrapper mb-4">
+            <div class="filters-section">
+                <RfDropdown TValue="string"
+                            Value="@SelectedMetric"
+                            ValueChanged="ChangeMetric"
+                            Options="MetricOptions"
+                            SheetTitle="SHOW PERFORMANCE BY"
+                            Icon="@GetIcon(MetricOptions, SelectedMetric, "insights")"
+                            WrapperClass=@($"filter-dropdown {(SelectedMetric != "ProgressiveOverload" ? "active-filter" : "")}") />
 
-            <!-- Time Range Selector -->
-            <div class="sorting-selector-container">
-                <label class="sorting-label">Time Range</label>
-                <div class="sorting-buttons">
-                    <button class="sorting-btn @(SelectedTimeframe == "14D" ? "active" : "")" @onclick='() => ChangeTimeframe("14D")'>
-                        <span class="material-symbols-outlined btn-icon">calendar_today</span>
-                        <span>14D</span>
-                    </button>
-                    <button class="sorting-btn @(SelectedTimeframe == "30D" ? "active" : "")" @onclick='() => ChangeTimeframe("30D")'>
-                        <span class="material-symbols-outlined btn-icon">date_range</span>
-                        <span>30D</span>
-                    </button>
-                    <button class="sorting-btn @(SelectedTimeframe == "90D" ? "active" : "")" @onclick='() => ChangeTimeframe("90D")'>
-                        <span class="material-symbols-outlined btn-icon">calendar_month</span>
-                        <span>90D</span>
-                    </button>
-                    <button class="sorting-btn @(SelectedTimeframe == "All" ? "active" : "")" @onclick='() => ChangeTimeframe("All")'>
-                        <span class="material-symbols-outlined btn-icon">all_inclusive</span>
-                        <span>All</span>
-                    </button>
-                </div>
-            </div>
+                <RfDropdown TValue="string"
+                            Value="@SelectedTimeframe"
+                            ValueChanged="ChangeTimeframe"
+                            Options="TimeframeOptions"
+                            SheetTitle="TIME RANGE"
+                            Icon="@GetIcon(TimeframeOptions, SelectedTimeframe, "date_range")"
+                            WrapperClass=@($"filter-dropdown {(SelectedTimeframe != "30D" ? "active-filter" : "")}") />
 
-            <!-- Metric Selector -->
-            <div class="sorting-selector-container">
-                <label class="sorting-label">Show Performance By</label>
-                <div class="sorting-buttons">
-                    <button class="sorting-btn @(SelectedMetric == "ProgressiveOverload" ? "active" : "")" @onclick='() => ChangeMetric("ProgressiveOverload")'>
-                        <span class="material-symbols-outlined btn-icon">monitoring</span>
-                        <span>Progressive Overload</span>
-                    </button>
-                    <button class="sorting-btn @(SelectedMetric == "1RM" ? "active" : "")" @onclick='() => ChangeMetric("1RM")'>
-                        <span class="material-symbols-outlined btn-icon">insights</span>
-                        <span>Est. 1RM</span>
-                    </button>
-                    <button class="sorting-btn @(SelectedMetric == "MaxWeight" ? "active" : "")" @onclick='() => ChangeMetric("MaxWeight")'>
-                        <span class="material-symbols-outlined btn-icon">fitness_center</span>
-                        <span>Max Weight</span>
-                    </button>
-                </div>
+                <RfDropdown TValue="string"
+                            Value="@SelectedSort"
+                            ValueChanged="ChangeSort"
+                            Options="SortOptions"
+                            SheetTitle="SORT BY"
+                            Icon="@GetIcon(SortOptions, SelectedSort, "sort")"
+                            WrapperClass=@($"filter-dropdown {(SelectedSort != "Recent" ? "active-filter" : "")}") />
+
+                <button class="sort-dir-btn @(!IsSortDescending ? "active-filter" : "")" @onclick="ToggleSortDirection" title="@(IsSortDescending ? "Sort Descending" : "Sort Ascending")">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">
+                        @(IsSortDescending ? "arrow_downward" : "arrow_upward")
+                    </span>
+                </button>
             </div>
         </div>
 
 
-        <div class="list-grid">
-            @foreach (var vm in exerciseViewModels)
+        <div class="list-grid @(isUpdating ? "updating-fade" : "")">
+            @if (!exerciseViewModels.Any())
             {
-                <ExerciseSparklineChart
-                    ExerciseId="vm.ExerciseId"
-                    ExerciseName="@vm.ExerciseName"
-                    LastTrained="vm.LastTrained"
-                    DataPoints="vm.DataPoints"
-                    RateOfChange="vm.RateOfChange"
-                    MetricUnitLabel="@(SelectedMetric == "ProgressiveOverload" ? "pts" : "kg")"
-                    ShowValueBadge="@(SelectedMetric != "ProgressiveOverload")"
-                    OnClick="NavigateToDetail"/>
+                <div class="empty-state mt-5">
+                    <span class="material-symbols-outlined empty-icon" style="font-size: 48px; opacity: 0.5;">query_stats</span>
+                    <p class="text-muted mt-2">No data matches the selected filters.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var vm in exerciseViewModels)
+                {
+                    <ExerciseSparklineChart
+                        ExerciseId="vm.ExerciseId"
+                        ExerciseName="@vm.ExerciseName"
+                        LastTrained="vm.LastTrained"
+                        DataPoints="vm.DataPoints"
+                        RateOfChange="vm.RateOfChange"
+                        MetricUnitLabel="@(SelectedMetric == "ProgressiveOverload" ? "pts" : "kg")"
+                        ShowValueBadge="@(SelectedMetric != "ProgressiveOverload")"
+                        OnClick="NavigateToDetail"/>
+                }
             }
         </div>
     }
@@ -115,7 +89,8 @@ else
 }
 
 @code {
-    private bool isLoading = true;
+    private bool isInitialLoad = true;
+    private bool isUpdating = false;
     private string SelectedMetric = "ProgressiveOverload";
     private string SelectedTimeframe = "30D";
     private string SelectedSort = "Recent";
@@ -137,6 +112,33 @@ else
 
     private List<ExerciseViewModel> exerciseViewModels = new();
 
+    private IEnumerable<RfDropdownOption<string>> MetricOptions => new List<RfDropdownOption<string>>
+    {
+        new() { Value = "ProgressiveOverload", Text = "Progressive Overload", Icon = "monitoring" },
+        new() { Value = "1RM", Text = "Est. 1RM", Icon = "insights" },
+        new() { Value = "MaxWeight", Text = "Max Weight", Icon = "fitness_center" }
+    };
+
+    private IEnumerable<RfDropdownOption<string>> TimeframeOptions => new List<RfDropdownOption<string>>
+    {
+        new() { Value = "14D", Text = "14 Days", Icon = "calendar_today" },
+        new() { Value = "30D", Text = "30 Days", Icon = "date_range" },
+        new() { Value = "90D", Text = "90 Days", Icon = "calendar_month" },
+        new() { Value = "All", Text = "All Time", Icon = "all_inclusive" }
+    };
+
+    private IEnumerable<RfDropdownOption<string>> SortOptions => new List<RfDropdownOption<string>>
+    {
+        new() { Value = "Recent", Text = "Recent", Icon = "schedule" },
+        new() { Value = "ChangeRate", Text = "Change Rate", Icon = "trending_up" },
+        new() { Value = "Alphabetical", Text = "Alphabetical", Icon = "sort_by_alpha" }
+    };
+
+    private string GetIcon(IEnumerable<RfDropdownOption<string>> options, string value, string defaultIcon)
+    {
+        return options.FirstOrDefault(o => o.Value == value)?.Icon ?? defaultIcon;
+    }
+
     protected override void OnInitialized()
     {
     }
@@ -153,8 +155,11 @@ else
 
     private async Task CrunchAndSortDataAsync()
     {
-        isLoading = true;
-        await InvokeAsync(StateHasChanged);
+        if (!isInitialLoad)
+        {
+            isUpdating = true;
+            await InvokeAsync(StateHasChanged);
+        }
 
         var newViewModels = new List<ExerciseViewModel>();
 
@@ -226,7 +231,8 @@ else
 
         exerciseViewModels = newViewModels;
 
-        isLoading = false;
+        isUpdating = false;
+        isInitialLoad = false;
         await InvokeAsync(StateHasChanged);
     }
 
@@ -234,10 +240,6 @@ else
     {
         if (SelectedMetric == metric) return;
         SelectedMetric = metric;
-
-        // Immediately signal loading to abort any ongoing chart renders
-        isLoading = true;
-        await InvokeAsync(StateHasChanged);
 
         // Destroy current chart instances to prevent overlap
         await DestroyAllChartsAsync();
@@ -279,9 +281,6 @@ else
         if (SelectedSort == sort) return;
         SelectedSort = sort;
 
-        isLoading = true;
-        await InvokeAsync(StateHasChanged);
-
         await DestroyAllChartsAsync();
 
         await CrunchAndSortDataAsync();
@@ -292,9 +291,6 @@ else
         if (SelectedTimeframe == timeframe) return;
         SelectedTimeframe = timeframe;
 
-        isLoading = true;
-        await InvokeAsync(StateHasChanged);
-
         await DestroyAllChartsAsync();
 
         await CrunchAndSortDataAsync();
@@ -303,9 +299,6 @@ else
     private async Task ToggleSortDirection()
     {
         IsSortDescending = !IsSortDescending;
-
-        isLoading = true;
-        await InvokeAsync(StateHasChanged);
 
         await DestroyAllChartsAsync();
 

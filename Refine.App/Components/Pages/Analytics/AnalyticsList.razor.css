@@ -33,94 +33,106 @@
     justify-content: center;
 }
 
-.sorting-selector-container {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.filters-wrapper {
+    position: relative;
+    width: 100%;
 }
 
-.sorting-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--refine-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.sorting-buttons {
-    display: flex;
-    background-color: var(--refine-card);
-    border: 1px solid var(--refine-border);
-    border-radius: 12px;
-    padding: 4px;
-    gap: 4px;
-}
-
-.sorting-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: var(--refine-muted);
-    padding: 8px 12px;
-    font-size: 13px;
-    font-weight: 500;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.sorting-btn .btn-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.sorting-btn:hover {
-    color: var(--refine-text);
-}
-
-.sorting-btn:hover .btn-icon {
-    transform: scale(1.15) rotate(-3deg);
-}
-
-.sorting-btn.active {
-    background-color: var(--refine-accent, #ccff00);
-    color: #000000;
-    font-weight: 600;
+/* Fading right edge to indicate scrollability without breaking fixed positioning */
+.filters-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 48px;
+    background: linear-gradient(to right, transparent, var(--color-background));
+    pointer-events: none;
+    z-index: 5;
 }
 
 .filters-section {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 8px;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    
+    /* Scroll snapping */
+    scroll-snap-type: x mandatory;
+    padding-right: 40px; /* Allow last item to be scrolled fully into view before the fade */
 }
 
-.filter-row {
-    display: flex;
-    gap: 12px;
+.filters-section::-webkit-scrollbar {
+    display: none;
+}
+
+::deep .filter-dropdown {
+    flex: 0 0 auto;
+    min-width: 140px;
+    scroll-snap-align: start;
+}
+
+::deep .filter-dropdown .input-card {
+    padding: 6px 12px;
+    border-radius: 20px;
+    background-color: var(--refine-card);
+    border: 1px solid var(--refine-border);
+    min-height: 36px;
+    margin-bottom: 0;
+}
+
+::deep .filter-dropdown .input-card .profile-input {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+::deep .filter-dropdown .input-icon {
+    font-size: 16px;
+    margin-right: 6px;
+}
+
+::deep .filter-dropdown.active-filter .input-card {
+    border-color: var(--refine-accent, #ccff00);
+    background-color: rgba(204, 255, 0, 0.05);
+}
+
+::deep .filter-dropdown.active-filter .input-card .profile-input span,
+::deep .filter-dropdown.active-filter .input-card .material-symbols-outlined {
+    color: var(--refine-accent, #ccff00) !important;
 }
 
 .sort-dir-btn {
     background-color: var(--refine-card);
     border: 1px solid var(--refine-border);
-    border-radius: 12px;
+    border-radius: 20px;
     color: var(--refine-muted);
-    width: 42px;
-    align-self: stretch;
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex: 0 0 auto;
+    scroll-snap-align: start;
 }
 
-.sort-dir-btn:hover {
-    color: var(--refine-text);
+.sort-dir-btn:hover,
+.sort-dir-btn.active-filter {
+    color: var(--refine-accent, #ccff00);
     border-color: var(--refine-accent, #ccff00);
+    background-color: rgba(204, 255, 0, 0.05);
+}
+
+.list-grid {
+    transition: opacity 0.2s ease;
+}
+
+.updating-fade {
+    opacity: 0.5;
+    pointer-events: none;
 }

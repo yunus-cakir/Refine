@@ -16,52 +16,28 @@ else
 {
 <div class="analytics-container animate-fade-in">
     <!-- Filters Section -->
-    <div class="filters-section mb-4">
-        <!-- Time Range Selector -->
-        <div class="sorting-selector-container">
-            <label class="sorting-label">Time Range</label>
-            <div class="sorting-buttons">
-                <button class="sorting-btn @(SelectedTimeframe == "14D" ? "active" : "")" @onclick='() => ChangeTimeframe("14D")'>
-                    <span class="material-symbols-outlined btn-icon">calendar_today</span>
-                    <span>14D</span>
-                </button>
-                <button class="sorting-btn @(SelectedTimeframe == "30D" ? "active" : "")" @onclick='() => ChangeTimeframe("30D")'>
-                    <span class="material-symbols-outlined btn-icon">date_range</span>
-                    <span>30D</span>
-                </button>
-                <button class="sorting-btn @(SelectedTimeframe == "90D" ? "active" : "")" @onclick='() => ChangeTimeframe("90D")'>
-                    <span class="material-symbols-outlined btn-icon">calendar_month</span>
-                    <span>90D</span>
-                </button>
-                <button class="sorting-btn @(SelectedTimeframe == "All" ? "active" : "")" @onclick='() => ChangeTimeframe("All")'>
-                    <span class="material-symbols-outlined btn-icon">all_inclusive</span>
-                    <span>All</span>
-                </button>
-            </div>
-        </div>
+    <div class="filters-wrapper mb-4">
+        <div class="filters-section">
+            <RfDropdown TValue="string"
+                        Value="@SelectedMetric"
+                        ValueChanged="ChangeMetric"
+                        Options="MetricOptions"
+                        SheetTitle="SHOW PERFORMANCE BY"
+                        Icon="@GetIcon(MetricOptions, SelectedMetric, "insights")"
+                        WrapperClass=@($"filter-dropdown {(SelectedMetric != "ProgressiveOverload" ? "active-filter" : "")}") />
 
-        <!-- Metric Selector -->
-        <div class="sorting-selector-container">
-            <label class="sorting-label">Show Performance By</label>
-            <div class="sorting-buttons">
-                <button class="sorting-btn @(SelectedMetric == "ProgressiveOverload" ? "active" : "")" @onclick='() => ChangeMetric("ProgressiveOverload")'>
-                    <span class="material-symbols-outlined btn-icon">monitoring</span>
-                    <span>Progressive Overload</span>
-                </button>
-                <button class="sorting-btn @(SelectedMetric == "1RM" ? "active" : "")" @onclick='() => ChangeMetric("1RM")'>
-                    <span class="material-symbols-outlined btn-icon">insights</span>
-                    <span>Est. 1RM</span>
-                </button>
-                <button class="sorting-btn @(SelectedMetric == "MaxWeight" ? "active" : "")" @onclick='() => ChangeMetric("MaxWeight")'>
-                    <span class="material-symbols-outlined btn-icon">fitness_center</span>
-                    <span>Max Weight</span>
-                </button>
-            </div>
+            <RfDropdown TValue="string"
+                        Value="@SelectedTimeframe"
+                        ValueChanged="ChangeTimeframe"
+                        Options="TimeframeOptions"
+                        SheetTitle="TIME RANGE"
+                        Icon="@GetIcon(TimeframeOptions, SelectedTimeframe, "date_range")"
+                        WrapperClass=@($"filter-dropdown {(SelectedTimeframe != "30D" ? "active-filter" : "")}") />
         </div>
     </div>
 
     <!-- Chart Container -->
-    <div class="chart-card">
+    <div class="chart-card position-relative">
         @if (dataPoints == null || !dataPoints.Any())
         {
             <div class="empty-state">
@@ -69,9 +45,15 @@ else
                 <p>No data available for the selected filters.</p>
             </div>
         }
-        <div class="canvas-wrapper" style="@((dataPoints == null || !dataPoints.Any()) ? "display:none;" : "display:block;")">
+        <div class="canvas-wrapper" style="@((dataPoints == null || !dataPoints.Any()) ? "display:none;" : "display:block;") @(isUpdating ? "opacity: 0.5; pointer-events: none;" : "")">
             <canvas @ref="chartCanvas"></canvas>
         </div>
+        @if (isUpdating)
+        {
+            <div class="position-absolute top-50 start-50 translate-middle">
+                <RfSpinner IsLoading="true" />
+            </div>
+        }
     </div>
 
     <!-- History Section -->
@@ -137,6 +119,7 @@ else
     private List<ChartDataPoint> dataPoints = new();
     
     private bool isLoading = true;
+    private bool isUpdating = false;
     private bool isFirstRenderComplete = false;
     
     [Parameter]
@@ -173,6 +156,26 @@ else
                 _ = CrunchDataAsync();
             }
         }
+    }
+
+    private IEnumerable<RfDropdownOption<string>> MetricOptions => new List<RfDropdownOption<string>>
+    {
+        new() { Value = "ProgressiveOverload", Text = "Progressive Overload", Icon = "monitoring" },
+        new() { Value = "1RM", Text = "Est. 1RM", Icon = "insights" },
+        new() { Value = "MaxWeight", Text = "Max Weight", Icon = "fitness_center" }
+    };
+
+    private IEnumerable<RfDropdownOption<string>> TimeframeOptions => new List<RfDropdownOption<string>>
+    {
+        new() { Value = "14D", Text = "14 Days", Icon = "calendar_today" },
+        new() { Value = "30D", Text = "30 Days", Icon = "date_range" },
+        new() { Value = "90D", Text = "90 Days", Icon = "calendar_month" },
+        new() { Value = "All", Text = "All Time", Icon = "all_inclusive" }
+    };
+
+    private string GetIcon(IEnumerable<RfDropdownOption<string>> options, string value, string defaultIcon)
+    {
+        return options.FirstOrDefault(o => o.Value == value)?.Icon ?? defaultIcon;
     }
 
     private IJSObjectReference? chartModule;
@@ -228,6 +231,12 @@ else
 
     private async Task HandleExerciseChanged()
     {
+        if (chartModule != null && chartInstance != null)
+        {
+            await chartModule.InvokeVoidAsync("destroyChart", chartInstance);
+            chartInstance = null;
+        }
+
         isLoading = true;
         await InvokeAsync(StateHasChanged);
         
@@ -263,7 +272,7 @@ else
 
     private async Task CrunchDataAsync()
     {
-        isLoading = true;
+        isUpdating = true;
         await InvokeAsync(StateHasChanged);
 
         // Background thread for number crunching (No DB query)
@@ -272,7 +281,7 @@ else
              await CrunchDataInternalAsync();
         });
 
-        isLoading = false;
+        isUpdating = false;
         await InvokeAsync(StateHasChanged);
         
         if (isFirstRenderComplete)

@@ -351,12 +351,6 @@
 
     private async Task GoToExerciseSelection()
     {
-        if (string.IsNullOrWhiteSpace(_workout.Name))
-        {
-            await UiHelper.ShowAlert("Validation", "Please enter a workout title before adding exercises.", "OK");
-            return;
-        }
-
         // Save current draft to memory and prepare return state
         EditorState.DraftWorkout = _workout;
         EditorState.IsActive = true;
