@@ -1,0 +1,252 @@
+﻿        // --- 2. EGZERSÄ°ZLERÄ° OLUÅžTUR ---
+        var exercises = new List<Exercise>
+        {
+            new Exercise
+            {
+                Name = "Bench Press", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "bench_press.png",
+                CnsFatigueScore = 6.5m
+            },
+            new Exercise
+            {
+                Name = "Squat", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "squat.png",
+                CnsFatigueScore = 8.5m
+            },
+            new Exercise
+            {
+                Name = "Deadlift", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "deadlift.png",
+                CnsFatigueScore = 9.5m
+            },
+            new Exercise
+            {
+                Name = "Overhead Press", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "ohp.png",
+                CnsFatigueScore = 7.0m
+            },
+            new Exercise
+            {
+                Name = "Pull Up", Difficulty = "Intermediate", Equipment = "Bodyweight", ImageUrl = "pullup.png",
+                CnsFatigueScore = 6.0m
+            },
+            new Exercise
+            {
+                Name = "Barbell Row", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "barbell_row.png",
+                CnsFatigueScore = 7.5m
+            },
+            new Exercise
+            {
+                Name = "Dumbbell Curl", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "curl.png",
+                CnsFatigueScore = 3.0m
+            },
+            new Exercise
+            {
+                Name = "Triceps Pushdown", Difficulty = "Beginner", Equipment = "Machine", ImageUrl = "pushdown.png",
+                CnsFatigueScore = 3.0m
+            },
+            new Exercise
+            {
+                Name = "Lunges", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "lunges.png",
+                CnsFatigueScore = 6.0m
+            },
+            new Exercise
+            {
+                Name = "Plank", Difficulty = "Beginner", Equipment = "Bodyweight", ImageUrl = "plank.png",
+                CnsFatigueScore = 4.0m
+            },
+            new Exercise
+            {
+                Name = "Lateral Raise", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "lateral_raise.png",
+                CnsFatigueScore = 3.5m
+            },
+            new Exercise
+            {
+                Name = "Incline Dumbbell Press", Difficulty = "Intermediate", Equipment = "Dumbbell",
+                ImageUrl = "incline_press.png",
+                CnsFatigueScore = 5.5m
+            },
+            new Exercise
+            {
+                Name = "Face Pull", Difficulty = "Beginner", Equipment = "Cable", ImageUrl = "face_pull.png",
+                CnsFatigueScore = 3.5m
+            },
+            new Exercise
+            {
+                Name = "Hyperextension", Difficulty = "Beginner", Equipment = "Bodyweight",
+                ImageUrl = "hyperextension.png",
+                CnsFatigueScore = 4.5m
+            },
+            new Exercise
+            {
+                Name = "Plate Loaded Chest Press", Difficulty = "Intermediate", Equipment = "Machine",
+                ImageUrl = "chest_press.png",
+                CnsFatigueScore = 5.0m
+            },
+            new Exercise
+            {
+                Name = "Smith Machine Low Incline Press", Difficulty = "Intermediate", Equipment = "Machine",
+                ImageUrl = "smith_incline_press.png",
+                CnsFatigueScore = 5.5m
+            },
+            new Exercise
+            {
+                Name = "Chest Fly Machine", Difficulty = "Beginner", Equipment = "Machine",
+                ImageUrl = "chest_fly_machine.png",
+                CnsFatigueScore = 3.5m
+            },
+            new Exercise
+            {
+                Name = "Shoulder Press Machine", Difficulty = "Beginner", Equipment = "Machine",
+                ImageUrl = "shoulder_press_machine.png",
+                CnsFatigueScore = 4.5m
+            },
+            new Exercise
+            {
+                Name = "Overhead Rope Extension", Difficulty = "Beginner", Equipment = "Cable",
+                ImageUrl = "overhead_rope_extension.png",
+                CnsFatigueScore = 3.5m
+            },
+            new Exercise
+            {
+                Name = "Lat Pulldown", Difficulty = "Beginner", Equipment = "Machine", ImageUrl = "lat_pulldown.png",
+                CnsFatigueScore = 4.5m
+            },
+            new Exercise
+            {
+                Name = "Plate Loaded Wide Grip Row", Difficulty = "Intermediate", Equipment = "Machine",
+                ImageUrl = "wide_grip_row.png",
+                CnsFatigueScore = 5.0m
+            },
+            new Exercise
+            {
+                Name = "Cable Row", Difficulty = "Beginner", Equipment = "Cable", ImageUrl = "cable_row.png",
+                CnsFatigueScore = 4.5m
+            },
+            new Exercise
+            {
+                Name = "Cable Curl", Difficulty = "Beginner", Equipment = "Cable", ImageUrl = "cable_curl.png",
+                CnsFatigueScore = 3.0m
+            },
+            new Exercise
+            {
+                Name = "Hammer Curl", Difficulty = "Beginner", Equipment = "Dumbbell", ImageUrl = "hammer_curl.png",
+                CnsFatigueScore = 3.5m
+            },
+            new Exercise
+            {
+                Name = "Reverse Barbell Curl", Difficulty = "Intermediate", Equipment = "Barbell",
+                ImageUrl = "reverse_barbell_curl.png",
+                CnsFatigueScore = 3.5m
+            },
+            new Exercise
+            {
+                Name = "Leg Press", Difficulty = "Beginner", Equipment = "Machine", ImageUrl = "leg_press.png",
+                CnsFatigueScore = 6.5m
+            },
+            new Exercise
+            {
+                Name = "Smith Machine Squat", Difficulty = "Intermediate", Equipment = "Machine",
+                ImageUrl = "smith_squat.png",
+                CnsFatigueScore = 7.0m
+            },
+            new Exercise
+            {
+                Name = "Leg Extension", Difficulty = "Beginner", Equipment = "Machine", ImageUrl = "leg_extension.png",
+                CnsFatigueScore = 4.0m
+            },
+            new Exercise
+            {
+                Name = "Seated Leg Curl", Difficulty = "Beginner", Equipment = "Machine",
+                ImageUrl = "seated_leg_curl.png",
+                CnsFatigueScore = 4.0m
+            },
+            new Exercise
+            {
+                Name = "Cable Rear Delt Fly", Difficulty = "Beginner", Equipment = "Cable",
+                ImageUrl = "cable_rear_delt_fly.png",
+                CnsFatigueScore = 3.0m
+            },
+            new Exercise
+            {
+                Name = "Close Grip Lat Pulldown", Difficulty = "Beginner", Equipment = "Machine",
+                ImageUrl = "close_grip_lat_pulldown.png",
+                CnsFatigueScore = 4.5m
+            },
+            new Exercise
+            {
+                Name = "Dips", Difficulty = "Intermediate", Equipment = "Bodyweight", ImageUrl = "dips.png",
+                CnsFatigueScore = 5.0m
+            },
+            new Exercise
+            {
+                Name = "Front Squat", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "front_squat.png",
+                CnsFatigueScore = 8.0m
+            },
+            new Exercise
+            {
+                Name = "Bulgarian Split Squat", Difficulty = "Intermediate", Equipment = "Dumbbell",
+                ImageUrl = "bulgarian_split_squat.png",
+                CnsFatigueScore = 6.5m
+            },
+            new Exercise
+            {
+                Name = "Incline Barbell Bench Press", Difficulty = "Intermediate", Equipment = "Barbell",
+                ImageUrl = "incline_barbell_bench.png",
+                CnsFatigueScore = 6.0m
+            },
+            new Exercise
+            {
+                Name = "Close Grip Bench Press", Difficulty = "Intermediate", Equipment = "Barbell",
+                ImageUrl = "close_grip_bench.png",
+                CnsFatigueScore = 5.5m
+            },
+            new Exercise
+            {
+                Name = "Chin Up", Difficulty = "Intermediate", Equipment = "Bodyweight", ImageUrl = "chinup.png",
+                CnsFatigueScore = 5.5m
+            },
+            new Exercise
+            {
+                Name = "Weighted Pull Up", Difficulty = "Advanced", Equipment = "Bodyweight",
+                ImageUrl = "weighted_pullup.png",
+                CnsFatigueScore = 7.0m
+            },
+            new Exercise
+            {
+                Name = "Seated Dumbbell Press", Difficulty = "Intermediate", Equipment = "Dumbbell",
+                ImageUrl = "seated_dumbbell_press.png",
+                CnsFatigueScore = 5.5m
+            },
+            new Exercise
+            {
+                Name = "Push Press", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "push_press.png",
+                CnsFatigueScore = 8.0m
+            },
+            new Exercise
+            {
+                Name = "Romanian Deadlift", Difficulty = "Intermediate", Equipment = "Barbell", ImageUrl = "rdl.png",
+                CnsFatigueScore = 7.5m
+            },
+            new Exercise
+            {
+                Name = "Sumo Deadlift", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "sumo_deadlift.png",
+                CnsFatigueScore = 9.0m
+            },
+            new Exercise
+            {
+                Name = "Pendlay Row", Difficulty = "Advanced", Equipment = "Barbell", ImageUrl = "pendlay_row.png",
+                CnsFatigueScore = 7.0m
+            },
+            new Exercise
+            {
+                Name = "T-Bar Row", Difficulty = "Intermediate", Equipment = "Machine", ImageUrl = "tbar_row.png",
+                CnsFatigueScore = 6.5m
+            }
+        };
+
+        // Toplu ekle
+        await _connection!.InsertAllAsync(exercises);
+
+        // ID eÅŸleÅŸmesi iÃ§in veritabanÄ±ndan geri Ã§ek
+        var dbExercises = await _connection.Table<Exercise>().ToListAsync();
+
+        // Helper fonksiyon
+        int GetExId(string name) => dbExercises.FirstOrDefault(e => e.Name == name)?.Id ?? 0;
+

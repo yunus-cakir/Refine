@@ -9,10 +9,25 @@ public class Exercise
 
     public string Name { get; set; } = "";
     public string Difficulty { get; set; } = "";
-    public string Equipment { get; set; } = "";
+    public EquipmentType Equipment { get; set; } = EquipmentType.None;
     public string ImageUrl { get; set; } = "";
 
+    public enum EquipmentType
+    {
+        None,
+        Barbell,
+        Dumbbell,
+        Machine,
+        Cable,
+        Bodyweight,
+        Kettlebell
+    }
+
     public decimal CnsFatigueScore { get; set; } // Örn: 8.5
+
+    [TextBlob("VariationTagsBlob")]
+    public List<string> VariationTags { get; set; } = new();
+    public string VariationTagsBlob { get; set; } = "";
 
     [OneToMany(CascadeOperations = CascadeOperation.All)]
     public List<ExerciseMuscleMap> MuscleMaps { get; set; } = new();

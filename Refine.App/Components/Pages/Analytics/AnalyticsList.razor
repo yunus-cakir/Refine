@@ -1,6 +1,7 @@
 @page "/analytics"
 @using Refine.App.Models
 @using Refine.App.Services
+@using Refine.App.Helpers
 @inject IJSRuntime JS
 @inject LocalDbService DbService
 @inject AnalyticsService AnalyticsSvc
@@ -200,7 +201,7 @@ else
                 viewModels.Add(new ExerciseViewModel
                 {
                     ExerciseId = group.ExerciseId,
-                    ExerciseName = exercise.Name,
+                    ExerciseName = ExerciseFormatter.Format(exercise),
                     LastTrained = group.LastTrained,
                     FirstTrainedOnLastDay = firstTrainedOnLastDay,
                     DataPoints = points,

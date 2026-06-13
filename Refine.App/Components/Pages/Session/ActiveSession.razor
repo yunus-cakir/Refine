@@ -4,6 +4,7 @@
 
 @using Refine.App.Models
 @using Refine.App.Services
+@using Refine.App.Helpers
 @using Microsoft.AspNetCore.Components.Routing
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
@@ -86,7 +87,7 @@ else
                                     @item.Sets Sets
                                 </span>
                                 <h1 class="font-headline" style="font-size: 30px; font-weight: bold; color: white; margin-top: 12px; letter-spacing: -0.025em; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.07));">
-                                    @item.Exercise.Name
+                                    @ExerciseFormatter.Format(item.Exercise)
                                 </h1>
                                 <p class="font-body rf-flex-row rf-items-center" style="font-size: 14px; color: var(--color-on-surface-variant); gap: 8px; margin-top: 8px;">
                                     <span class="material-symbols-outlined" style="font-size: 14px;">fitness_center</span>
@@ -104,7 +105,7 @@ else
                             var activeLog = currentLogs.FirstOrDefault(l => l.SetNumber == sClosure);
                             if (activeLog == null)
                             {
-                                activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, WorkoutId = WorkoutId, SetNumber = sClosure, Date = _targetDate, FormRating = 3, IsCompleted = false, IsSaved = false, Week = Week ?? _currentProgramWeek };
+                                activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, ExerciseNameSnapshot = ExerciseFormatter.Format(item.Exercise), WorkoutId = WorkoutId, SetNumber = sClosure, Date = _targetDate, FormRating = 3, IsCompleted = false, IsSaved = false, Week = Week ?? _currentProgramWeek };
                                 _activeLogs.Add(activeLog);
                                 currentLogs.Add(activeLog);
                             }
@@ -114,15 +115,18 @@ else
                             <div id="set-card-@(item.ExerciseId)-@sClosure" class="refine-active-card" style="min-width: 100%; scroll-snap-align: center; scroll-snap-stop: always; flex-shrink: 0; margin-bottom: 0;">
 
                                 <!-- Inputs Grid -->
-                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 8px;">
-                                    <!-- Weight -->
-                                    <div class="rf-flex-col rf-items-center">
-                                        <span class="refine-input-label">Weight</span>
-                                        <input type="number" inputmode="decimal"
-                                               class="rf-input-number"
-                                               placeholder="@(history?.Weight.ToString() ?? "-")"
-                                               @bind="activeLog.Weight"/>
-                                    </div>
+                                <div style="display: grid; grid-template-columns: repeat(@(item.Exercise.Equipment == Exercise.EquipmentType.Bodyweight ? 2 : 3), 1fr); gap: 12px; margin-bottom: 8px;">
+                                    @if (item.Exercise.Equipment != Exercise.EquipmentType.Bodyweight)
+                                    {
+                                        <!-- Weight -->
+                                        <div class="rf-flex-col rf-items-center">
+                                            <span class="refine-input-label">Weight</span>
+                                            <input type="number" inputmode="decimal"
+                                                   class="rf-input-number"
+                                                   placeholder="@(history?.Weight.ToString() ?? "-")"
+                                                   @bind="activeLog.Weight"/>
+                                        </div>
+                                    }
                                     <!-- Reps -->
                                     <div class="rf-flex-col rf-items-center">
                                         <span class="refine-input-label">Reps</span>
@@ -166,7 +170,7 @@ else
 
                                 <!-- Bottom Links -->
                                 <div class="rf-flex-row rf-justify-center" style="gap: 24px; margin-top: 8px; opacity: 0.7; transform: scale(0.9); transform-origin: top;">
-                                    <button class="refine-ghost-btn" @onclick="() => OpenHistory(item.ExerciseId, item.Exercise.Name)">
+                                    <button class="refine-ghost-btn" @onclick="() => OpenHistory(item.ExerciseId, ExerciseFormatter.Format(item.Exercise))">
                                         <span class="material-symbols-outlined" style="font-size: 18px;">history</span> HISTORY
                                     </button>
                                     <button class="refine-ghost-btn">
@@ -367,6 +371,7 @@ else
                             _activeLogs.Add(new WorkoutLog
                             {
                                 ExerciseId = item.ExerciseId,
+                                ExerciseNameSnapshot = ExerciseFormatter.Format(item.Exercise),
                                 WorkoutId = WorkoutId,
                                 SetNumber = i,
                                 Date = _targetDate, // Sabitlenen tarihi kullan
@@ -385,7 +390,7 @@ else
             foreach (var item in _exercises)
             {
                 var logsForExercise = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).OrderBy(l => l.SetNumber).ToList();
-                var firstUncompletedLog = logsForExercise.FirstOrDefault(l => !l.Weight.HasValue || !l.Reps.HasValue);
+                var firstUncompletedLog = logsForExercise.FirstOrDefault(l => (item.Exercise.Equipment != Exercise.EquipmentType.Bodyweight && !l.Weight.HasValue) || !l.Reps.HasValue);
                 if (firstUncompletedLog != null)
                 {
                     _currentSetIndex[item.ExerciseId] = firstUncompletedLog.SetNumber;
@@ -447,8 +452,8 @@ else
         {
             var item = _exercises[i];
             var logsForExercise = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).ToList();
-            bool hasAnyCompletedSet = logsForExercise.Any(l => l.Weight.HasValue && l.Reps.HasValue);
-            bool isFullyCompleted = logsForExercise.Count >= item.Sets && logsForExercise.All(l => l.Weight.HasValue && l.Reps.HasValue);
+            bool hasAnyCompletedSet = logsForExercise.Any(l => (item.Exercise.Equipment == Exercise.EquipmentType.Bodyweight || l.Weight.HasValue) && l.Reps.HasValue);
+            bool isFullyCompleted = logsForExercise.Count >= item.Sets && logsForExercise.All(l => (item.Exercise.Equipment == Exercise.EquipmentType.Bodyweight || l.Weight.HasValue) && l.Reps.HasValue);
 
             if (hasAnyCompletedSet)
             {
@@ -470,7 +475,7 @@ else
             int scrollIndex = lastPerformedIndex;
             var lastPerformedExercise = _exercises[lastPerformedIndex];
             var logsForLast = _activeLogs.Where(l => l.ExerciseId == lastPerformedExercise.ExerciseId).ToList();
-            bool isLastFullyCompleted = logsForLast.Count >= lastPerformedExercise.Sets && logsForLast.All(l => l.Weight.HasValue && l.Reps.HasValue);
+            bool isLastFullyCompleted = logsForLast.Count >= lastPerformedExercise.Sets && logsForLast.All(l => (lastPerformedExercise.Exercise.Equipment == Exercise.EquipmentType.Bodyweight || l.Weight.HasValue) && l.Reps.HasValue);
 
             if (isLastFullyCompleted && lastPerformedIndex < _exercises.Count - 1)
             {
@@ -531,10 +536,14 @@ else
 
     private async Task LogSet(int exerciseId, int currentExerciseIndex, int maxSets, int totalExercises, int loggedSetNumber)
     {
+        var targetExercise = _exercises.FirstOrDefault(e => e.ExerciseId == exerciseId)?.Exercise;
+        bool isBodyweight = targetExercise?.Equipment == Exercise.EquipmentType.Bodyweight;
+
         var activeLog = _activeLogs.FirstOrDefault(l => l.ExerciseId == exerciseId && l.SetNumber == loggedSetNumber);
-        if (activeLog == null || !activeLog.Weight.HasValue || !activeLog.Reps.HasValue)
+        if (activeLog == null || (!isBodyweight && !activeLog.Weight.HasValue) || !activeLog.Reps.HasValue)
         {
-            await UiHelper.ShowAlert("Missing Info", "Please enter both weight and repetition values before logging this set.", "OK");
+            string missingMsg = isBodyweight ? "Please enter a repetition value before logging this set." : "Please enter both weight and repetition values before logging this set.";
+            await UiHelper.ShowAlert("Missing Info", missingMsg, "OK");
             return;
         }
 
@@ -567,9 +576,11 @@ else
             var exists = _activeLogs.Any(l => l.ExerciseId == exerciseId && l.SetNumber == nextSet);
             if (!exists)
             {
+                var exercise = _exercises.FirstOrDefault(e => e.ExerciseId == exerciseId);
                 _activeLogs.Add(new WorkoutLog
                 {
                     ExerciseId = exerciseId,
+                    ExerciseNameSnapshot = ExerciseFormatter.Format(exercise?.Exercise),
                     WorkoutId = WorkoutId,
                     SetNumber = nextSet,
                     Date = _targetDate,

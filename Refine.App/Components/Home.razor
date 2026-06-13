@@ -2,6 +2,7 @@
 @using Refine.App.Models
 @using Refine.App.Services
 @using Refine.App.Components.Pages.Analytics
+@using Refine.App.Helpers
 @inject TopBarBridge TopBar
 @inject NavigationManager NavManager
 @inject HomeStateService StateService
@@ -64,7 +65,7 @@
                 <ExerciseSparklineChart 
                     style="width: 100%;"
                     ExerciseId="StateService.TopExercise.Id"
-                    ExerciseName="@StateService.TopExercise.Name"
+                    ExerciseName="@ExerciseFormatter.Format(StateService.TopExercise)"
                     LastTrained="StateService.TopExerciseLastTrained"
                     DataPoints="StateService.TopExerciseDataPoints"
                     RateOfChange="StateService.TopExerciseRateOfChange"

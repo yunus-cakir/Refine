@@ -1,6 +1,7 @@
 @page "/exercises"
 @using Refine.App.Models
 @using Refine.App.Services
+@using Refine.App.Helpers
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
 @inject TopBarBridge TopBar
@@ -61,15 +62,15 @@ else
                             </div>
                             
                             <div class="d-flex flex-column align-items-start">
-                                <span class="fw-bold text-white fs-6 mb-1 text-start">@ex.Name</span>
+                                <span class="fw-bold text-white fs-6 mb-1 text-start">@ExerciseFormatter.Format(ex)</span>
                                 <div class="d-flex flex-wrap align-items-center gap-2">
                                     <span class="rf-badge-faded" style="font-size: 10px; padding: 2px 8px;">
                                         @ex.PrimaryMuscleCategory
                                     </span>
-                                    @if (!string.IsNullOrWhiteSpace(ex.Equipment))
+                                    @if (ex.Equipment != Exercise.EquipmentType.None)
                                     {
                                         <span class="text-on-surface-variant" style="font-size: 11px;">
-                                            @ex.Equipment
+                                            @ex.Equipment.ToString()
                                         </span>
                                     }
                                 </div>
@@ -121,9 +122,9 @@ else
             if (string.IsNullOrWhiteSpace(_searchText)) return _exercises;
 
             return _exercises.Where(e => 
-                e.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                ExerciseFormatter.Format(e).Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
                 e.PrimaryMuscleCategory.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
-                (e.Equipment != null && e.Equipment.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+                (e.Equipment != Exercise.EquipmentType.None && e.Equipment.ToString().Contains(_searchText, StringComparison.OrdinalIgnoreCase))
             );
         }
     }
@@ -138,7 +139,7 @@ else
         _exercises = await DbService.GetExercisesAsync();
         if (_exercises != null)
         {
-            _exercises = _exercises.OrderBy(e => e.Name).ToList();
+            _exercises = _exercises.OrderBy(e => ExerciseFormatter.Format(e)).ToList();
         }
     }
 

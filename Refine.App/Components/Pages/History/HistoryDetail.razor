@@ -1,6 +1,7 @@
 @page "/history/detail/{WorkoutId:int}/{DateTicks:long}"
 @using Refine.App.Models
 @using Refine.App.Services
+@using Refine.App.Helpers
 @inject LocalDbService DbService
 @inject NavigationManager NavManager
 @inject TopBarBridge TopBar
@@ -199,7 +200,7 @@ else
                 var ex = allExercises.FirstOrDefault(e => e.Id == g.Key);
                 return new ExerciseHistoryGroup
                 {
-                    ExerciseName = ex?.Name ?? "Bilinmeyen Hareket",
+                    ExerciseName = ExerciseFormatter.Format(ex),
                     BaseCnsScore = ex?.CnsFatigueScore ?? 0m,
                     Logs = g.OrderBy(l => l.SetNumber).ToList()
                 };

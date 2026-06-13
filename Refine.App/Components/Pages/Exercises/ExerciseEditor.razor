@@ -40,7 +40,12 @@
 
         <div class="mb-3">
             <label class="form-label text-muted small">Ekipman</label>
-            <InputText @bind-Value="_exercise.Equipment" class="form-control bg-dark text-white border-secondary" placeholder="Örn: Barbell, Dumbbell" />
+            <InputSelect @bind-Value="_exercise.Equipment" class="form-select bg-dark text-white border-secondary">
+                @foreach (var type in Enum.GetValues(typeof(Exercise.EquipmentType)))
+                {
+                    <option value="@type">@type.ToString()</option>
+                }
+            </InputSelect>
         </div>
 
         <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold mt-3">
