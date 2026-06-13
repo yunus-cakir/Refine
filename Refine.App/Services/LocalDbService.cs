@@ -980,245 +980,301 @@ public class LocalDbService
         {
             { "Bench Press", new Exercise {
                 Name = "Bench Press", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Barbell, ImageUrl = "bench_press.png",
-                CnsFatigueScore = 6.5m
+                CnsFatigueScore = 6.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Squat", new Exercise {
                 Name = "Squat", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Barbell, ImageUrl = "squat.png",
-                CnsFatigueScore = 8.5m
+                CnsFatigueScore = 8.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Deadlift", new Exercise {
                 Name = "Deadlift", Difficulty = "Advanced", Equipment = Exercise.EquipmentType.Barbell, ImageUrl = "deadlift.png",
-                CnsFatigueScore = 9.5m
+                CnsFatigueScore = 9.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Overhead Press", new Exercise {
                 Name = "Overhead Press", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Barbell, ImageUrl = "ohp.png",
-                CnsFatigueScore = 7.0m
+                CnsFatigueScore = 7.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Pull Up", new Exercise {
                 Name = "Pull Up", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Bodyweight, ImageUrl = "pullup.png",
-                CnsFatigueScore = 6.0m
+                CnsFatigueScore = 6.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Barbell Row", new Exercise {
                 Name = "Row", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Barbell, ImageUrl = "barbell_row.png",
-                CnsFatigueScore = 7.5m
+                CnsFatigueScore = 7.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Dumbbell Curl", new Exercise {
                 Name = "Curl", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Dumbbell, ImageUrl = "curl.png",
-                CnsFatigueScore = 3.0m
+                CnsFatigueScore = 3.0m,
+                Laterality = Exercise.LateralityType.UnilateralAlternating
             } },
             { "Triceps Pushdown", new Exercise {
                 Name = "Triceps Pushdown", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Machine, ImageUrl = "pushdown.png",
-                CnsFatigueScore = 3.0m
+                CnsFatigueScore = 3.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Lunges", new Exercise {
                 Name = "Lunges", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Dumbbell, ImageUrl = "lunges.png",
-                CnsFatigueScore = 6.0m
+                CnsFatigueScore = 6.0m,
+                Laterality = Exercise.LateralityType.UnilateralAlternating
             } },
             { "Plank", new Exercise {
                 Name = "Plank", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Bodyweight, ImageUrl = "plank.png",
-                CnsFatigueScore = 4.0m
+                CnsFatigueScore = 4.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Lateral Raise", new Exercise {
                 Name = "Lateral Raise", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Dumbbell, ImageUrl = "lateral_raise.png",
-                CnsFatigueScore = 3.5m
+                CnsFatigueScore = 3.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Incline Dumbbell Press", new Exercise {
                 Name = "Press", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Dumbbell,
                 ImageUrl = "incline_press.png",
-                CnsFatigueScore = 5.5m
+                CnsFatigueScore = 5.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Incline" }} },
             { "Face Pull", new Exercise {
                 Name = "Face Pull", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Cable, ImageUrl = "face_pull.png",
-                CnsFatigueScore = 3.5m
+                CnsFatigueScore = 3.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Hyperextension", new Exercise {
                 Name = "Hyperextension", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Bodyweight,
                 ImageUrl = "hyperextension.png",
-                CnsFatigueScore = 4.0m
+                CnsFatigueScore = 4.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Plate Loaded Chest Press", new Exercise {
                 Name = "Chest Press", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Machine,
                 ImageUrl = "chest_press.png",
-                CnsFatigueScore = 5.0m
+                CnsFatigueScore = 5.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Plate Loaded" }} },
             { "Smith Machine Low Incline Press", new Exercise {
                 Name = "Press", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Machine,
                 ImageUrl = "smith_incline_press.png",
-                CnsFatigueScore = 5.0m
+                CnsFatigueScore = 5.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Smith Machine", "Low Incline" }} },
             { "Chest Fly Machine", new Exercise {
                 Name = "Chest Fly", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Machine,
                 ImageUrl = "chest_fly_machine.png",
-                CnsFatigueScore = 3.5m
+                CnsFatigueScore = 3.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Shoulder Press Machine", new Exercise {
                 Name = "Shoulder Press", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Machine,
                 ImageUrl = "shoulder_press_machine.png",
-                CnsFatigueScore = 4.0m
+                CnsFatigueScore = 4.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Overhead Rope Extension", new Exercise {
                 Name = "Overhead Extension", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Cable,
                 ImageUrl = "overhead_rope_extension.png",
-                CnsFatigueScore = 3.0m
+                CnsFatigueScore = 3.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Rope" }} },
             { "Lat Pulldown", new Exercise {
                 Name = "Lat Pulldown", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Machine, ImageUrl = "lat_pulldown.png",
-                CnsFatigueScore = 4.5m
+                CnsFatigueScore = 4.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Plate Loaded Wide Grip Row", new Exercise {
                 Name = "Row", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Machine,
                 ImageUrl = "wide_grip_row.png",
-                CnsFatigueScore = 6.0m
+                CnsFatigueScore = 6.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Plate Loaded", "Wide Grip" }} },
             { "Cable Row", new Exercise {
                 Name = "Row", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Cable, ImageUrl = "cable_row.png",
-                CnsFatigueScore = 4.5m
+                CnsFatigueScore = 4.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Cable Curl", new Exercise {
                 Name = "Curl", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Cable, ImageUrl = "cable_curl.png",
-                CnsFatigueScore = 3.0m
+                CnsFatigueScore = 3.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Hammer Curl", new Exercise {
                 Name = "Hammer Curl", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Dumbbell, ImageUrl = "hammer_curl.png",
-                CnsFatigueScore = 3.5m
+                CnsFatigueScore = 3.5m,
+                Laterality = Exercise.LateralityType.UnilateralAlternating
             } },
             { "Reverse Barbell Curl", new Exercise {
                 Name = "Reverse Curl", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Barbell,
                 ImageUrl = "reverse_barbell_curl.png",
-                CnsFatigueScore = 4.0m
+                CnsFatigueScore = 4.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Leg Press", new Exercise {
                 Name = "Leg Press", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Machine, ImageUrl = "leg_press.png",
-                CnsFatigueScore = 6.5m
+                CnsFatigueScore = 6.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Smith Machine Squat", new Exercise {
                 Name = "Squat", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Machine,
                 ImageUrl = "smith_squat.png",
-                CnsFatigueScore = 6.5m
+                CnsFatigueScore = 6.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Smith Machine" }} },
             { "Leg Extension", new Exercise {
                 Name = "Leg Extension", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Machine, ImageUrl = "leg_extension.png",
-                CnsFatigueScore = 4.0m
+                CnsFatigueScore = 4.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Seated Leg Curl", new Exercise {
                 Name = "Leg Curl", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Machine,
                 ImageUrl = "seated_leg_curl.png",
-                CnsFatigueScore = 4.0m
+                CnsFatigueScore = 4.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Seated" }} },
             { "Cable Rear Delt Fly", new Exercise {
                 Name = "Cable Rear Delt Fly", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Cable,
                 ImageUrl = "cable_rear_delt_fly.png",
-                CnsFatigueScore = 3.0m
+                CnsFatigueScore = 3.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Close Grip Lat Pulldown", new Exercise {
                 Name = "Lat Pulldown", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Machine,
                 ImageUrl = "close_grip_lat_pulldown.png",
-                CnsFatigueScore = 4.5m
+                CnsFatigueScore = 4.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Close Grip" }} },
             { "Dips", new Exercise {
                 Name = "Dips", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Bodyweight, ImageUrl = "dips.png",
-                CnsFatigueScore = 5.0m
+                CnsFatigueScore = 5.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Front Squat", new Exercise {
                 Name = "Squat", Difficulty = "Advanced", Equipment = Exercise.EquipmentType.Barbell, ImageUrl = "front_squat.png",
-                CnsFatigueScore = 8.0m
+                CnsFatigueScore = 8.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Front" }} },
             { "Bulgarian Split Squat", new Exercise {
                 Name = "Split Squat", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Dumbbell,
                 ImageUrl = "bulgarian_split_squat.png",
-                CnsFatigueScore = 6.5m
+                CnsFatigueScore = 6.5m,
+                Laterality = Exercise.LateralityType.UnilateralIsolated
             , VariationTags = new List<string> { "Bulgarian" }} },
             { "Incline Barbell Bench Press", new Exercise {
                 Name = "Bench Press", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Barbell,
                 ImageUrl = "incline_barbell_bench.png",
-                CnsFatigueScore = 6.0m
+                CnsFatigueScore = 6.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Incline" }} },
             { "Close Grip Bench Press", new Exercise {
                 Name = "Bench Press", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Barbell,
                 ImageUrl = "close_grip_bench.png",
-                CnsFatigueScore = 5.5m
+                CnsFatigueScore = 5.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Close Grip" }} },
             { "Chin Up", new Exercise {
                 Name = "Chin Up", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Bodyweight, ImageUrl = "chinup.png",
-                CnsFatigueScore = 5.5m
+                CnsFatigueScore = 5.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Weighted Pull Up", new Exercise {
                 Name = "Pull Up", Difficulty = "Advanced", Equipment = Exercise.EquipmentType.Bodyweight,
                 ImageUrl = "weighted_pullup.png",
-                CnsFatigueScore = 7.0m
+                CnsFatigueScore = 7.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Weighted" }} },
             { "Seated Dumbbell Press", new Exercise {
                 Name = "Press", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Dumbbell,
                 ImageUrl = "seated_dumbbell_press.png",
-                CnsFatigueScore = 5.5m
+                CnsFatigueScore = 5.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Seated" }} },
             { "Push Press", new Exercise {
                 Name = "Push Press", Difficulty = "Advanced", Equipment = Exercise.EquipmentType.Barbell, ImageUrl = "push_press.png",
-                CnsFatigueScore = 8.0m
+                CnsFatigueScore = 8.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Romanian Deadlift", new Exercise {
                 Name = "Deadlift", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Barbell, ImageUrl = "rdl.png",
-                CnsFatigueScore = 7.5m
+                CnsFatigueScore = 7.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Romanian" }} },
             { "Sumo Deadlift", new Exercise {
                 Name = "Deadlift", Difficulty = "Advanced", Equipment = Exercise.EquipmentType.Barbell, ImageUrl = "sumo_deadlift.png",
-                CnsFatigueScore = 9.0m
+                CnsFatigueScore = 9.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Sumo" }} },
             { "Pendlay Row", new Exercise {
                 Name = "Row", Difficulty = "Advanced", Equipment = Exercise.EquipmentType.Barbell, ImageUrl = "pendlay_row.png",
-                CnsFatigueScore = 7.0m
+                CnsFatigueScore = 7.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Pendlay" }} },
             { "T-Bar Row", new Exercise {
                 Name = "Row", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Machine, ImageUrl = "tbar_row.png",
-                CnsFatigueScore = 6.5m
+                CnsFatigueScore = 6.5m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "T-Bar" }} },
             { "Cable Lat Pull Over", new Exercise {
                 Name = "Lat Pull Over", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Cable, ImageUrl = "lat_pullover.png",
-                CnsFatigueScore = 5.0m
+                CnsFatigueScore = 5.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Smith Incline Bench Press", new Exercise {
                 Name = "Bench Press", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Machine,
-                ImageUrl = "smith_incline_press.png", CnsFatigueScore = 6.0m
+                ImageUrl = "smith_incline_press.png", CnsFatigueScore = 6.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Smith", "Incline" }} },
             { "Fly Machine", new Exercise {
                 Name = "Chest Fly", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Machine, ImageUrl = "fly_machine.png",
-                CnsFatigueScore = 4.0m
+                CnsFatigueScore = 4.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Rear Delt Machine Fly", new Exercise {
                 Name = "Rear Delt Fly", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Machine,
-                ImageUrl = "rear_delt_machine_fly.png", CnsFatigueScore = 4.0m
+                ImageUrl = "rear_delt_machine_fly.png", CnsFatigueScore = 4.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Seated Machine Row", new Exercise {
                 Name = "Row", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Machine,
-                ImageUrl = "seated_machine_row.png", CnsFatigueScore = 5.0m
+                ImageUrl = "seated_machine_row.png", CnsFatigueScore = 5.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             , VariationTags = new List<string> { "Seated" }} },
             { "One Arm Cable Row", new Exercise {
                 Name = "Row", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Cable,
-                ImageUrl = "one_arm_cable_row.png", CnsFatigueScore = 5.0m
+                ImageUrl = "one_arm_cable_row.png", CnsFatigueScore = 5.0m,
+                Laterality = Exercise.LateralityType.UnilateralIsolated
             , VariationTags = new List<string> { "One Arm" }} },
             { "Cable Lateral Raise", new Exercise {
                 Name = "Lateral Raise", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Cable,
-                ImageUrl = "cable_lateral_raise.png", CnsFatigueScore = 4.0m
+                ImageUrl = "cable_lateral_raise.png", CnsFatigueScore = 4.0m,
+                Laterality = Exercise.LateralityType.UnilateralIsolated
             } },
             { "Leg Raise", new Exercise {
                 Name = "Leg Raise", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Bodyweight,
-                ImageUrl = "leg_raise.png", CnsFatigueScore = 4.0m
+                ImageUrl = "leg_raise.png", CnsFatigueScore = 4.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Calf Raise", new Exercise {
                 Name = "Calf Raise", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Machine,
-                ImageUrl = "calf_raise.png", CnsFatigueScore = 4.0m
+                ImageUrl = "calf_raise.png", CnsFatigueScore = 4.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Shoulder Machine", new Exercise {
                 Name = "Shoulder Press", Difficulty = "Intermediate", Equipment = Exercise.EquipmentType.Machine,
-                ImageUrl = "shoulder_machine.png", CnsFatigueScore = 5.0m
+                ImageUrl = "shoulder_machine.png", CnsFatigueScore = 5.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } },
             { "Triceps Kickback", new Exercise {
                 Name = "Triceps Kickback", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Dumbbell,
-                ImageUrl = "triceps_kickback.png", CnsFatigueScore = 3.0m
+                ImageUrl = "triceps_kickback.png", CnsFatigueScore = 3.0m,
+                Laterality = Exercise.LateralityType.UnilateralIsolated
             } },
             { "Ab Crunch", new Exercise {
                 Name = "Ab Crunch", Difficulty = "Beginner", Equipment = Exercise.EquipmentType.Bodyweight,
-                ImageUrl = "ab_crunch.png", CnsFatigueScore = 3.0m
+                ImageUrl = "ab_crunch.png", CnsFatigueScore = 3.0m,
+                Laterality = Exercise.LateralityType.Bilateral
             } }
         };
 

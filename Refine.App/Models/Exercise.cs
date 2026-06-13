@@ -23,6 +23,16 @@ public class Exercise
         Kettlebell
     }
 
+    public enum LateralityType
+    {
+        Bilateral,
+        UnilateralAlternating,
+        UnilateralIsolated
+    }
+
+    public LateralityType Laterality { get; set; } = LateralityType.Bilateral;
+
+
     public decimal CnsFatigueScore { get; set; } // Örn: 8.5
 
     [TextBlob("VariationTagsBlob")]
