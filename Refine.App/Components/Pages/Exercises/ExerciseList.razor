@@ -8,28 +8,14 @@
 @inject IJSRuntime JS
 @implements IDisposable
 
-@if (_showTopBarMenu)
+@if (_showTopBarMenu && !_isSelectionMode)
 {
     <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
     <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
-        @if (!_isSelectionMode)
-        {
-            <button class="refine-dropdown-item" @onclick="EnableSelectionMode">
-                <span class="material-symbols-outlined text-[20px]">check_box</span>
-                Select Exercises
-            </button>
-            <button class="refine-dropdown-item" @onclick="AddExercise">
-                <span class="material-symbols-outlined text-[20px]">add</span>
-                Add New Exercise
-            </button>
-        }
-        else
-        {
-            <button class="refine-dropdown-item" @onclick="DisableSelectionMode">
-                <span class="material-symbols-outlined text-[20px]">close</span>
-                Exit Selection Mode
-            </button>
-        }
+        <button class="refine-dropdown-item" @onclick="AddExercise">
+            <span class="material-symbols-outlined text-[20px]">add</span>
+            Add New Exercise
+        </button>
     </div>
 }
 

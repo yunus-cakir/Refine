@@ -4,70 +4,96 @@
 @inject TopBarBridge TopBar
 
 <div class="menu-list d-flex flex-column gap-3 animate-fade-in @(IsEmbedded ? "" : "page-container py-4 px-0 min-h-screen")">
-    <!-- Body Measurements -->
-    <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/profile/body-measurements")'>
-        <div class="d-flex align-items-center gap-3">
-            <div class="icon-box d-flex align-items-center justify-content-center">
-                <span class="material-symbols-outlined menu-icon">straighten</span>
+    <!-- Workout Section -->
+    <div class="d-flex flex-column gap-3 mb-3">
+        <div class="text-uppercase tracking-wider text-on-surface-variant text-start" style="font-size: 11px; font-weight: 700; opacity: 0.6; padding-left: 4px; letter-spacing: 0.1em; margin-bottom: -4px;">Workout</div>
+
+        <!-- Workout Programs -->
+        <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/programs")'>
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-box d-flex align-items-center justify-content-center">
+                    <span class="material-symbols-outlined menu-icon">event_note</span>
+                </div>
+                <span class="menu-title">Workout Programs</span>
             </div>
-            <span class="menu-title">Body Measurements</span>
+            <span class="material-symbols-outlined chevron-icon">chevron_right</span>
         </div>
-        <span class="material-symbols-outlined chevron-icon">chevron_right</span>
+
+        <!-- Workout History -->
+        <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/history")'>
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-box d-flex align-items-center justify-content-center">
+                    <span class="material-symbols-outlined menu-icon">history</span>
+                </div>
+                <span class="menu-title">Workout History</span>
+            </div>
+            <span class="material-symbols-outlined chevron-icon">chevron_right</span>
+        </div>
+
+        <!-- Workout Settings -->
+        <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/profile/workout-settings")'>
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-box d-flex align-items-center justify-content-center">
+                    <span class="material-symbols-outlined menu-icon">fitness_center</span>
+                </div>
+                <span class="menu-title">Workout Settings</span>
+            </div>
+            <span class="material-symbols-outlined chevron-icon">chevron_right</span>
+        </div>
+
+        <!-- Exercise List -->
+        <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/exercises")'>
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-box d-flex align-items-center justify-content-center">
+                    <span class="material-symbols-outlined menu-icon">list</span>
+                </div>
+                <span class="menu-title">Exercise List</span>
+            </div>
+            <span class="material-symbols-outlined chevron-icon">chevron_right</span>
+        </div>
     </div>
 
-    <!-- Body Fat Calculator -->
-    <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/profile/body-fat-calculator")'>
-        <div class="d-flex align-items-center gap-3">
-            <div class="icon-box d-flex align-items-center justify-content-center">
-                <span class="material-symbols-outlined menu-icon">percent</span>
+    <!-- Body Section -->
+    <div class="d-flex flex-column gap-3 mb-3">
+        <div class="text-uppercase tracking-wider text-on-surface-variant text-start" style="font-size: 11px; font-weight: 700; opacity: 0.6; padding-left: 4px; letter-spacing: 0.1em; margin-bottom: -4px;">Body</div>
+
+        <!-- Body Measurements -->
+        <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/profile/body-measurements")'>
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-box d-flex align-items-center justify-content-center">
+                    <span class="material-symbols-outlined menu-icon">straighten</span>
+                </div>
+                <span class="menu-title">Body Measurements</span>
             </div>
-            <span class="menu-title">Body Fat Calculator</span>
+            <span class="material-symbols-outlined chevron-icon">chevron_right</span>
         </div>
-        <span class="material-symbols-outlined chevron-icon">chevron_right</span>
+
+        <!-- Body Fat Calculator -->
+        <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/profile/body-fat-calculator")'>
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-box d-flex align-items-center justify-content-center">
+                    <span class="material-symbols-outlined menu-icon">percent</span>
+                </div>
+                <span class="menu-title">Body Fat Calculator</span>
+            </div>
+            <span class="material-symbols-outlined chevron-icon">chevron_right</span>
+        </div>
     </div>
 
-    <!-- Workout Settings -->
-    <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/profile/workout-settings")'>
-        <div class="d-flex align-items-center gap-3">
-            <div class="icon-box d-flex align-items-center justify-content-center">
-                <span class="material-symbols-outlined menu-icon">fitness_center</span>
-            </div>
-            <span class="menu-title">Workout Settings</span>
-        </div>
-        <span class="material-symbols-outlined chevron-icon">chevron_right</span>
-    </div>
+    <!-- Other Section -->
+    <div class="d-flex flex-column gap-3 mb-3">
+        <div class="text-uppercase tracking-wider text-on-surface-variant text-start" style="font-size: 11px; font-weight: 700; opacity: 0.6; padding-left: 4px; letter-spacing: 0.1em; margin-bottom: -4px;">Other</div>
 
-    <!-- Exercise List -->
-    <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/exercises")'>
-        <div class="d-flex align-items-center gap-3">
-            <div class="icon-box d-flex align-items-center justify-content-center">
-                <span class="material-symbols-outlined menu-icon">list</span>
+        <!-- App Settings -->
+        <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/profile/app-settings")'>
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-box d-flex align-items-center justify-content-center">
+                    <span class="material-symbols-outlined menu-icon">settings</span>
+                </div>
+                <span class="menu-title">App Settings</span>
             </div>
-            <span class="menu-title">Exercise List</span>
+            <span class="material-symbols-outlined chevron-icon">chevron_right</span>
         </div>
-        <span class="material-symbols-outlined chevron-icon">chevron_right</span>
-    </div>
-
-    <!-- Workout History -->
-    <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/history")'>
-        <div class="d-flex align-items-center gap-3">
-            <div class="icon-box d-flex align-items-center justify-content-center">
-                <span class="material-symbols-outlined menu-icon">history</span>
-            </div>
-            <span class="menu-title">Workout History</span>
-        </div>
-        <span class="material-symbols-outlined chevron-icon">chevron_right</span>
-    </div>
-
-    <!-- App Settings -->
-    <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/profile/app-settings")'>
-        <div class="d-flex align-items-center gap-3">
-            <div class="icon-box d-flex align-items-center justify-content-center">
-                <span class="material-symbols-outlined menu-icon">settings</span>
-            </div>
-            <span class="menu-title">App Settings</span>
-        </div>
-        <span class="material-symbols-outlined chevron-icon">chevron_right</span>
     </div>
 </div>
 
