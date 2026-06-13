@@ -72,30 +72,18 @@ else
                 var currentIndex = i; // local copy for closure
                 var currentLogs = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).OrderBy(l => l.SetNumber).ToList();
 
-                int currentSet = _currentSetIndex.GetValueOrDefault(item.ExerciseId, 1);
-                var activeLog = currentLogs.FirstOrDefault(l => l.SetNumber == currentSet);
-
-                if (activeLog == null)
-                {
-                    activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, WorkoutId = WorkoutId, SetNumber = currentSet, Date = _targetDate, FormRating = 3, IsCompleted = false, IsSaved = false, Week = Week ?? _currentProgramWeek };
-                    _activeLogs.Add(activeLog);
-                    currentLogs.Add(activeLog);
-                }
-
-                var history = GetHistoryLog(item.ExerciseId, currentSet);
-
                 <section id="exercise-@currentIndex" class="snap-section" style="height: 100%; width: 100%; scroll-snap-align: start; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 16px 16px 24px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);">
 
                     <!-- Dynamic Background Placeholder -->
                     <div style='position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAGAu4maGWtgwQhZmOumfz5XSAYrxdnzesrRWFY9xyJ12jwXfZHkPX1c8v5QbbuhQb-n7R8fHgk5sRiK6NPhOT9DItBi1Yh6IdsUaJHXHRYMWmcIaiS3WLlP8wcL3L1HaU-gJJ8-b0yMK0NgFTHLV4-RVa1y7dLGmfBdodiHamEaDRSaPb3lCm4hIgg0ZZsNfsbiJ-9hTrSSGtyLMId6nKrK4oM-SoX6nS3Bjq62IE95EvIkxr1j4tldy_FbwB4hGs3aMRv9cUyQA");'></div>
                     <div style="position: absolute; inset: 0; z-index: 0; background: linear-gradient(to bottom, rgba(18,20,20,0.95), rgba(18,20,20,0.5), rgba(18,20,20,0.95));"></div>
 
-                    <!-- Top Info & Menu Container -->
+                    <!-- Top Info Container -->
                     <div class="rf-flex-col" style="position: relative; z-index: 50; gap: 16px;">
                         <div class="rf-flex-row rf-justify-between" style="align-items: flex-start;">
                             <div style="flex: 1;">
                                 <span class="refine-badge">
-                                    Set @currentSet of @item.Sets
+                                    @item.Sets Sets
                                 </span>
                                 <h1 class="font-headline" style="font-size: 30px; font-weight: bold; color: white; margin-top: 12px; letter-spacing: -0.025em; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.07));">
                                     @item.Exercise.Name
@@ -105,98 +93,92 @@ else
                                     @item.Exercise.PrimaryMuscleCategory
                                 </p>
                             </div>
+                        </div>
+                    </div>
 
-                            <!-- Slide Menu -->
-                            @if (currentSet > 1)
+                    <!-- Bottom Sets Panel (Horizontal Swipeable View) -->
+                    <div id="sets-container-@item.ExerciseId" class="hide-scrollbar" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 16px; margin-bottom: 8px; padding-bottom: 8px; width: calc(100% + 32px); margin-left: -16px; padding-left: 16px; padding-right: 16px; box-sizing: border-box; scroll-behavior: smooth; position: relative; z-index: 50;">
+                        @for (int s = 1; s <= item.Sets; s++)
+                        {
+                            var sClosure = s;
+                            var activeLog = currentLogs.FirstOrDefault(l => l.SetNumber == sClosure);
+                            if (activeLog == null)
                             {
-                                <div style="position: relative;">
-                                    <button class="refine-icon-btn" @onclick="() => ToggleMenu(item.ExerciseId)">
-                                        <span class="material-symbols-outlined">more_vert</span>
-                                    </button>
-
-                                    @if (_openMenuId == item.ExerciseId)
-                                    {
-                                        <div style="position: fixed; inset: 0; z-index: 40;" @onclick="CloseMenu"></div>
-                                        <div class="rf-dropdown">
-                                            <button class="refine-dropdown-item" style="border-bottom: none;"
-                                                    @onclick="() => { CloseMenu(); ReturnToPreviousSet(item.ExerciseId); }">
-                                                <span class="material-symbols-outlined text-[20px]">undo</span>
-                                                Önceki Sete Dön
-                                            </button>
-                                        </div>
-                                    }
-                                </div>
+                                activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, WorkoutId = WorkoutId, SetNumber = sClosure, Date = _targetDate, FormRating = 3, IsCompleted = false, IsSaved = false, Week = Week ?? _currentProgramWeek };
+                                _activeLogs.Add(activeLog);
+                                currentLogs.Add(activeLog);
                             }
-                        </div>
+
+                            var history = GetHistoryLog(item.ExerciseId, sClosure);
+
+                            <div id="set-card-@(item.ExerciseId)-@sClosure" class="refine-active-card" style="min-width: 100%; scroll-snap-align: center; scroll-snap-stop: always; flex-shrink: 0; margin-bottom: 0;">
+
+                                <!-- Inputs Grid -->
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 8px;">
+                                    <!-- Weight -->
+                                    <div class="rf-flex-col rf-items-center">
+                                        <span class="refine-input-label">Weight</span>
+                                        <input type="number" inputmode="decimal"
+                                               class="rf-input-number"
+                                               placeholder="@(history?.Weight.ToString() ?? "-")"
+                                               @bind="activeLog.Weight"/>
+                                    </div>
+                                    <!-- Reps -->
+                                    <div class="rf-flex-col rf-items-center">
+                                        <span class="refine-input-label">Reps</span>
+                                        <input type="number" inputmode="numeric"
+                                               class="rf-input-number"
+                                               placeholder="@(history?.Reps.ToString() ?? "-")"
+                                               @bind="activeLog.Reps"/>
+                                    </div>
+                                    <!-- RIR -->
+                                    <div class="rf-flex-col rf-items-center">
+                                        <span class="refine-input-label">RIR</span>
+                                        <input type="number" inputmode="numeric"
+                                               class="rf-input-number"
+                                               placeholder="@(history?.RIR.ToString() ?? "-")"
+                                               @bind="activeLog.RIR"/>
+                                    </div>
+                                </div>
+
+                                <!-- Form Rating -->
+                                <div class="rf-flex-row rf-justify-center rf-items-center" style="gap: 16px; margin-bottom: 8px;">
+                                    <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 1 ? "#ffc107" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 1 ? "drop-shadow(0 0 12px rgba(255,193,7,0.6))" : "none"); transform: @(activeLog.FormRating == 1 ? "scale(1.1)" : "scale(1)");"
+                                            @onclick="() => activeLog.FormRating = 1">
+                                        <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 1 ? "1" : "0");">sentiment_neutral</span>
+                                    </button>
+                                    <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 2 ? "#198754" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 2 ? "drop-shadow(0 0 12px rgba(25,135,84,0.6))" : "none"); transform: @(activeLog.FormRating == 2 ? "scale(1.1)" : "scale(1)");"
+                                            @onclick="() => activeLog.FormRating = 2">
+                                        <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 2 ? "1" : "0");">sentiment_satisfied</span>
+                                    </button>
+                                    <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 3 ? "#f97316" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 3 ? "drop-shadow(0 0 12px rgba(249,115,22,0.6))" : "none"); transform: @(activeLog.FormRating == 3 ? "scale(1.1)" : "scale(1)");"
+                                            @onclick="() => activeLog.FormRating = 3">
+                                        <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 3 ? "1" : "0");">local_fire_department</span>
+                                    </button>
+                                </div>
+
+                                <!-- Log Button -->
+                                <button class="rf-button-primary"
+                                        @onclick="() => LogSet(item.ExerciseId, currentIndex, item.Sets, _exercises.Count, sClosure)">
+                                    <span class="material-symbols-outlined" style='font-size: 20px; font-variation-settings: "wght" 700;'>done_all</span>
+                                    LOG SET @sClosure
+                                </button>
+
+                                <!-- Bottom Links -->
+                                <div class="rf-flex-row rf-justify-center" style="gap: 24px; margin-top: 8px; opacity: 0.7; transform: scale(0.9); transform-origin: top;">
+                                    <button class="refine-ghost-btn" @onclick="() => OpenHistory(item.ExerciseId, item.Exercise.Name)">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">history</span> HISTORY
+                                    </button>
+                                    <button class="refine-ghost-btn">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">videocam</span> FORM VIDEO
+                                    </button>
+                                </div>
+                            </div>
+                        }
                     </div>
 
-                    <!-- Bottom Sets Panel (Single Set View) -->
-                    <div class="refine-active-card" style="margin-bottom: 8px;">
-
-                        <!-- Inputs Grid -->
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 8px;">
-                            <!-- Weight -->
-                            <div class="rf-flex-col rf-items-center">
-                                <span class="refine-input-label">Weight</span>
-                                <input type="number" inputmode="decimal"
-                                       class="rf-input-number"
-                                       placeholder="@(history?.Weight.ToString() ?? "-")"
-                                       @bind="activeLog.Weight"/>
-                            </div>
-                            <!-- Reps -->
-                            <div class="rf-flex-col rf-items-center">
-                                <span class="refine-input-label">Reps</span>
-                                <input type="number" inputmode="numeric"
-                                       class="rf-input-number"
-                                       placeholder="@(history?.Reps.ToString() ?? "-")"
-                                       @bind="activeLog.Reps"/>
-                            </div>
-                            <!-- RIR -->
-                            <div class="rf-flex-col rf-items-center">
-                                <span class="refine-input-label">RIR</span>
-                                <input type="number" inputmode="numeric"
-                                       class="rf-input-number"
-                                       placeholder="@(history?.RIR.ToString() ?? "-")"
-                                       @bind="activeLog.RIR"/>
-                            </div>
-                        </div>
-
-                        <!-- Form Rating -->
-                        <div class="rf-flex-row rf-justify-center rf-items-center" style="gap: 16px; margin-bottom: 8px;">
-                            <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 1 ? "#ffc107" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 1 ? "drop-shadow(0 0 12px rgba(255,193,7,0.6))" : "none"); transform: @(activeLog.FormRating == 1 ? "scale(1.1)" : "scale(1)");"
-                                    @onclick="() => activeLog.FormRating = 1">
-                                <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 1 ? "1" : "0");">sentiment_neutral</span>
-                            </button>
-                            <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 2 ? "#198754" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 2 ? "drop-shadow(0 0 12px rgba(25,135,84,0.6))" : "none"); transform: @(activeLog.FormRating == 2 ? "scale(1.1)" : "scale(1)");"
-                                    @onclick="() => activeLog.FormRating = 2">
-                                <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 2 ? "1" : "0");">sentiment_satisfied</span>
-                            </button>
-                            <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 3 ? "#f97316" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 3 ? "drop-shadow(0 0 12px rgba(249,115,22,0.6))" : "none"); transform: @(activeLog.FormRating == 3 ? "scale(1.1)" : "scale(1)");"
-                                    @onclick="() => activeLog.FormRating = 3">
-                                <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 3 ? "1" : "0");">local_fire_department</span>
-                            </button>
-                        </div>
-
-                        <!-- Log Button -->
-                        <button class="rf-button-primary"
-                                @onclick="() => LogSet(item.ExerciseId, currentIndex, item.Sets, _exercises.Count)">
-                            <span class="material-symbols-outlined" style='font-size: 20px; font-variation-settings: "wght" 700;'>done_all</span>
-                            LOG SET @currentSet
-                        </button>
-
-                        <!-- Bottom Links -->
-                        <div class="rf-flex-row rf-justify-center" style="gap: 24px; margin-top: 8px; opacity: 0.7; transform: scale(0.9); transform-origin: top;">
-                            <button class="refine-ghost-btn" @onclick="() => OpenHistory(item.ExerciseId, item.Exercise.Name)">
-                                <span class="material-symbols-outlined" style="font-size: 18px;">history</span> HISTORY
-                            </button>
-                            <button class="refine-ghost-btn">
-                                <span class="material-symbols-outlined" style="font-size: 18px;">videocam</span> FORM VIDEO
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Scroll Hint (Only if not the last set of the last exercise) -->
-                    @if (!(currentIndex == _exercises.Count - 1 && currentSet == item.Sets))
+                    <!-- Scroll Hint (Only if not the last exercise) -->
+                    @if (currentIndex != _exercises.Count - 1)
                     {
                         <div class="rf-flex-row rf-justify-center" style="position: absolute; bottom: 24px; left: 0; right: 0; z-index: 10; opacity: 0.5; pointer-events: none; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;">
                             <span class="material-symbols-outlined" style="color: white; font-size: 30px;">keyboard_arrow_down</span>
@@ -496,6 +478,13 @@ else
             }
 
             await JSRuntime.InvokeVoidAsync("eval", $"var el = document.getElementById('exercise-{scrollIndex}'); if (el) el.scrollIntoView({{ behavior: 'auto' }});");
+            
+            // Also scroll horizontally to the first uncompleted set of that exercise
+            var exerciseToScroll = _exercises[scrollIndex];
+            if (_currentSetIndex.TryGetValue(exerciseToScroll.ExerciseId, out var uncompletedSet) && uncompletedSet > 1)
+            {
+                await JSRuntime.InvokeVoidAsync("eval", $"setTimeout(function() {{ var nextCard = document.getElementById('set-card-{exerciseToScroll.ExerciseId}-{uncompletedSet}'); if (nextCard) {{ nextCard.scrollIntoView({{ behavior: 'auto', block: 'nearest', inline: 'center' }}); }} }}, 50);");
+            }
         }
     }
 
@@ -538,33 +527,11 @@ else
         await JSRuntime.InvokeVoidAsync("eval", script);
     }
 
-    private void ToggleMenu(int exerciseId)
-    {
-        if (_openMenuId == exerciseId)
-            _openMenuId = null;
-        else
-            _openMenuId = exerciseId;
-    }
 
-    private void CloseMenu()
-    {
-        _openMenuId = null;
-    }
 
-    private void ReturnToPreviousSet(int exerciseId)
+    private async Task LogSet(int exerciseId, int currentExerciseIndex, int maxSets, int totalExercises, int loggedSetNumber)
     {
-        if (_currentSetIndex.ContainsKey(exerciseId) && _currentSetIndex[exerciseId] > 1)
-        {
-            _currentSetIndex[exerciseId]--;
-        }
-    }
-
-    private async Task LogSet(int exerciseId, int currentExerciseIndex, int maxSets, int totalExercises)
-    {
-        if (!_currentSetIndex.ContainsKey(exerciseId)) return;
-
-        var currentSet = _currentSetIndex[exerciseId];
-        var activeLog = _activeLogs.FirstOrDefault(l => l.ExerciseId == exerciseId && l.SetNumber == currentSet);
+        var activeLog = _activeLogs.FirstOrDefault(l => l.ExerciseId == exerciseId && l.SetNumber == loggedSetNumber);
         if (activeLog == null || !activeLog.Weight.HasValue || !activeLog.Reps.HasValue)
         {
             await UiHelper.ShowAlert("Missing Info", "Please enter both weight and repetition values before logging this set.", "OK");
@@ -574,7 +541,7 @@ else
         // Save current progress as draft to database but do not change the IsCompleted and IsSaved values
         await DbService.UpdateSessionLogsAsync(_activeLogs);
 
-        if (_currentSetIndex[exerciseId] >= maxSets)
+        if (loggedSetNumber >= maxSets)
         {
             // We reached the max sets for this exercise.
             bool isLastExercise = (currentExerciseIndex == totalExercises - 1);
@@ -592,18 +559,19 @@ else
         }
         else
         {
-            // Move to next set
-            _currentSetIndex[exerciseId]++;
+            int nextSet = loggedSetNumber + 1;
+            // Move to next set horizontally
+            await JSRuntime.InvokeVoidAsync("eval", $"var nextCard = document.getElementById('set-card-{exerciseId}-{nextSet}'); if (nextCard) {{ nextCard.scrollIntoView({{ behavior: 'smooth', block: 'nearest', inline: 'center' }}); }}");
 
             // Just in case the user went above planned sets (e.g. they added more)
-            var exists = _activeLogs.Any(l => l.ExerciseId == exerciseId && l.SetNumber == _currentSetIndex[exerciseId]);
+            var exists = _activeLogs.Any(l => l.ExerciseId == exerciseId && l.SetNumber == nextSet);
             if (!exists)
             {
                 _activeLogs.Add(new WorkoutLog
                 {
                     ExerciseId = exerciseId,
                     WorkoutId = WorkoutId,
-                    SetNumber = _currentSetIndex[exerciseId],
+                    SetNumber = nextSet,
                     Date = _targetDate,
                     FormRating = 3,
                     IsCompleted = false,
