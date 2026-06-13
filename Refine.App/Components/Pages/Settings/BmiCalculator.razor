@@ -1,0 +1,193 @@
+@page "/profile/bmi-calculator"
+@using Refine.App.Models
+@using Refine.App.Services
+@implements IDisposable
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+
+@if (_user == null)
+{
+    <RfSpinner IsLoading="true"/>
+}
+else
+{
+    <div class="page-container py-4 min-h-screen">
+        <div class="animate-fade-in">
+            <!-- Results Display Card -->
+            <div class="calculator-result-card mb-4 text-center p-4">
+                <div class="result-glow"></div>
+                <div class="result-content">
+                    <span class="result-label">BODY MASS INDEX</span>
+                    @if (BmiValue.HasValue)
+                    {
+                        <div class="bf-percentage-display mt-2 mb-2">
+                            <span class="bf-number">@BmiValue.Value.ToString("F1")</span>
+                        </div>
+                        <div class="bf-category @Category.ColorClass fw-bold fs-5 mb-1">
+                            @Category.Name
+                        </div>
+                        <div class="bf-description text-on-surface-variant small px-3">
+                            @Category.Desc
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="bf-percentage-display mt-2 mb-2">
+                            <span class="bf-placeholder">--.-</span>
+                        </div>
+                        <div class="bf-category text-muted fw-bold fs-5 mb-1">
+                            Awaiting Inputs
+                        </div>
+                        <div class="bf-description text-on-surface-variant small px-3">
+                            Please fill in weight and height to calculate.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Input Fields Card -->
+            <div class="d-flex flex-column gap-3 mb-4">
+                <!-- Weight -->
+                <div class="refine-active-card p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="row-icon-container">
+                            <span class="material-symbols-outlined row-icon">scale</span>
+                        </div>
+                        <span class="refine-input-label m-0 fs-6">Weight</span>
+                    </div>
+                    <div class="input-wrapper" style="width: 130px;">
+                        <input type="number" step="any" class="rf-input-number w-100" style="padding-right: 42px;" @bind="_weight" @bind:event="oninput"/>
+                        <span class="unit-label">kg</span>
+                    </div>
+                </div>
+
+                <!-- Height -->
+                <div class="refine-active-card p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="row-icon-container">
+                            <span class="material-symbols-outlined row-icon">height</span>
+                        </div>
+                        <span class="refine-input-label m-0 fs-6">Height</span>
+                    </div>
+                    <div class="input-wrapper" style="width: 130px;">
+                        <input type="number" step="any" class="rf-input-number w-100" style="padding-right: 42px;" @bind="_height" @bind:event="oninput"/>
+                        <span class="unit-label">cm</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <RfButton IsSticky="true" Icon="check" Text="SAVE INFO" OnClick="SaveToBiometrics"/>
+        </div>
+    </div>
+}
+
+@code {
+    private User? _user;
+    private double? _weight;
+    private double? _height;
+
+    private double? BmiValue => CalculateBmi();
+    private (string Name, string ColorClass, string Desc) Category => BmiValue.HasValue ? GetCategory(BmiValue.Value) : ("", "", "");
+
+    protected override void OnInitialized()
+    {
+        TopBar.SetDetailMode("BMI CALCULATOR");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserValues();
+    }
+
+    private async Task LoadUserValues()
+    {
+        _user = await DbService.GetUserAsync();
+        if (_user != null)
+        {
+            _height = _user.Height > 0 ? _user.Height : null;
+            _weight = _user.Weight > 0 ? _user.Weight : null;
+
+            if (_user.BiometricLogs != null && _user.BiometricLogs.Any())
+            {
+                var sortedLogs = _user.BiometricLogs.OrderByDescending(l => l.Date).ToList();
+                var latestWeight = sortedLogs.FirstOrDefault(l => l.Weight.HasValue)?.Weight;
+                if (latestWeight.HasValue)
+                {
+                    _weight = latestWeight;
+                }
+            }
+        }
+    }
+
+    private double? CalculateBmi()
+    {
+        if (!_weight.HasValue || _weight <= 0 || !_height.HasValue || _height <= 0)
+        {
+            return null;
+        }
+
+        double heightInMeters = _height.Value / 100.0;
+        double bmi = (1.3 * _weight.Value) / Math.Pow(heightInMeters, 2.5);
+        return Math.Max(0.0, Math.Round(bmi, 1));
+    }
+
+    private (string Name, string ColorClass, string Desc) GetCategory(double bmi)
+    {
+        if (bmi < 18.5) return ("Underweight", "text-warning", "You are considered underweight. Consult a healthcare professional.");
+        if (bmi < 25) return ("Normal Weight", "text-success", "You are within the healthy weight range.");
+        if (bmi < 30) return ("Overweight", "text-warning", "You are considered overweight. Consider adjusting your diet and activity.");
+        return ("Obese", "text-danger", "You are in the obese category. Higher risk of health issues.");
+    }
+
+    private async Task SaveToBiometrics()
+    {
+        if (_user == null) return;
+
+        try
+        {
+            bool userUpdated = false;
+
+            if (_height.HasValue && _height.Value != _user.Height)
+            {
+                _user.Height = _height.Value;
+                userUpdated = true;
+            }
+
+            if (_weight.HasValue && _weight.Value != _user.Weight)
+            {
+                _user.Weight = _weight.Value;
+                userUpdated = true;
+            }
+
+            if (userUpdated)
+            {
+                await DbService.UpdateUserAsync(_user);
+            }
+
+            if (_weight.HasValue || _height.HasValue)
+            {
+                var log = new BiometricLog
+                {
+                    UserId = _user.Id,
+                    Date = DateTime.Now,
+                    Weight = _weight
+                };
+
+                await DbService.AddBiometricLogAsync(log);
+            }
+
+            await UiHelper.ShowAlert("Success", "Measurements and BMI metrics have been successfully saved to your history.", "OK");
+            await LoadUserValues();
+        }
+        catch (Exception ex)
+        {
+            await UiHelper.ShowAlert("Error", $"Could not save measurements: {ex.Message}", "OK");
+        }
+    }
+
+    public void Dispose()
+    {
+    }
+}
