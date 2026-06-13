@@ -13,8 +13,15 @@
                 <span class="font-label" style="font-size: 13px; text-transform: uppercase;">@Title</span>
             </div>
             <div class="rf-flex-row" style="align-items: baseline; gap: 4px;">
-                <span class="font-headline" style="font-size: 28px; font-weight: bold; color: @dynamicColor.CurrentPrimaryColor;">@percentage.ToString("0")</span>
-                <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">%</span>
+                @if (DisplayMode == CnsLoadDisplayMode.Percentage)
+                {
+                    <span class="font-headline" style="font-size: 28px; font-weight: bold; color: @dynamicColor.CurrentPrimaryColor;">@percentage.ToString("0")</span>
+                    <span class="font-body" style="font-size: 14px; color: var(--color-on-surface-variant);">%</span>
+                }
+                else
+                {
+                    <span class="font-headline" style="font-size: 28px; font-weight: bold; color: @dynamicColor.CurrentPrimaryColor;">@Math.Round(CurrentLoad, MidpointRounding.AwayFromZero).ToString("0")</span>
+                }
             </div>
         </div>
         <RfProgressBar Percentage="@percentage" CssStyle="margin-top: auto;"/>
@@ -33,4 +40,5 @@
     [Parameter] public decimal CnsThreshold { get; set; }
     [Parameter] public string WarningMessage { get; set; } = "The workout appears to have exceeded the safe fatigue threshold.";
     [Parameter] public string CssClass { get; set; } = "mb-4";
+    [Parameter] public CnsLoadDisplayMode DisplayMode { get; set; } = CnsLoadDisplayMode.Percentage;
 }

@@ -13,6 +13,7 @@ else
 {
 <div class="page-container py-4 px-0 min-h-screen animate-fade-in">
         <div class="settings-list d-flex flex-column gap-4 px-0 animate-fade-in pb-5">
+            <div class="rf-section-label px-2" style="margin-bottom: -16px; margin-top: 8px;">Set Data</div>
             <!-- Preferred Set Count Card -->
             <div class="rf-card p-4">
                 <div class="d-flex align-items-center justify-content-between">
@@ -86,6 +87,7 @@ else
                 </div>
             </div>
 
+            <div class="rf-section-label px-2" style="margin-bottom: -16px; margin-top: 8px;">Time Data</div>
             <!-- Preferred Rest Time Card -->
             <div class="rf-card p-4">
                 <div class="d-flex align-items-center justify-content-between">
@@ -126,6 +128,38 @@ else
                 </div>
             </div>
 
+            <div class="rf-section-label px-2" style="margin-bottom: -16px; margin-top: 8px;">CNS Data</div>
+            <!-- CNS Load Display Mode -->
+            <RfDropdown TValue="CnsLoadDisplayMode"
+                        Icon="neurology"
+                        Placeholder="Select Display Mode"
+                        SheetTitle="DISPLAY MODE"
+                        Value="_user.WorkoutSettings.CnsLoadDisplayMode"
+                        ValueChanged="OnCnsLoadDisplayModeChanged"
+                        Options="_cnsDisplayOptions"
+                        WrapperClass="mb-0" />
+
+            <!-- CNS Threshold Card -->
+            <div class="rf-card p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex flex-column gap-1 text-start">
+                        <h6 class="text-white text-uppercase m-0 tracking-wider" style="font-size: 13px;">CNS Threshold</h6>
+                        <span class="text-on-surface-variant font-label small" style="opacity: 0.8;">Maximum safe fatigue limit</span>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between bg-dark rounded-pill px-1 py-1" style="border: 1px solid rgba(255,255,255,0.05); min-width: 120px;">
+                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 32px; height: 32px; background: rgba(255,255,255,0.1);" @onclick="() => { if(_user.WorkoutSettings.CnsThreshold >= 10m) { _user.WorkoutSettings.CnsThreshold -= 10m; SaveSettings(); } }">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">remove</span>
+                        </button>
+                        <input type="text" inputmode="decimal" class="form-control bg-transparent text-white text-center border-0 fw-bold p-0" style="width: 50px; box-shadow: none;" value="@_user.WorkoutSettings.CnsThreshold.ToString("0.##")" @onchange="OnCnsThresholdChanged"/>
+                        <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-dark" style="width: 32px; height: 32px; background: #C3F400;" @onclick="() => { _user.WorkoutSettings.CnsThreshold += 10m; SaveSettings(); }">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rf-section-label px-2" style="margin-bottom: -16px; margin-top: 8px;">Other</div>
             <!-- Auto Copy Previous Set Data Card -->
             <div class="rf-card p-4">
                 <h6 class="text-white text-uppercase mb-2 tracking-wider text-start" style="font-size: 13px;">Auto Copy Previous Set Data</h6>
@@ -168,6 +202,30 @@ else
 
 @code {
     private User? _user;
+
+    private IEnumerable<RfDropdownOption<CnsLoadDisplayMode>> _cnsDisplayOptions => new List<RfDropdownOption<CnsLoadDisplayMode>>
+    {
+        new() { Value = CnsLoadDisplayMode.Percentage, Text = "Percentage", Icon = "percent" },
+        new() { Value = CnsLoadDisplayMode.Numeric, Text = "Numeric", Icon = "tag" }
+    };
+
+    private async Task OnCnsLoadDisplayModeChanged(CnsLoadDisplayMode mode)
+    {
+        if (_user != null)
+        {
+            _user.WorkoutSettings.CnsLoadDisplayMode = mode;
+            await SaveSettings();
+        }
+    }
+
+    private async Task OnCnsThresholdChanged(ChangeEventArgs e)
+    {
+        if (_user != null && decimal.TryParse(e.Value?.ToString(), out var result))
+        {
+            _user.WorkoutSettings.CnsThreshold = result;
+            await SaveSettings();
+        }
+    }
 
     protected override void OnInitialized()
     {

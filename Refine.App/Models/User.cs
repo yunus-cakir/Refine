@@ -27,6 +27,13 @@ public class WorkoutSettings
     public bool AutoCopyFormRating { get; set; } = true;
     public decimal CnsThreshold { get; set; } = 150m;
     public string WeekLength { get; set; } = "Weekly";
+    public CnsLoadDisplayMode CnsLoadDisplayMode { get; set; } = CnsLoadDisplayMode.Percentage;
+}
+
+public enum CnsLoadDisplayMode
+{
+    Percentage,
+    Numeric
 }
 
 public enum Gender

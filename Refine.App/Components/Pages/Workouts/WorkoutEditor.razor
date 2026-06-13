@@ -64,7 +64,7 @@
 
             <!-- CNS LOAD -->
             <div>
-                <CnsLoadCard Title="CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" WarningMessage="High CNS fatigue!" CssClass="mb-2"/>
+                <CnsLoadCard Title="CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" DisplayMode="@(_currentUser?.WorkoutSettings?.CnsLoadDisplayMode ?? CnsLoadDisplayMode.Percentage)" WarningMessage="High CNS fatigue!" CssClass="mb-2"/>
             </div>
 
             <!-- ESTIMATED MUSCLE IMPACT -->

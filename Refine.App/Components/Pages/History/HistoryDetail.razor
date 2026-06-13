@@ -51,7 +51,7 @@ else
         }
     </div>
 
-    <CnsLoadCard CurrentLoad="TotalActualCnsLoad" CnsThreshold="CnsThreshold"/>
+    <CnsLoadCard CurrentLoad="TotalActualCnsLoad" CnsThreshold="CnsThreshold" DisplayMode="@_displayMode"/>
 
     <div style="margin-bottom: 16px;">
         <MuscleFatigueList Fatigues="_workoutFatigues" Title="Muscle Impact" EmptyMessage="No muscle volume recorded." Preset="GradientPreset.MuscleImpact"/>
@@ -150,6 +150,7 @@ else
     private List<MuscleFatigueInfo>? _workoutFatigues;
     private decimal CnsThreshold = 150m;
     private decimal PreferredRIR = 2.0m;
+    private CnsLoadDisplayMode _displayMode = CnsLoadDisplayMode.Percentage;
 
     private decimal TotalActualCnsLoad => _logsGrouped?.Sum(g =>
         g.Logs.Sum(l =>
@@ -175,6 +176,7 @@ else
         {
             CnsThreshold = user.WorkoutSettings.CnsThreshold;
             PreferredRIR = user.WorkoutSettings.PreferredRIR;
+            _displayMode = user.WorkoutSettings.CnsLoadDisplayMode;
         }
 
         // Ticks'i tekrar DateTime'a çevir

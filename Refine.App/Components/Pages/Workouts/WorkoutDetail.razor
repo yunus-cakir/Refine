@@ -65,7 +65,7 @@ else
 
         <!-- CNS YÜKÜ PROGRESS BAR -->
         <div class="cns-container section-margin">
-            <CnsLoadCard Title="Estimated CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" WarningMessage="Severe CNS Fatigue! This program may overtax your nervous system." CssClass="m-0"/>
+            <CnsLoadCard Title="Estimated CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" DisplayMode="@(_currentUser?.WorkoutSettings?.CnsLoadDisplayMode ?? CnsLoadDisplayMode.Percentage)" WarningMessage="Severe CNS Fatigue! This program may overtax your nervous system." CssClass="m-0"/>
         </div>
 
         <!-- ESTIMATED MUSCLE IMPACT -->
