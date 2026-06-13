@@ -95,7 +95,7 @@
                        MaxLines="1" />
 
                 <!-- Settings Icon (Right) -->
-                <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="Center">
+                <VerticalStackLayout x:Name="LegacyDetailHeaderRightButton" Grid.Column="2" VerticalOptions="Center" HorizontalOptions="Center">
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnTopBarRightTapped" />
                     </VerticalStackLayout.GestureRecognizers>
@@ -139,7 +139,7 @@
                        MaxLines="1" />
 
                 <!-- Circular Settings Icon (Right) -->
-                <Border Grid.Column="2" 
+                <Border x:Name="DetailHeaderRightButton" Grid.Column="2" 
                         VerticalOptions="Center" 
                         WidthRequest="40" 
                         HeightRequest="40" 

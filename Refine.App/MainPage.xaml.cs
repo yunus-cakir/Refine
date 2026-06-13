@@ -15,6 +15,7 @@ public partial class MainPage : ContentPage
         _topBarBridge = topBarBridge;
 
         _topBarBridge.OnConfigChanged += HandleTopBarConfigChanged;
+        _topBarBridge.OnRightActionStateChanged += HandleRightActionStateChanged;
         _navBridge.OnLocationChanged += HandleLocationChanged;
 
         // Varsayılan sekmeyi ayarla (Home)
@@ -75,6 +76,25 @@ public partial class MainPage : ContentPage
                 DetailHeaderGrid.IsVisible = true;
                 DetailHeaderTitle.Text = config.Title?.ToUpper() ?? "DETAIL";
             }
+
+            // Sync right action visibility on config change
+            DetailHeaderRightButton.Opacity = _topBarBridge.HasRightAction ? 1.0 : 0.0;
+            DetailHeaderRightButton.InputTransparent = !_topBarBridge.HasRightAction;
+            
+            LegacyDetailHeaderRightButton.Opacity = _topBarBridge.HasRightAction ? 1.0 : 0.0;
+            LegacyDetailHeaderRightButton.InputTransparent = !_topBarBridge.HasRightAction;
+        });
+    }
+
+    private void HandleRightActionStateChanged(bool hasAction)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            DetailHeaderRightButton.Opacity = hasAction ? 1.0 : 0.0;
+            DetailHeaderRightButton.InputTransparent = !hasAction;
+            
+            LegacyDetailHeaderRightButton.Opacity = hasAction ? 1.0 : 0.0;
+            LegacyDetailHeaderRightButton.InputTransparent = !hasAction;
         });
     }
 

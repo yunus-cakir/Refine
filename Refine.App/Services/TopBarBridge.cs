@@ -17,8 +17,25 @@ public class TopBarBridge
 {
     public event Action<TopBarConfig>? OnConfigChanged;
     public event Action? OnLeftActionTapped;
-    public event Action? OnRightActionTapped;
     public event Action? OnDefaultBackRequested;
+
+    private Action? _onRightActionTapped;
+    public event Action? OnRightActionTapped
+    {
+        add
+        {
+            _onRightActionTapped += value;
+            OnRightActionStateChanged?.Invoke(HasRightAction);
+        }
+        remove
+        {
+            _onRightActionTapped -= value;
+            OnRightActionStateChanged?.Invoke(HasRightAction);
+        }
+    }
+
+    public bool HasRightAction => _onRightActionTapped != null;
+    public event Action<bool>? OnRightActionStateChanged;
 
     public TopBarConfig CurrentConfig { get; private set; } = new();
 
@@ -52,5 +69,5 @@ public class TopBarBridge
         }
     }
 
-    public void RightTapped() => OnRightActionTapped?.Invoke();
+    public void RightTapped() => _onRightActionTapped?.Invoke();
 }
