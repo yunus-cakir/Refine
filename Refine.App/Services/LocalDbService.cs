@@ -52,7 +52,7 @@ public class LocalDbService
                         LastName = "",
                         Height = 175,
                         Weight = 75,
-                        Gender = "Male",
+                        Gender = Gender.Male,
                         TargetDailyCalories = 2500,
                         MetabolismType = "normal",
                         AppSettings = new AppSettings { Language = "en", UnitSystem = "metric", Theme = "dark" },

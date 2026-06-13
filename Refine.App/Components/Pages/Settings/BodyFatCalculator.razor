@@ -1,0 +1,295 @@
+@page "/profile/body-fat-calculator"
+@using Refine.App.Models
+@using Refine.App.Services
+@implements IDisposable
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+
+@if (_user == null)
+{
+    <RfSpinner IsLoading="true"/>
+}
+else
+{
+    <div class="page-container py-4 min-h-screen">
+        <div class="animate-fade-in">
+            <!-- Results Display Card (Glassmorphic / Glow style) -->
+            <div class="calculator-result-card mb-4 text-center p-4">
+                <div class="result-glow"></div>
+                <div class="result-content">
+                    <span class="result-label">ESTIMATED BODY FAT</span>
+                    @if (BfValue.HasValue)
+                    {
+                        <div class="bf-percentage-display mt-2 mb-2">
+                            <span class="bf-number">@BfValue.Value.ToString("F1")</span>
+                            <span class="bf-symbol">%</span>
+                        </div>
+                        <div class="bf-category @Category.ColorClass fw-bold fs-5 mb-1">
+                            @Category.Name
+                        </div>
+                        <div class="bf-description text-on-surface-variant small px-3">
+                            @Category.Desc
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="bf-percentage-display mt-2 mb-2">
+                            <span class="bf-placeholder">--.-</span>
+                            <span class="bf-symbol">%</span>
+                        </div>
+                        <div class="bf-category text-muted fw-bold fs-5 mb-1">
+                            Awaiting Inputs
+                        </div>
+                        <div class="bf-description text-on-surface-variant small px-3">
+                            Please fill in all circumference data and height to calculate.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Input Fields Card -->
+            <div class="d-flex flex-column gap-3 mb-4">
+                <!-- Gender Selection -->
+                <div class="refine-active-card p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="row-icon-container">
+                            <span class="material-symbols-outlined row-icon">wc</span>
+                        </div>
+                        <span class="refine-input-label m-0 fs-6">Gender</span>
+                    </div>
+                    <div class="gender-toggle-container d-flex">
+                        <button type="button" class="gender-btn @(_gender == Gender.Male ? "active" : "")" @onclick="() => SetGender(Gender.Male)">
+                            Male
+                        </button>
+                        <button type="button" class="gender-btn @(_gender == Gender.Female ? "active" : "")" @onclick="() => SetGender(Gender.Female)">
+                            Female
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Height -->
+                <div class="refine-active-card p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="row-icon-container">
+                            <span class="material-symbols-outlined row-icon">height</span>
+                        </div>
+                        <span class="refine-input-label m-0 fs-6">Height</span>
+                    </div>
+                    <div class="input-wrapper" style="width: 130px;">
+                        <input type="number" step="any" class="rf-input-number w-100" style="padding-right: 42px;" @bind="_height" @bind:event="oninput"/>
+                        <span class="unit-label">cm</span>
+                    </div>
+                </div>
+
+                <!-- Neck -->
+                <div class="refine-active-card p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="row-icon-container">
+                            <span class="material-symbols-outlined row-icon">line_weight</span>
+                        </div>
+                        <span class="refine-input-label m-0 fs-6">Neck</span>
+                    </div>
+                    <div class="input-wrapper" style="width: 130px;">
+                        <input type="number" step="any" class="rf-input-number w-100" style="padding-right: 42px;" @bind="_neck" @bind:event="oninput"/>
+                        <span class="unit-label">cm</span>
+                    </div>
+                </div>
+
+                <!-- Waist -->
+                <div class="refine-active-card p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="row-icon-container">
+                            <span class="material-symbols-outlined row-icon">accessibility</span>
+                        </div>
+                        <span class="refine-input-label m-0 fs-6">Waist</span>
+                    </div>
+                    <div class="input-wrapper" style="width: 130px;">
+                        <input type="number" step="any" class="rf-input-number w-100" style="padding-right: 42px;" @bind="_waist" @bind:event="oninput"/>
+                        <span class="unit-label">cm</span>
+                    </div>
+                </div>
+
+                <!-- Hip (Only for Females) -->
+                @if (_gender == Gender.Female)
+                {
+                    <div class="refine-active-card p-3 d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="row-icon-container">
+                                <span class="material-symbols-outlined row-icon">boy</span>
+                            </div>
+                            <span class="refine-input-label m-0 fs-6">Hips</span>
+                        </div>
+                        <div class="input-wrapper" style="width: 130px;">
+                            <input type="number" step="any" class="rf-input-number w-100" style="padding-right: 42px;" @bind="_hip" @bind:event="oninput"/>
+                            <span class="unit-label">cm</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Action Buttons -->
+            <RfButton IsSticky="true" Icon="check" Text="SAVE INFO" OnClick="SaveToBiometrics"/>
+        </div>
+    </div>
+}
+
+@code {
+    private User? _user;
+    private Gender _gender = Gender.Male;
+    private double? _height;
+    private double? _neck;
+    private double? _waist;
+    private double? _hip;
+
+    private double? BfValue => CalculateBodyFat();
+    private (string Name, string ColorClass, string Desc) Category => BfValue.HasValue ? GetCategory(BfValue.Value, _gender) : ("", "", "");
+
+    protected override void OnInitialized()
+    {
+        TopBar.SetDetailMode("BODY FAT CALCULATOR");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserValues();
+    }
+
+    private async Task LoadUserValues()
+    {
+        _user = await DbService.GetUserAsync();
+        if (_user != null)
+        {
+            _gender = _user.Gender;
+            _height = _user.Height > 0 ? _user.Height : null;
+
+            if (_user.BiometricLogs != null && _user.BiometricLogs.Any())
+            {
+                var sortedLogs = _user.BiometricLogs.OrderByDescending(l => l.Date).ToList();
+                _neck = sortedLogs.FirstOrDefault(l => l.Neck.HasValue)?.Neck;
+                _waist = sortedLogs.FirstOrDefault(l => l.Waist.HasValue)?.Waist;
+                _hip = sortedLogs.FirstOrDefault(l => l.Hip.HasValue)?.Hip;
+            }
+        }
+    }
+
+    private void SetGender(Gender newGender)
+    {
+        _gender = newGender;
+    }
+
+    private double? CalculateBodyFat()
+    {
+        if (!_height.HasValue || _height <= 0 || !_neck.HasValue || _neck <= 0 || !_waist.HasValue || _waist <= 0)
+        {
+            return null;
+        }
+
+        if (_gender == Gender.Male)
+        {
+            if (_waist <= _neck) return null;
+            
+            double waistNeckDiff = _waist.Value - _neck.Value;
+            double logWaistNeck = Math.Log10(waistNeckDiff);
+            double logHeight = Math.Log10(_height.Value);
+            
+            double denominator = 1.0324 - 0.19077 * logWaistNeck + 0.15456 * logHeight;
+            if (denominator <= 0) return null;
+
+            double bf = (495.0 / denominator) - 450.0;
+            return Math.Max(0.0, Math.Round(bf, 1));
+        }
+        else // Female
+        {
+            if (!_hip.HasValue || _hip <= 0) return null;
+            
+            double val = _waist.Value + _hip.Value - _neck.Value;
+            if (val <= 0) return null;
+
+            double logVal = Math.Log10(val);
+            double logHeight = Math.Log10(_height.Value);
+
+            double denominator = 1.29579 - 0.35004 * logVal + 0.22100 * logHeight;
+            if (denominator <= 0) return null;
+
+            double bf = (495.0 / denominator) - 450.0;
+            return Math.Max(0.0, Math.Round(bf, 1));
+        }
+    }
+
+    private (string Name, string ColorClass, string Desc) GetCategory(double bf, Gender gender)
+    {
+        if (gender == Gender.Male)
+        {
+            if (bf < 2) return ("Underessential Fat", "text-warning", "Body fat is below essential levels. Consult a healthcare professional.");
+            if (bf <= 5) return ("Essential Fat", "text-success", "Essential fat required for basic physiological and hormonal functions.");
+            if (bf <= 13) return ("Athletes", "text-info", "Typical fat level for elite athletes and highly active individuals.");
+            if (bf <= 17) return ("Fitness", "text-success-accent", "Healthy, fit physical conditioning.");
+            if (bf <= 24) return ("Acceptable", "text-on-surface-variant", "Normal range for average health and physical activity levels.");
+            return ("Obesity", "text-danger", "Higher risk of cardiovascular and metabolic health issues.");
+        }
+        else
+        {
+            if (bf < 10) return ("Underessential Fat", "text-warning", "Body fat is below essential levels. Consult a healthcare professional.");
+            if (bf <= 13) return ("Essential Fat", "text-success", "Essential fat required for basic physiological and hormonal functions.");
+            if (bf <= 20) return ("Athletes", "text-info", "Typical fat level for elite athletes and highly active individuals.");
+            if (bf <= 24) return ("Fitness", "text-success-accent", "Healthy, fit physical conditioning.");
+            if (bf <= 31) return ("Acceptable", "text-on-surface-variant", "Normal range for average health and physical activity levels.");
+            return ("Obesity", "text-danger", "Higher risk of cardiovascular and metabolic health issues.");
+        }
+    }
+
+    private async Task SaveToBiometrics()
+    {
+        if (_user == null) return;
+
+        try
+        {
+            bool userUpdated = false;
+
+            if (_height.HasValue && _height.Value != _user.Height)
+            {
+                _user.Height = _height.Value;
+                userUpdated = true;
+            }
+
+            if (_gender != _user.Gender)
+            {
+                _user.Gender = _gender;
+                userUpdated = true;
+            }
+
+            if (userUpdated)
+            {
+                await DbService.UpdateUserAsync(_user);
+            }
+
+            bool hasLogData = _neck.HasValue || _waist.HasValue || (_gender == Gender.Female && _hip.HasValue);
+            if (hasLogData)
+            {
+                var log = new BiometricLog
+                {
+                    UserId = _user.Id,
+                    Date = DateTime.Now,
+                    Weight = _user.Weight > 0 ? _user.Weight : null,
+                    Neck = _neck,
+                    Waist = _waist,
+                    Hip = _gender == Gender.Female ? _hip : null
+                };
+
+                await DbService.AddBiometricLogAsync(log);
+            }
+
+            await UiHelper.ShowAlert("Success", "Measurements and body fat metrics have been successfully saved to your history.", "OK");
+            await LoadUserValues();
+        }
+        catch (Exception ex)
+        {
+            await UiHelper.ShowAlert("Error", $"Could not save measurements: {ex.Message}", "OK");
+        }
+    }
+
+    public void Dispose()
+    {
+    }
+}

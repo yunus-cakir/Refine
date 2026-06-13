@@ -1,17 +1,26 @@
+@using Refine.App.Models
+
+@{
+    var progressPercentage = (decimal)(Ratio * 100);
+    var dynamicColor = GradientPreset.Tier.GetColor(progressPercentage);
+    var activeColor = Ratio >= 0.8 ? dynamicColor.CurrentPrimaryColor : "var(--color-on-surface-variant)";
+    var subtitleColor = Ratio >= 0.8 ? dynamicColor.CurrentPrimaryColor : "transparent";
+}
+
 <HomeCard
     WidthWeight="WidthWeight"
     IsLoading="IsLoading"
     Icon="local_fire_department"
     IconFill="Ratio >= 0.8"
     Title="Streak"
-    TitleColor='@(Ratio >= 0.8 ? "#c4f000" : "var(--color-on-surface-variant)")'
+    TitleColor="@activeColor"
     PrimaryText="@CompletedDays.ToString()"
     SecondaryText="@($"/ {TotalDays} days")"
     Subtitle='@(Ratio >= 0.8 ? "CRUSHING IT!" : "KEEP GOING")'
-    SubtitleColor='@(Ratio >= 0.8 ? "#c4f000" : "transparent")'
+    SubtitleColor="@subtitleColor"
     ShowProgressBar="true"
     ProgressValue="@(Ratio * 100)"
-    ProgressColor='@(Ratio >= 0.8 ? "#c4f000" : "var(--color-primary)")'
+    ProgressColor="@dynamicColor"
     ProgressBackgroundColor="rgba(255,255,255,0.05)"
 />
 

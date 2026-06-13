@@ -1,14 +1,20 @@
+@using Refine.App.Models
+
+@{
+    var dynamicColor = GradientPreset.DefaultCns.GetColor(100m - Value);
+}
+
 <HomeCard
     WidthWeight="WidthWeight"
     IsLoading="IsLoading"
     Icon="favorite"
     Title="Recovery"
     PrimaryText="@Value.ToString()"
-    PrimaryTextColor="var(--color-tertiary)"
+    PrimaryTextColor="@dynamicColor.CurrentPrimaryColor"
     SecondaryText="%"
     ShowProgressBar="true"
     ProgressValue="@Value"
-    ProgressColor="var(--color-primary-container)"
+    ProgressColor="@dynamicColor"
     ProgressBackgroundColor="var(--color-surface-container-highest)"
     OnClick="OnClick"/>
 
@@ -17,4 +23,4 @@
     [Parameter] public int WidthWeight { get; set; } = 1;
     [Parameter] public int Value { get; set; } = 84;
     [Parameter] public EventCallback OnClick { get; set; }
-}
+}

@@ -1,9 +1,10 @@
+@using Refine.App.Models
 @using Refine.App.Services
 
 @if (Type == ProgressBarType.Linear)
 {
     <div style="width: 100%; background-color: var(--color-surface-container-highest); height: @Height; border-radius: 9999px; overflow: hidden; @CssStyle">
-        <div style="background-color: @BarColor; width: @(Math.Min(100, Percentage).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%; height: 100%; border-radius: 9999px; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+        <div style="background: linear-gradient(90deg, @BarColors.CurrentPrimaryColor, @BarColors.CurrentSecondaryColor); width: @(Math.Min(100, Percentage).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%; height: 100%; border-radius: 9999px; transition: width 0.3s ease, background 0.3s ease;"></div>
     </div>
 }
 else if (Type == ProgressBarType.Circular)
@@ -11,19 +12,25 @@ else if (Type == ProgressBarType.Circular)
     <div style="position: relative; width: @Size; height: @Size; @CssStyle">
         <!-- Simple Circular Progress SVG -->
         <svg viewBox="0 0 36 36" style="width: 100%; height: 100%;">
+            <defs>
+                <linearGradient id="gradient-@_uniqueId" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="@BarColors.CurrentPrimaryColor" />
+                    <stop offset="100%" stop-color="@BarColors.CurrentSecondaryColor" />
+                </linearGradient>
+            </defs>
             <path stroke="var(--color-surface-container-highest)" stroke-width="4" fill="none"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-            <path stroke="@BarColor" stroke-width="4" stroke-dasharray="@(Math.Min(100, Percentage).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)), 100" fill="none" stroke-linecap="round"
+            <path stroke="url(#gradient-@_uniqueId)" stroke-width="4" stroke-dasharray="@(Math.Min(100, Percentage).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)), 100" fill="none" stroke-linecap="round"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style="transition: stroke-dasharray 0.3s ease, stroke 0.3s ease;" />
         </svg>
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
             @if (ChildContent != null)
             {
-                @ChildContent(BarColor)
+                @ChildContent(BarColors.CurrentPrimaryColor)
             }
             else
             {
-                <span class="font-headline" style="font-size: @FontSize; font-weight: bold; color: @BarColor;">@Percentage.ToString("0")%</span>
+                <span class="font-headline" style="font-size: @FontSize; font-weight: bold; color: @BarColors.CurrentPrimaryColor;">@Percentage.ToString("0")%</span>
             }
         </div>
     </div>
@@ -35,6 +42,8 @@ else if (Type == ProgressBarType.Circular)
         Linear,
         Circular
     }
+
+    private string _uniqueId = Guid.NewGuid().ToString("N");
 
     [Parameter] public ProgressBarType Type { get; set; } = ProgressBarType.Linear;
     [Parameter] public decimal Percentage { get; set; }
@@ -49,13 +58,16 @@ else if (Type == ProgressBarType.Circular)
     // Passes the evaluated BarColor to child content if custom text is desired
     [Parameter] public RenderFragment<string>? ChildContent { get; set; }
 
-    public string BarColor => GetDynamicColor(Percentage, InvertColorLogic);
+    [Parameter] public GradientPreset Preset { get; set; } = GradientPreset.DefaultCns;
 
-    public static string GetDynamicColor(decimal percentage, bool invert = false)
+    public GradientColor BarColors => GetDynamicColor(Percentage, InvertColorLogic, Preset);
+
+    public static GradientColor GetDynamicColor(decimal percentage, bool invert = false, GradientPreset? preset = null)
     {
+        preset ??= GradientPreset.DefaultCns;
         // For recovery (invert = true), 100% is Green, 0% is Red/Purple
         // For fatigue (invert = false), 0% is Green, 100% is Red/Purple
         decimal val = invert ? 100m - percentage : percentage;
-        return CnsHelper.GetCnsColor(val);
+        return preset.GetColor(val);
     }
 }

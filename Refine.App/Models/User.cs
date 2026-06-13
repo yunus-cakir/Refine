@@ -29,6 +29,12 @@ public class WorkoutSettings
     public string WeekLength { get; set; } = "Weekly";
 }
 
+public enum Gender
+{
+    Male,
+    Female
+}
+
 public class User
 {
     [PrimaryKey, AutoIncrement]
@@ -36,11 +42,12 @@ public class User
     public string FirstName { get; set; } = "";
     public string LastName { get; set; } = "";
     public string Email { get; set; } = "";
-    public string Gender { get; set; } = "";
+    public Gender Gender { get; set; } = Gender.Male;
     
     // Flat cached biometric data
     public double Height { get; set; }
     public double Weight { get; set; }
+    public int Age { get; set; }
 
     // Flat nutrition settings
     public int TargetDailyCalories { get; set; } = 2500;

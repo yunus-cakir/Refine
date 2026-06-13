@@ -3,26 +3,17 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<div class="rf-card" @onclick="HandleClick" @attributes="AdditionalAttributes">
-    <div class="d-flex justify-content-between align-items-start" style="z-index: 10; position: relative;">
-        <div>
-            @if (ReverseLayout)
-            {
-                <div class="rf-flex-row rf-items-center mb-1" style="gap: 8px; color: var(--color-on-surface-variant);">
-                    <span class="material-symbols-outlined" style="font-size: 18px;">fitness_center</span>
-                    <span class="font-label" style="font-size: 11px; text-transform: uppercase;">@(string.IsNullOrEmpty(Subtitle) ? $"Last Trained: {LastTrained.ToString("MMM dd")}" : Subtitle)</span>
-                </div>
-                <h6 class="fw-bold mb-0" style="color: var(--refine-text);">@ExerciseName</h6>
-            }
-            else
-            {
-                <h6 class="fw-bold mb-1" style="color: var(--refine-text);">@ExerciseName</h6>
-                <small class="text-muted">@(string.IsNullOrEmpty(Subtitle) ? $"Last Trained: {LastTrained.ToString("MMM dd")}" : Subtitle)</small>
-            }
-        </div>
-        <div class="d-flex flex-column align-items-end">
-            @if (ShowValueBadge)
-            {
+<HomeCard 
+    Icon="@(string.IsNullOrEmpty(ReverseLayout ? Subtitle : ExerciseName) ? "" : "fitness_center")"
+    Title="@(ReverseLayout ? Subtitle : ExerciseName)"
+    TitleColor="@(ReverseLayout ? "var(--color-on-surface-variant)" : "#ffffff")"
+    OnClick="HandleClick"
+    AdditionalAttributes="AdditionalAttributes">
+
+    <HeaderRightContent>
+        @if (ShowValueBadge)
+        {
+            <div class="d-flex flex-column align-items-end">
                 @if (DataPoints != null && DataPoints.Any())
                 {
                     <div class="metric-highlight" style="background-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.1)" : "rgba(255, 69, 58, 0.1)"); border-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.2)" : "rgba(255, 69, 58, 0.2)");">
@@ -33,20 +24,30 @@
                 <span class="badge mt-2" style="font-size: 11px; padding: 4px 8px; border-radius: 8px; font-weight: bold; background-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.15)" : "rgba(255, 69, 58, 0.15)"); color: @(RateOfChange >= 0 ? "#c3f400" : "#ff453a");">
                     @(RateOfChange >= 0 ? "+" : "")@(Math.Round(RateOfChange * 100, 1))%
                 </span>
-            }
-            else
-            {
-                <div class="metric-highlight" style="background-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.1)" : "rgba(255, 69, 58, 0.1)"); border-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.2)" : "rgba(255, 69, 58, 0.2)");">
-                    <span class="fw-bold" style="color: @(RateOfChange >= 0 ? "#c3f400" : "#ff453a");">@(RateOfChange >= 0 ? "+" : "")@(Math.Round(RateOfChange * 100, 1))%</span>
-                </div>
-            }
-        </div>
-    </div>
+            </div>
+        }
+        else
+        {
+            <div class="metric-highlight" style="background-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.1)" : "rgba(255, 69, 58, 0.1)"); border-color: @(RateOfChange >= 0 ? "rgba(195, 244, 0, 0.2)" : "rgba(255, 69, 58, 0.2)");">
+                <span class="fw-bold" style="color: @(RateOfChange >= 0 ? "#c3f400" : "#ff453a");">@(RateOfChange >= 0 ? "+" : "")@(Math.Round(RateOfChange * 100, 1))%</span>
+            </div>
+        }
+    </HeaderRightContent>
 
-    <div class="sparkline-container" style="position: relative; z-index: 10;">
-        <canvas @ref="_canvasRef"></canvas>
-    </div>
-</div>
+    <Content>
+        @if (ReverseLayout)
+        {
+            <h6 class="fw-bold mb-1" style="color: var(--refine-text);">@ExerciseName</h6>
+        }
+        else
+        {
+            <small class="text-muted mb-2">@(string.IsNullOrEmpty(Subtitle) ? $"Last Trained: {LastTrained.ToString("MMM dd")}" : Subtitle)</small>
+        }
+        <div class="sparkline-container" style="position: relative; z-index: 10; flex: 1; min-height: 50px;">
+            <canvas @ref="_canvasRef"></canvas>
+        </div>
+    </Content>
+</HomeCard>
 
 @code {
     [Parameter] public int ExerciseId { get; set; }

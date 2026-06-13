@@ -26,7 +26,7 @@ else
 
         <RfInput Title="Email Address" Icon="mail" Type="email" Placeholder="Enter email address" Delay="0.1" @bind-Value="_user.Email" />
 
-        <RfDropdown TValue="string"
+        <RfDropdown TValue="Gender"
                     Title="Gender"
                     Icon="wc"
                     Placeholder="Select Gender"
@@ -45,11 +45,10 @@ else
 @code {
     private User? _user;
     
-    private List<RfDropdownOption<string>> _genderOptions = new()
+    private List<RfDropdownOption<Gender>> _genderOptions = new()
     {
-        new() { Value = "Male", Text = "Male", Icon = "male" },
-        new() { Value = "Female", Text = "Female", Icon = "female" },
-        new() { Value = "Prefer not to say", Text = "Prefer not to say", Icon = "visibility_off" }
+        new() { Value = Gender.Male, Text = "Male", Icon = "male" },
+        new() { Value = Gender.Female, Text = "Female", Icon = "female" }
     };
 
     protected override async Task OnInitializedAsync()

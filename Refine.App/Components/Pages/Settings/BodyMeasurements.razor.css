@@ -18,6 +18,11 @@
     letter-spacing: 0.02em;
 }
 
+.label-icon-top {
+    font-size: 14px;
+    color: var(--color-on-surface-variant);
+}
+
 .row-icon-container {
     width: 42px;
     height: 42px;
@@ -56,6 +61,7 @@
         opacity: 0;
         transform: translateY(12px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);

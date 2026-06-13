@@ -1,14 +1,14 @@
 @using Refine.App.Models
 
-<div class="rf-card" @onclick="HandleClick" style="background-color: var(--color-primary-container); color: var(--color-on-primary-fixed); overflow: hidden; position: relative; cursor: @(IsLoading ? "default" : "pointer"); border: none; box-shadow: none;">
+<div class="rf-card" @onclick="HandleClick" style="background: linear-gradient(to bottom right, var(--color-primary-container), #32A390); color: var(--color-on-primary-fixed); overflow: hidden; position: relative; cursor: @(IsLoading ? "default" : "pointer"); border: none; box-shadow: none;">
     <!-- Abstract grid overlay -->
     <div style="position: absolute; inset: 0; opacity: 0.1; pointer-events: none; background-image: radial-gradient(circle, #000 1px, transparent 1px); background-size: 20px 20px;"></div>
-    
+
     <div class="rf-flex-col" style="position: relative; z-index: 10; gap: 16px;">
         <div class="rf-flex-row rf-justify-between rf-items-center">
             <span class="font-label" style="background-color: rgba(0,0,0,0.1); padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: bold; letter-spacing: 0.1em; color: var(--color-on-primary-fixed);">UP NEXT</span>
         </div>
-        
+
         @if (IsLoading)
         {
             <div>
@@ -36,14 +36,22 @@
                 </div>
             </div>
             <div class="rf-flex-row rf-justify-between rf-items-center" style="margin-top: 8px;">
-                <div class="rf-flex-row" style="gap: 8px;">
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-on-primary-fixed);"></span>
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: rgba(22, 30, 0, 0.3);"></span>
+                <div class="rf-flex-row rf-items-center" style="gap: 8px;">
+                    @if (WorkoutStates != null)
+                    {
+                        for (int i = 0; i < WorkoutStates.Count; i++)
+                        {
+                            var isSaved = WorkoutStates[i];
+                            var isActive = i == ActiveWorkoutIndex;
+                            var opacity = isSaved ? "1" : "0.35";
+                            var activeStyle = isActive ? "outline: 1px solid var(--color-on-primary-fixed); outline-offset: 3px;" : "";
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-on-primary-fixed); opacity: @opacity; transition: opacity 0.2s ease, outline 0.2s ease; @activeStyle"></span>
+                        }
+                    }
                 </div>
-                <button class="font-label" @onclick="OnStartClick" @onclick:stopPropagation="true" style="background-color: var(--color-on-primary-fixed); color: var(--color-primary-container); padding: 8px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <button class="font-label" @onclick="OnStartClick" @onclick:stopPropagation="true" style="background-color: rgba(0, 0, 0, 0.12); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15); color: var(--color-on-primary-fixed); padding: 8px 24px; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
                     @(IsSaved ? "CONTINUE" : "START")
-                    <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
+                    <span class="material-symbols-outlined" style="font-size: 16px;">arrow_forward</span>
                 </button>
             </div>
         }
@@ -56,6 +64,8 @@
     [Parameter] public string MuscleGroups { get; set; }
     [Parameter] public int Duration { get; set; }
     [Parameter] public bool IsSaved { get; set; }
+    [Parameter] public List<bool> WorkoutStates { get; set; } = new();
+    [Parameter] public int ActiveWorkoutIndex { get; set; } = -1;
     [Parameter] public EventCallback OnCardClick { get; set; }
     [Parameter] public EventCallback OnStartClick { get; set; }
 
@@ -66,4 +76,5 @@
             await OnCardClick.InvokeAsync();
         }
     }
+
 }

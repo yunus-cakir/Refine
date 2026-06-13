@@ -11,9 +11,9 @@
         {
             <span class="material-symbols-outlined input-icon">@Icon</span>
         }
-        <div class="profile-input d-flex align-items-center" style="color: @(EqualityComparer<TValue>.Default.Equals(Value, default) || string.IsNullOrEmpty(Value?.ToString()) ? "rgba(255,255,255,0.35)" : "#ffffff") !important; flex-grow: 1; min-width: 0; overflow: hidden;">
+        <div class="profile-input d-flex align-items-center" style="color: @(IsValueSelected(Value) ? "#ffffff" : "rgba(255,255,255,0.35)") !important; flex-grow: 1; min-width: 0; overflow: hidden;">
             <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; width: 100%;">
-                @(EqualityComparer<TValue>.Default.Equals(Value, default) || string.IsNullOrEmpty(Value?.ToString()) ? Placeholder : GetDisplayValue(Value))
+                @(IsValueSelected(Value) ? GetDisplayValue(Value) : Placeholder)
             </span>
         </div>
         <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 20px;">expand_more</span>
@@ -94,5 +94,12 @@
     {
         var option = Options.FirstOrDefault(o => EqualityComparer<TValue>.Default.Equals(o.Value, value));
         return option?.Text ?? value?.ToString() ?? "";
+    }
+
+    private bool IsValueSelected(TValue value)
+    {
+        if (value == null) return false;
+        if (value is string str && string.IsNullOrEmpty(str)) return false;
+        return Options.Any(o => EqualityComparer<TValue>.Default.Equals(o.Value, value));
     }
 }

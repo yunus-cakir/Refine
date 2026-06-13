@@ -314,6 +314,13 @@ else
             {
                 _currentProgramWeek = program.Week;
                 _currentProgramCycle = program.Cycle;
+
+                if (Week.HasValue && Week.Value > program.Week)
+                {
+                    program.Week = Week.Value;
+                    await DbService.SaveWorkoutProgramAsync(program);
+                    _currentProgramWeek = program.Week;
+                }
             }
 
             _exercises = _workout.Items.OrderBy(i => i.Order).ToList();

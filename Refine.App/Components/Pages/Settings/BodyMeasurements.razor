@@ -8,38 +8,52 @@
 
 @if (_user == null)
 {
-    <RfSpinner IsLoading="true" />
+    <RfSpinner IsLoading="true"/>
 }
 else
 {
-<div class="page-container py-4 min-h-screen">
+    <div class="page-container py-4 min-h-screen">
         <div class="animate-fade-in">
-            <!-- Top measurement cards: BOY & KILO -->
+            <!-- Top measurement cards: AGE, BOY & KILO -->
             <div class="row g-3 mb-4">
-                <!-- BOY Card -->
-                <div class="col-6">
+                <!-- AGE Card -->
+                <div class="col-4">
                     <div class="refine-active-card">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="refine-input-label">HEIGHT</span>
-                            <span class="material-symbols-outlined label-icon-top">height</span>
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="refine-input-label" style="margin-bottom: 0;">AGE</span>
+                            <span class="material-symbols-outlined label-icon-top" style="line-height: 1;">calendar_today</span>
                         </div>
-                        <div class="input-wrapper">
-                            <input type="number" step="any" class="rf-input-number" style="padding-right: 42px; width: 100%;" placeholder="@(_ghostHeight?.ToString() ?? "---")" @bind="_inputHeight"/>
-                            <span class="unit-label">cm</span>
+                        <div class="d-flex flex-column align-items-center">
+                            <input type="number" class="rf-input-number" style="width: 100%;" placeholder="@(_ghostAge?.ToString() ?? "---")" @bind="_inputAge"/>
+                            <span class="mt-2" style="font-size: 11px; font-weight: 700; color: #8c887d; letter-spacing: 0.05em; text-transform: uppercase;">YEARS</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOY Card -->
+                <div class="col-4">
+                    <div class="refine-active-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="refine-input-label" style="margin-bottom: 0;">HEIGHT</span>
+                            <span class="material-symbols-outlined label-icon-top" style="line-height: 1;">height</span>
+                        </div>
+                        <div class="d-flex flex-column align-items-center">
+                            <input type="number" step="any" class="rf-input-number" style="width: 100%;" placeholder="@(_ghostHeight?.ToString() ?? "---")" @bind="_inputHeight"/>
+                            <span class="mt-2" style="font-size: 11px; font-weight: 700; color: #8c887d; letter-spacing: 0.05em; text-transform: uppercase;">cm</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- KILO Card -->
-                <div class="col-6">
+                <div class="col-4">
                     <div class="refine-active-card">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="refine-input-label">WEIGHT</span>
-                            <span class="material-symbols-outlined label-icon-top">weight</span>
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="refine-input-label" style="margin-bottom: 0;">WEIGHT</span>
+                            <span class="material-symbols-outlined label-icon-top" style="line-height: 1;">weight</span>
                         </div>
-                        <div class="input-wrapper">
-                            <input type="number" step="any" class="rf-input-number" style="padding-right: 42px; width: 100%;" placeholder="@(_ghostWeight?.ToString() ?? "---")" @bind="_inputWeight"/>
-                            <span class="unit-label">kg</span>
+                        <div class="d-flex flex-column align-items-center">
+                            <input type="number" step="any" class="rf-input-number" style="width: 100%;" placeholder="@(_ghostWeight?.ToString() ?? "---")" @bind="_inputWeight"/>
+                            <span class="mt-2" style="font-size: 11px; font-weight: 700; color: #8c887d; letter-spacing: 0.05em; text-transform: uppercase;">kg</span>
                         </div>
                     </div>
                 </div>
@@ -111,12 +125,7 @@ else
             </div>
 
             <!-- Save Button -->
-            <div class="mt-4 px-1">
-                <button class="rf-button-primary w-100" @onclick="SaveMeasurements">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">check</span>
-                    SAVE
-                </button>
-            </div>
+            <RfButton IsSticky="true" Icon="check" Text="SAVE" OnClick="SaveMeasurements"/>
         </div>
     </div>
 }
@@ -125,6 +134,7 @@ else
     private User? _user;
 
     // Optional input fields (null unless entered)
+    private int? _inputAge;
     private double? _inputHeight;
     private double? _inputWeight;
     private double? _inputNeck;
@@ -133,6 +143,7 @@ else
     private double? _inputHip;
 
     // Previous values for ghost text placeholders
+    private int? _ghostAge;
     private double? _ghostHeight;
     private double? _ghostWeight;
     private double? _ghostNeck;
@@ -151,12 +162,13 @@ else
     }
 
 
-
     private async Task LoadUserAndGhostValues()
     {
         _user = await DbService.GetUserAsync();
         if (_user != null)
         {
+            _ghostAge = _user.Age > 0 ? _user.Age : null;
+
             // Height is a flat cached biometric property
             _ghostHeight = _user.Height > 0 ? _user.Height : null;
 
@@ -180,7 +192,7 @@ else
         if (_user == null) return;
 
         // Verify if at least one value was modified/entered
-        bool hasEnteredData = _inputHeight.HasValue || _inputWeight.HasValue || _inputNeck.HasValue ||
+        bool hasEnteredData = _inputAge.HasValue || _inputHeight.HasValue || _inputWeight.HasValue || _inputNeck.HasValue ||
                               _inputShoulder.HasValue || _inputWaist.HasValue || _inputHip.HasValue;
 
         if (!hasEnteredData)
@@ -191,10 +203,22 @@ else
 
         try
         {
-            // 1. If height was entered, update the User object directly
+            // 1. Update flat user attributes (Age, Height)
+            bool userUpdated = false;
+            if (_inputAge.HasValue)
+            {
+                _user.Age = _inputAge.Value;
+                userUpdated = true;
+            }
+
             if (_inputHeight.HasValue)
             {
                 _user.Height = _inputHeight.Value;
+                userUpdated = true;
+            }
+
+            if (userUpdated)
+            {
                 await DbService.UpdateUserAsync(_user);
             }
 
@@ -222,6 +246,7 @@ else
             await UiHelper.ShowAlert("Başarılı", "Girdiğiniz ölçüm verileri başarıyla kaydedildi.", "Tamam");
 
             // Clear inputs so placeholders show the new values
+            _inputAge = null;
             _inputHeight = null;
             _inputWeight = null;
             _inputNeck = null;

@@ -26,7 +26,7 @@
                     <div class="rf-flex-col" style="gap: 16px;">
                         @foreach (var muscle in Fatigues)
                         {
-                            var mColor = RfProgressBar.GetDynamicColor(muscle.FatiguePercentage);
+                            var mColor = RfProgressBar.GetDynamicColor(muscle.FatiguePercentage, false, Preset);
                             <div class="rf-flex-col" style="gap: 8px;">
                                 <div class="rf-flex-row" style="align-items: center; justify-content: space-between; gap: 16px; width: 100%;">
                                     <!-- Left Column: Title & Sub-muscles badges -->
@@ -37,22 +37,28 @@
                                             <div class="rf-flex-row" style="flex-wrap: wrap; gap: 6px;">
                                                 @foreach (var sub in muscle.SubMuscles)
                                                 {
-                                                    var subColor = RfProgressBar.GetDynamicColor(sub.FatiguePercentage);
-                                                    <span class="rf-badge-faded" style="font-size: 10px; padding: 2px 8px; border-color: rgba(255, 255, 255, 0.05); color: var(--color-on-surface-variant); display: inline-flex; align-items: center;">
+                                                    var subColor = RfProgressBar.GetDynamicColor(sub.FatiguePercentage, false, Preset);
+                                                    <span class="rf-badge-faded" style="font-size: 10px; padding: 2px 8px; border-color: rgba(255, 255, 255, 0.05); color: @subColor.CurrentPrimaryColor; display: inline-flex; align-items: center;">
                                                         <span style="font-weight: 500;">@sub.MuscleName</span>
-                                                        <span style="color: @subColor; margin-left: 4px; font-weight: bold;">@Math.Round(sub.FatiguePercentage)%</span>
+                                                        @if (ShowPercentageIndicators)
+                                                        {
+                                                            <span style="color: @subColor.CurrentPrimaryColor; margin-left: 4px; font-weight: bold;">@Math.Round(sub.FatiguePercentage)%</span>
+                                                        }
                                                     </span>
                                                 }
                                             </div>
                                         }
                                     </div>
-                                    
-                                    <!-- Right Column: Primary muscle group percentage -->
-                                    <div style="flex-shrink: 0; text-align: right; display: flex; align-items: center; justify-content: flex-end;">
-                                        <span class="font-headline" style="color: @mColor; font-size: 20px; font-weight: bold; line-height: 1;">@Math.Round(muscle.FatiguePercentage)%</span>
-                                    </div>
+
+                                    @if (ShowPercentageIndicators)
+                                    {
+                                        <!-- Right Column: Primary muscle group percentage -->
+                                        <div style="flex-shrink: 0; text-align: right; display: flex; align-items: center; justify-content: flex-end;">
+                                            <span class="font-headline" style="color: @mColor.CurrentPrimaryColor; font-size: 20px; font-weight: bold; line-height: 1;">@Math.Round(muscle.FatiguePercentage)%</span>
+                                        </div>
+                                    }
                                 </div>
-                                <RfProgressBar Percentage="@muscle.FatiguePercentage" />
+                                <RfProgressBar Percentage="@muscle.FatiguePercentage" Preset="Preset"/>
                             </div>
                         }
                     </div>
@@ -73,6 +79,8 @@
     [Parameter] public string CssStyle { get; set; } = "";
     [Parameter] public bool InitiallyExpanded { get; set; } = false;
     [Parameter] public bool Collapsible { get; set; } = true;
+    [Parameter] public GradientPreset Preset { get; set; } = GradientPreset.DefaultCns;
+    [Parameter] public bool ShowPercentageIndicators { get; set; } = false;
 
     private bool _isExpanded;
 
@@ -86,4 +94,5 @@
         if (!Collapsible) return;
         _isExpanded = !_isExpanded;
     }
+
 }

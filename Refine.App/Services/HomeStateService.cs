@@ -40,6 +40,8 @@ namespace Refine.App.Services
         public string UpNextMuscleGroups { get; private set; } = "";
         public bool UpNextIsSaved { get; private set; } = false;
         public int UpNextWeek { get; private set; } = 1;
+        public List<bool> UpNextWorkoutStates { get; private set; } = new();
+        public int UpNextWorkoutIndex { get; private set; } = -1;
 
         public event Action? OnStateChanged;
 
@@ -273,33 +275,40 @@ namespace Refine.App.Services
                 if (program != null && program.Workouts != null && program.Workouts.Any())
                 {
                     var orderedWorkouts = program.Workouts.OrderBy(w => w.Order).ToList();
-                    var completedWorkouts = new Dictionary<int, bool>();
+                    
+                    int searchWeek = program.Week;
+                    bool found = false;
 
-                    foreach (var w in orderedWorkouts)
+                    while (!found)
                     {
-                        completedWorkouts[w.Id] = await _dbService.HasLogForWeekAsync(w.Id, program.Week, program.Cycle);
-                    }
-
-                    var completedList = orderedWorkouts
-                        .Where(w => completedWorkouts.TryGetValue(w.Id, out bool comp) && comp).ToList();
-
-                    if (!completedList.Any())
-                    {
-                        UpNextWorkout = orderedWorkouts.FirstOrDefault();
-                    }
-                    else
-                    {
-                        var highestCompletedOrder = completedList.Max(w => w.Order);
-                        UpNextWorkout = orderedWorkouts.FirstOrDefault(w => w.Order > highestCompletedOrder);
-
-                        if (UpNextWorkout == null)
+                        var completedWorkoutsForWeek = new Dictionary<int, bool>();
+                        foreach (var w in orderedWorkouts)
                         {
-                            UpNextWorkout = orderedWorkouts.FirstOrDefault();
+                            bool isCompleted = await _dbService.HasLogForWeekAsync(w.Id, searchWeek, program.Cycle);
+                            bool isSaved = await _dbService.HasSavedLogForWeekAsync(w.Id, searchWeek, program.Cycle);
+                            completedWorkoutsForWeek[w.Id] = isCompleted || isSaved;
+                        }
+
+                        // Search for the first workout where IsSaved = false
+                        var firstIncomplete = orderedWorkouts.FirstOrDefault(w => !completedWorkoutsForWeek[w.Id]);
+
+                        if (firstIncomplete != null)
+                        {
+                            // Found the next actionable workout
+                            UpNextWorkout = firstIncomplete;
+                            UpNextWeek = searchWeek;
+                            
+                            UpNextWorkoutStates = orderedWorkouts.Select(w => completedWorkoutsForWeek[w.Id]).ToList();
+                            UpNextWorkoutIndex = orderedWorkouts.FindIndex(w => w.Id == firstIncomplete.Id);
+                            
+                            found = true;
+                        }
+                        else
+                        {
+                            // All workouts in this week are completed. Advance to the next week.
+                            searchWeek++;
                         }
                     }
-
-                    UpNextWeek = program.Week;
-                    UpNextIsSaved = false;
 
                     if (UpNextWorkout != null && UpNextWorkout.Items != null)
                     {
@@ -323,7 +332,7 @@ namespace Refine.App.Services
                             UpNextMuscleGroups = "GENERAL";
                         }
 
-                        UpNextIsSaved = await _dbService.HasSavedLogForWeekAsync(UpNextWorkout.Id, program.Week, program.Cycle);
+                        UpNextIsSaved = await _dbService.HasSavedLogForWeekAsync(UpNextWorkout.Id, UpNextWeek, program.Cycle);
                     }
                 }
             }

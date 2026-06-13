@@ -10,7 +10,7 @@
 
 @if (_workout == null)
 {
-    <RfSpinner IsLoading="true" />
+    <RfSpinner IsLoading="true"/>
 }
 else
 {
@@ -65,12 +65,12 @@ else
 
         <!-- CNS YÜKÜ PROGRESS BAR -->
         <div class="cns-container section-margin">
-            <CnsLoadCard Title="Estimated CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" WarningMessage="Severe CNS Fatigue! This program may overtax your nervous system." CssClass="m-0" />
+            <CnsLoadCard Title="Estimated CNS Load" CurrentLoad="TotalCnsLoad" CnsThreshold="CnsThreshold" WarningMessage="Severe CNS Fatigue! This program may overtax your nervous system." CssClass="m-0"/>
         </div>
 
         <!-- ESTIMATED MUSCLE IMPACT -->
-        <div class="section-margin" style="margin-bottom: 16px;">
-            <MuscleFatigueList Fatigues="_estimatedMuscleFatigues" Title="Estimated Muscle Impact" EmptyMessage="No muscle impact configured." />
+        <div style="margin-bottom: 16px;">
+            <MuscleFatigueList Fatigues="_estimatedMuscleFatigues" Title="Estimated Muscle Impact" EmptyMessage="No muscle impact configured." Preset="GradientPreset.MuscleImpact"/>
         </div>
 
 
