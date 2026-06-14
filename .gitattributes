@@ -68,8 +68,12 @@
 # Treat HTML, CSS, and JS files as undetectable so the repository is 
 # properly classified as a C# project.
 ###############################################################################
-*.html linguist-vendored
-*.css linguist-vendored
-*.js linguist-vendored
+# Exclude 3rd-party libraries and generated folders from statistics
+wwwroot/lib/** linguist-vendored
+wwwroot/css/bootstrap/** linguist-vendored
+obj/** linguist-vendored
+bin/** linguist-vendored
+node_modules/** linguist-vendored
+
+# Explicitly map Blazor Razor components to C# so it remains dominant
 *.razor linguist-language=C#
-wwwroot/** linguist-vendored
