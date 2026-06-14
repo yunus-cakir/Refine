@@ -68,7 +68,7 @@
 # Treat HTML, CSS, and JS files as undetectable so the repository is 
 # properly classified as a C# project.
 ###############################################################################
-*.html linguist-detectable=false
-*.css linguist-detectable=false
-*.js linguist-detectable=false
-wwwroot/** linguist-vendored
+*.html linguist-generated=true
+*.css linguist-generated=true
+*.js linguist-generated=true
+wwwroot/** linguist-vendored=true
