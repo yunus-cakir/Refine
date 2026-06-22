@@ -8,7 +8,7 @@
 <img width="275" alt="Screenshot_1782116846" src="https://github.com/user-attachments/assets/d94dbb7a-7e90-4584-baea-34455fec3c34" />
 
 ## Analytics Module
-<img width="275" alt="Screenshot_1782116435" src="https://github.com/user-attachments/assets/41d4c440-405e-4fa0-9ca9-aab42b2abb2a" />
+<img width="275" alt="Screenshot_1782117134" src="https://github.com/user-attachments/assets/e9a1ac6d-743c-4177-b401-4941f5c229e5" />
 <img width="275" alt="Screenshot_1782116744" src="https://github.com/user-attachments/assets/a92dab9f-ffbb-42ba-9861-a7915e5ccfb4" />
 <img width="275" alt="Screenshot_1782116216" src="https://github.com/user-attachments/assets/4213d041-2039-495b-a754-6ce4b7eae4ec" />
 
