@@ -1,8 +1,20 @@
 # Refine
 
+[![Jira Board](https://img.shields.io/badge/Jira-RF%20Board-0052CC?style=for-the-badge&logo=jira)](https://yunuscakir.atlassian.net/jira/software/projects/RF/boards/1?atlOrigin=eyJpIjoiZGFhMmNiZDE0MDg4NGE0NmJkODBkNWNjYTVhMDViM2QiLCJwIjoiaiJ9)
+![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+![Blazor](https://img.shields.io/badge/Blazor%20Hybrid-512BD4?style=for-the-badge&logo=blazor&logoColor=white)
+![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=csharp&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+
+**Refine** is an offline-first workout tracking application built with **.NET MAUI Blazor Hybrid**. It helps users manage training programs, track workout performance, monitor recovery, and analyze body composition—all from a single mobile application.
+
 <a href="https://yunuscakir.atlassian.net/jira/software/projects/RF/boards/1?atlOrigin=eyJpIjoiZGFhMmNiZDE0MDg4NGE0NmJkODBkNWNjYTVhMDViM2QiLCJwIjoiaiJ9">
   <img width="100" alt="Screenshot_1782116949" src="https://img.shields.io/badge/Jira-RF%20Project-blue?logo=jira" />
 </a>
+[.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+[Blazor](https://img.shields.io/badge/Blazor%20Hybrid-512BD4?style=for-the-badge&logo=blazor&logoColor=white)
+[C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=csharp&logoColor=white)
+[SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 
 **Refine** is an offline-first workout tracking application built with **.NET MAUI Blazor Hybrid**. It helps users manage training programs, track workout performance, monitor recovery, and analyze body composition—all from a single mobile application.
 
