@@ -1,5 +1,9 @@
 # Refine
 
+<a href="https://yunuscakir.atlassian.net/jira/software/projects/RF/boards/1?atlOrigin=eyJpIjoiZGFhMmNiZDE0MDg4NGE0NmJkODBkNWNjYTVhMDViM2QiLCJwIjoiaiJ9">
+  <img width="100" alt="Screenshot_1782116949" src="https://img.shields.io/badge/Jira-RF%20Project-blue?logo=jira" />
+</a>
+
 **Refine** is an offline-first workout tracking application built with **.NET MAUI Blazor Hybrid**. It helps users manage training programs, track workout performance, monitor recovery, and analyze body composition—all from a single mobile application.
 
 ## User Experience
