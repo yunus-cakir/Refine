@@ -237,8 +237,8 @@ namespace Refine.App.Services
         {
             try
             {
-                StreakTotalDays = 0;
-                StreakCompletedDays = 0;
+                int tempTotalDays = 0;
+                int tempCompletedDays = 0;
 
                 var program = await _dbService.GetSelectedWorkoutProgramAsync();
                 if (program != null && program.Workouts != null)
@@ -250,10 +250,13 @@ namespace Refine.App.Services
                     {
                         var startDate = programLogs.Min(l => l.Date).Date;
                         var today = DateTime.Now.Date;
-                        StreakTotalDays = (today - startDate).Days + 1;
-                        StreakCompletedDays = programLogs.Select(l => l.Date.Date).Distinct().Count();
+                        tempTotalDays = (today - startDate).Days + 1;
+                        tempCompletedDays = programLogs.Select(l => l.Date.Date).Distinct().Count();
                     }
                 }
+
+                StreakTotalDays = tempTotalDays;
+                StreakCompletedDays = tempCompletedDays;
             }
             catch (Exception ex)
             {

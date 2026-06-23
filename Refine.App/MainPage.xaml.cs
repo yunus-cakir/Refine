@@ -6,7 +6,6 @@ public partial class MainPage : ContentPage
 {
     private readonly NavigationBridge _navBridge;
     private readonly TopBarBridge _topBarBridge;
-    private bool _isSwitchLeftActive = true;
 
     public MainPage(NavigationBridge navBridge, TopBarBridge topBarBridge)
     {
@@ -21,22 +20,8 @@ public partial class MainPage : ContentPage
         // Varsayılan sekmeyi ayarla (Home)
         UpdateActiveTab("");
 
-        SetInitialShadows();
-
         // Trigger top bar render immediately
         HandleTopBarConfigChanged(_topBarBridge.CurrentConfig);
-    }
-
-    private void SetInitialShadows()
-    {
-        SwitchLeftCircle.Shadow = new Shadow
-        {
-            Brush = new SolidColorBrush(Color.FromArgb("#3b82f6")),
-            Offset = new Point(0, 0),
-            Opacity = 0.5f,
-            Radius = 12
-        };
-        SwitchRightCircle.Shadow = null;
     }
 
     private void HandleTopBarConfigChanged(TopBarConfig config)
@@ -48,8 +33,8 @@ public partial class MainPage : ContentPage
                 HomeHeaderGrid.IsVisible = true;
                 DetailHeaderGrid.IsVisible = false;
 
-                HomeHeaderSwitchBorder.IsVisible = true;
                 HomeHeaderProfileBorder.IsVisible = true;
+                HomeHeaderProfileBorder.HorizontalOptions = LayoutOptions.Start;
 
                 if (!string.IsNullOrWhiteSpace(config.Title))
                 {
@@ -65,7 +50,6 @@ public partial class MainPage : ContentPage
                 HomeHeaderGrid.IsVisible = true;
                 DetailHeaderGrid.IsVisible = false;
 
-                HomeHeaderSwitchBorder.IsVisible = false;
                 HomeHeaderProfileBorder.IsVisible = false;
 
                 HomeHeaderLogoText.Text = config.Title?.ToUpper() ?? string.Empty;
@@ -114,42 +98,6 @@ public partial class MainPage : ContentPage
     private void OnTopBarRightTapped(object? sender, EventArgs e)
     {
         _topBarBridge.RightTapped();
-    }
-
-    private void OnSwitchTapped(object? sender, EventArgs e)
-    {
-        _isSwitchLeftActive = !_isSwitchLeftActive;
-        
-        if (_isSwitchLeftActive)
-        {
-            // Left is Blue, Right is Gray
-            SwitchLeftCircle.BackgroundColor = Color.FromArgb("#3b82f6"); 
-            SwitchRightCircle.BackgroundColor = Color.FromArgb("#3f3f46"); 
-
-            SwitchLeftCircle.Shadow = new Shadow
-            {
-                Brush = new SolidColorBrush(Color.FromArgb("#3b82f6")),
-                Offset = new Point(0, 0),
-                Opacity = 0.5f,
-                Radius = 12
-            };
-            SwitchRightCircle.Shadow = null;
-        }
-        else
-        {
-            // Left is Gray, Right is Green
-            SwitchLeftCircle.BackgroundColor = Color.FromArgb("#3f3f46"); 
-            SwitchRightCircle.BackgroundColor = Color.FromArgb("#22c55e"); 
-
-            SwitchLeftCircle.Shadow = null;
-            SwitchRightCircle.Shadow = new Shadow
-            {
-                Brush = new SolidColorBrush(Color.FromArgb("#22c55e")),
-                Offset = new Point(0, 0),
-                Opacity = 0.5f,
-                Radius = 12
-            };
-        }
     }
 
     private void OnProfileTapped(object? sender, EventArgs e)

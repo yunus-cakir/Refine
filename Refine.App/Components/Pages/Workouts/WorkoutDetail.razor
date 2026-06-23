@@ -82,26 +82,25 @@ else
             {
                 @foreach (var item in _workout.Items.OrderBy(i => i.Order))
                 {
-                    <article class="rf-card exercise-card">
-                        <div class="exercise-card-content">
-                            <div class="exercise-icon-container">
-                                <span class="material-symbols-outlined exercise-icon" style="font-variation-settings: 'FILL' 0;">fitness_center</span>
-                            </div>
-                            <div class="exercise-details">
-                                <div class="exercise-header">
-                                    <h3 class="font-body exercise-title">@ExerciseFormatter.Format(item.Exercise)</h3>
+                    if (item.Exercise != null)
+                    {
+                        <ExerciseListItem Exercise="item.Exercise" OnTapped="NavigateToExerciseDetail">
+                            <ChildContent>
+                                @if (!string.IsNullOrWhiteSpace(item.RepsRange) && !item.RepsRange.Equals("Failure", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <div class="exercise-stats font-body mt-1">
+                                        <span class="stat-item"><span class="material-symbols-outlined stat-icon" style="font-size: 16px; margin-right: 4px;">fitness_center</span>@item.RepsRange Reps</span>
+                                    </div>
+                                }
+                            </ChildContent>
+                            <RightContent>
+                                <div class="d-flex align-items-center gap-1 font-body text-white fw-bold bg-surface-variant rounded px-2 py-1" style="font-size: 14px;">
+                                    <span class="material-symbols-outlined" style="font-size: 16px; color: var(--color-primary);">repeat</span>
+                                    @item.Sets Sets
                                 </div>
-                                <div class="exercise-stats font-body">
-                                    <span class="stat-item"><span class="material-symbols-outlined stat-icon">repeat</span> @item.Sets Sets</span>
-                                    @if (!string.IsNullOrWhiteSpace(item.RepsRange) && !item.RepsRange.Equals("Failure", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        <span class="stat-divider">•</span>
-                                        <span class="stat-item"><span class="material-symbols-outlined stat-icon">fitness_center</span> @item.RepsRange Reps</span>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </article>
+                            </RightContent>
+                        </ExerciseListItem>
+                    }
                 }
             }
         </section>
@@ -262,4 +261,8 @@ else
         }
     }
 
+    private void NavigateToExerciseDetail(Exercise ex)
+    {
+        NavManager.NavigateTo($"/exercises/detail/{ex.Id}");
+    }
 }

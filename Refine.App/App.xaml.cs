@@ -10,7 +10,7 @@ public partial class App : Application
         InitializeComponent();
         _mainPage = mainPage;
     }
-
+ 
     protected override Window CreateWindow(IActivationState? activationState)
     {
         return new Window(_mainPage);

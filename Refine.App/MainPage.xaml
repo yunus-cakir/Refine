@@ -16,39 +16,19 @@
 
             <!-- HOME HEADER (Default) -->
             <Grid x:Name="HomeHeaderGrid">
-                <!-- Custom Switch (Left) -->
-                <Border x:Name="HomeHeaderSwitchBorder"
-                        HorizontalOptions="Start" VerticalOptions="Center" 
-                        Stroke="#1Affffff" StrokeThickness="1" 
-                        BackgroundColor="#1c1c1e" 
-                        StrokeShape="RoundRectangle 16"
-                        Padding="4">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnSwitchTapped" />
-                    </Border.GestureRecognizers>
-                    <Grid ColumnDefinitions="28,28" ColumnSpacing="4">
-                        <Border x:Name="SwitchLeftCircle" Grid.Column="0" StrokeThickness="0" BackgroundColor="#3b82f6" StrokeShape="RoundRectangle 14" HeightRequest="28" WidthRequest="28">
-                            <BoxView Color="#ffffff" HeightRequest="8" WidthRequest="8" CornerRadius="4" HorizontalOptions="Center" VerticalOptions="Center"/>
-                        </Border>
-                        <Border x:Name="SwitchRightCircle" Grid.Column="1" StrokeThickness="0" BackgroundColor="#3f3f46" StrokeShape="RoundRectangle 14" HeightRequest="28" WidthRequest="28">
-                            <BoxView Color="#71717a" HeightRequest="8" WidthRequest="8" CornerRadius="4" HorizontalOptions="Center" VerticalOptions="Center"/>
-                        </Border>
-                    </Grid>
-                </Border>
-
                 <!-- Center Logo Text -->
                 <Label x:Name="HomeHeaderLogoText"
                        Text="REFINE STUDIO" 
                        TextColor="#ccff00" 
-                       FontAttributes="Bold,Italic" 
-                       FontSize="18" 
+                       FontAttributes="Bold" 
+                       FontSize="20" 
                        HorizontalOptions="Center" 
                        VerticalOptions="Center" 
                        CharacterSpacing="1.5" />
 
-                <!-- Profile Photo (Right) -->
+                <!-- Profile Photo (Left) -->
                 <Border x:Name="HomeHeaderProfileBorder"
-                        HorizontalOptions="End" VerticalOptions="Center"
+                        HorizontalOptions="Start" VerticalOptions="Center"
                         StrokeThickness="0"
                         StrokeShape="RoundRectangle 16"
                         BackgroundColor="#c3f400"

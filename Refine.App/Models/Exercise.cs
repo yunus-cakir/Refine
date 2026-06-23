@@ -52,6 +52,8 @@ public class Exercise
         }
     }
 
+    public string Description { get; set; } = "";
+
     public bool IsCustom { get; set; } = false;
     public bool IsDeleted { get; set; } = false;
 }

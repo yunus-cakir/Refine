@@ -79,7 +79,7 @@ else
                         LastTrained="vm.LastTrained"
                         DataPoints="vm.DataPoints"
                         RateOfChange="vm.RateOfChange"
-                        MetricUnitLabel="@(SelectedMetric == "ProgressiveOverload" ? "pts" : "kg")"
+                        MetricUnitLabel="@(vm.IsBodyweight ? (SelectedMetric == "ProgressiveOverload" ? "pts" : "reps") : (SelectedMetric == "ProgressiveOverload" ? "pts" : "kg"))"
                         ShowValueBadge="@(SelectedMetric != "ProgressiveOverload")"
                         OnClick="NavigateToDetail"/>
                 }
@@ -109,6 +109,7 @@ else
         public DateTime FirstTrainedOnLastDay { get; set; }
         public List<ChartDataPoint> DataPoints { get; set; } = new();
         public double RateOfChange { get; set; }
+        public bool IsBodyweight { get; set; }
     }
 
     private List<ExerciseViewModel> exerciseViewModels = new();
@@ -116,8 +117,8 @@ else
     private IEnumerable<RfDropdownOption<string>> MetricOptions => new List<RfDropdownOption<string>>
     {
         new() { Value = "ProgressiveOverload", Text = "Progressive Overload", Icon = "monitoring" },
-        new() { Value = "1RM", Text = "Est. 1RM", Icon = "insights" },
-        new() { Value = "MaxWeight", Text = "Max Weight", Icon = "fitness_center" }
+        new() { Value = "1RM", Text = "Est. 1RM / Max Reps", Icon = "insights" },
+        new() { Value = "MaxWeight", Text = "Max Wt / Total Reps", Icon = "fitness_center" }
     };
 
     private IEnumerable<RfDropdownOption<string>> TimeframeOptions => new List<RfDropdownOption<string>>
@@ -183,8 +184,10 @@ else
                 var exercise = _allExercises.FirstOrDefault(e => e.Id == group.ExerciseId);
                 if (exercise == null) continue;
 
+                bool isBodyweight = exercise.Equipment == Exercise.EquipmentType.Bodyweight;
+
                 // Process data points for the sparkline chart: SelectedTimeframe
-                var points = AnalyticsSvc.ProcessLogs(group.Logs, SelectedTimeframe, SelectedMetric);
+                var points = AnalyticsSvc.ProcessLogs(group.Logs, SelectedTimeframe, SelectedMetric, isBodyweight);
                 if (points.Count < 2 || points.All(p => p.Value <= 0)) continue;
 
                 var first = points.FirstOrDefault()?.Value ?? 0;
@@ -205,7 +208,8 @@ else
                     LastTrained = group.LastTrained,
                     FirstTrainedOnLastDay = firstTrainedOnLastDay,
                     DataPoints = points,
-                    RateOfChange = rateOfChange
+                    RateOfChange = rateOfChange,
+                    IsBodyweight = isBodyweight
                 });
             }
 
@@ -258,10 +262,10 @@ else
     {
         return metric switch
         {
-            "MaxWeight" => "Max Weight",
-            "1RM" => "Est. 1RM",
+            "MaxWeight" => "Max Weight / Total Reps",
+            "1RM" => "Est. 1RM / Max Reps",
             "ProgressiveOverload" => "Progressive Overload",
-            _ => "Est. 1RM"
+            _ => "Est. 1RM / Max Reps"
         };
     }
 

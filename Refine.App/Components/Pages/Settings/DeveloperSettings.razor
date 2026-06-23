@@ -1,0 +1,274 @@
+@page "/profile/developer-settings"
+@using Refine.App.Models
+@using Refine.App.Services
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+@inject IPopupService PopupService
+
+@if (_user == null)
+{
+    <RfSpinner IsLoading="true"/>
+}
+else
+{
+    <div class="page-container py-4 px-0 min-h-screen animate-fade-in">
+        <div class="settings-list d-flex flex-column gap-4 px-0 animate-fade-in pb-5">
+            
+            <div class="rf-section-label px-2" style="margin-bottom: -16px; margin-top: 8px;">Database Operations</div>
+
+            <!-- Clear Logs Card -->
+            <div class="rf-card p-4">
+                <h6 class="text-white text-uppercase mb-2 tracking-wider text-start" style="font-size: 13px;">Clear All Workout Logs</h6>
+                <p class="text-on-surface-variant font-label small mb-4 text-start" style="opacity: 0.8;">
+                    Permanently delete all workout logs.
+                </p>
+
+                <button type="button" class="rf-button-destructive" @onclick="ConfirmClearLogs">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">delete_forever</span>
+                    CLEAR ALL WORKOUT LOGS
+                </button>
+            </div>
+
+            <!-- Load Mock Logs Card -->
+            <div class="rf-card p-4">
+                <h6 class="text-white text-uppercase mb-2 tracking-wider text-start" style="font-size: 13px;">Load Mock Workout Logs</h6>
+                <p class="text-on-surface-variant font-label small mb-4 text-start" style="opacity: 0.8;">
+                    Load 3 months of mock workout history for testing.
+                </p>
+
+                <button type="button" class="rf-button-primary" @onclick="ConfirmLoadMockLogs">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">publish</span>
+                    LOAD MOCK WORKOUT LOGS
+                </button>
+            </div>
+
+            <!-- Apply Recommended Settings Card -->
+            <div class="rf-card p-4">
+                <h6 class="text-white text-uppercase mb-2 tracking-wider text-start" style="font-size: 13px;">Apply Recommended Settings</h6>
+                <p class="text-on-surface-variant font-label small mb-4 text-start" style="opacity: 0.8;">
+                    Load recommended user profile and workout settings.
+                </p>
+
+                <button type="button" class="rf-button-primary" @onclick="ConfirmApplyRecommendedSettings">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">settings_suggest</span>
+                    APPLY RECOMMENDED SETTINGS
+                </button>
+            </div>
+            
+        </div>
+    </div>
+}
+
+<style>
+.rf-button-destructive {
+    width: 100%;
+    background-color: transparent;
+    color: #ffb4ab;
+    border: 2px solid #ffb4ab;
+    font-size: 14px;
+    padding: 12px 0;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-weight: bold;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.rf-button-destructive:hover {
+    background-color: rgba(255, 180, 171, 0.08);
+    box-shadow: 0 0 15px rgba(255, 180, 171, 0.1);
+}
+.rf-button-destructive:active {
+    transform: scale(0.95);
+}
+.rf-button-primary {
+    width: 100%;
+    background-color: transparent;
+    color: var(--md-sys-color-primary-container, #d3e4ff);
+    border: 2px solid var(--md-sys-color-primary-container, #d3e4ff);
+    font-size: 14px;
+    padding: 12px 0;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-weight: bold;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.rf-button-primary:hover {
+    background-color: rgba(211, 228, 255, 0.08);
+    box-shadow: 0 0 15px rgba(211, 228, 255, 0.1);
+}
+.rf-button-primary:active {
+    transform: scale(0.95);
+}
+</style>
+
+@code {
+    private User? _user;
+
+    protected override void OnInitialized()
+    {
+        TopBar.SetDetailMode("Developer Settings");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await DbService.GetUserAsync();
+    }
+
+    private async Task ConfirmClearLogs()
+    {
+        var result = await PopupService.ShowAsync(new PopupOptions
+        {
+            Title = "Delete All Logs?",
+            Description = "All your past workout logs will be permanently deleted. This action cannot be undone.",
+            Icon = "delete_forever",
+            Mode = PopupMode.Confirmation,
+            CustomButtons = new List<PopupButton>
+            {
+                new() { Text = "Delete All", ActionId = PopupResult.ConfirmedAction, Type = PopupButtonType.Destructive },
+                new() { Text = "Cancel", ActionId = PopupResult.RejectedAction, Type = PopupButtonType.Ghost }
+            }
+        });
+
+        if (result.IsConfirmed)
+        {
+            await DbService.ClearAllWorkoutLogsAsync();
+        }
+    }
+
+    private async Task ConfirmApplyRecommendedSettings()
+    {
+        var result = await PopupService.ShowAsync(new PopupOptions
+        {
+            Title = "Apply Recommended Settings?",
+            Description = "Your current user profile and workout settings will be overwritten with recommended defaults.",
+            Icon = "settings_suggest",
+            Mode = PopupMode.Confirmation,
+            CustomButtons = new List<PopupButton>
+            {
+                new() { Text = "Apply", ActionId = PopupResult.ConfirmedAction, Type = PopupButtonType.Primary },
+                new() { Text = "Cancel", ActionId = PopupResult.RejectedAction, Type = PopupButtonType.Ghost }
+            }
+        });
+
+        if (result.IsConfirmed && _user != null)
+        {
+            _user.FirstName = "Yunus";
+            _user.LastName = "Çakır";
+            _user.Email = "yunus.cakir@protonmail.com";
+            _user.Gender = Gender.Male;
+
+            _user.WorkoutSettings.PreferredSetCount = 2;
+            _user.WorkoutSettings.PreferredMinReps = 5;
+            _user.WorkoutSettings.PreferredMaxReps = 9;
+            _user.WorkoutSettings.PreferredRepRange = "5-9";
+            _user.WorkoutSettings.PreferredRIR = 0m;
+            _user.WorkoutSettings.PreferredRestTime = 165;
+            _user.WorkoutSettings.AverageSetDuration = 75;
+
+            _user.WorkoutSettings.AutoCopyWeight = true;
+            _user.WorkoutSettings.AutoCopyReps = false;
+            _user.WorkoutSettings.AutoCopyRIR = true;
+            _user.WorkoutSettings.AutoCopyFormRating = false;
+
+            await DbService.UpdateUserAsync(_user);
+
+            var allPrograms = await DbService.GetAllProgramsAsync();
+            var wsUpperLower = allPrograms.FirstOrDefault(p => p.Name == "W's Upper Lower");
+
+            if (wsUpperLower != null)
+            {
+                await DbService.SetSelectedWorkoutProgramAsync(wsUpperLower.Id);
+            }
+
+            await PopupService.ShowAsync(new PopupOptions
+            {
+                Title = "Success",
+                Description = "Recommended settings applied successfully.",
+                Icon = "check_circle",
+                Mode = PopupMode.SingleAction
+            });
+        }
+    }
+
+    private async Task ConfirmLoadMockLogs()
+    {
+        var logsCount = await DbService.GetWorkoutLogsCountAsync();
+        if (logsCount > 0)
+        {
+            var result = await PopupService.ShowAsync(new PopupOptions
+            {
+                Title = "Load Test Data?",
+                Description = $"There are currently {logsCount} workout logs. Existing mock data (W's Upper Lower) will be overwritten. Do you want to continue?",
+                Icon = "publish",
+                Mode = PopupMode.Confirmation,
+                CustomButtons = new List<PopupButton>
+                {
+                    new() { Text = "Load", ActionId = PopupResult.ConfirmedAction, Type = PopupButtonType.Primary },
+                    new() { Text = "Cancel", ActionId = PopupResult.RejectedAction, Type = PopupButtonType.Ghost }
+                }
+            });
+
+            if (!result.IsConfirmed)
+            {
+                return;
+            }
+        }
+        else
+        {
+            var result = await PopupService.ShowAsync(new PopupOptions
+            {
+                Title = "Load Test Data?",
+                Description = "Mock workout history will be added to the database for development purposes.",
+                Icon = "publish",
+                Mode = PopupMode.Confirmation,
+                CustomButtons = new List<PopupButton>
+                {
+                    new() { Text = "Load", ActionId = PopupResult.ConfirmedAction, Type = PopupButtonType.Primary },
+                    new() { Text = "Cancel", ActionId = PopupResult.RejectedAction, Type = PopupButtonType.Ghost }
+                }
+            });
+
+            if (!result.IsConfirmed)
+            {
+                return;
+            }
+        }
+
+        try
+        {
+            int insertedCount = await DbService.SeedMockWorkoutLogsAsync();
+            await PopupService.ShowAsync(new PopupOptions
+            {
+                Title = "Success",
+                Description = $"Successfully loaded {insertedCount} mock workout logs.",
+                Icon = "check_circle",
+                Mode = PopupMode.SingleAction
+            });
+        }
+        catch (Exception ex)
+        {
+            await PopupService.ShowAsync(new PopupOptions
+            {
+                Title = "Error",
+                Description = $"An error occurred while loading data: {ex.Message}",
+                Icon = "error",
+                Mode = PopupMode.SingleAction
+            });
+        }
+    }
+
+}

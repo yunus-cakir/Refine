@@ -1,0 +1,44 @@
+.exercise-detail-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #0d0d0d;
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.background-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 50%, #121312 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.backdrop-blur {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.content-wrapper {
+    position: relative;
+    z-index: 10;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+/* Adjustments to badges for read-only view */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}

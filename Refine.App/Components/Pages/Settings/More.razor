@@ -105,12 +105,21 @@
             </div>
             <span class="material-symbols-outlined chevron-icon">chevron_right</span>
         </div>
+        <!-- Developer Settings -->
+        <div class="menu-card d-flex align-items-center justify-content-between" @onclick='() => NavManager.NavigateTo("/profile/developer-settings")'>
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-box d-flex align-items-center justify-content-center">
+                    <span class="material-symbols-outlined menu-icon">settings</span>
+                </div>
+                <span class="menu-title">Developer Settings</span>
+            </div>
+            <span class="material-symbols-outlined chevron-icon">chevron_right</span>
+        </div>
     </div>
 </div>
 
 @code {
-    [Parameter]
-    public bool IsEmbedded { get; set; } = false;
+    [Parameter] public bool IsEmbedded { get; set; } = false;
 
     protected override void OnInitialized()
     {
@@ -119,4 +128,5 @@
             TopBar.SetDetailMode("More");
         }
     }
+
 }

@@ -15,7 +15,7 @@ public class ChartDataPoint
 
 public class AnalyticsService
 {
-    public List<ChartDataPoint> ProcessLogs(List<WorkoutLog> cachedLogs, string timeframe, string metric)
+    public List<ChartDataPoint> ProcessLogs(List<WorkoutLog> cachedLogs, string timeframe, string metric, bool isBodyweight = false)
     {
         if (cachedLogs == null || !cachedLogs.Any())
             return new List<ChartDataPoint>();
@@ -32,15 +32,32 @@ public class AnalyticsService
             return new List<ChartDataPoint>();
 
         // Strategy pattern to avoid string comparisons in the loop
-        Func<IGrouping<DateTime, WorkoutLog>, double> metricStrategy = metric switch
+        Func<IGrouping<DateTime, WorkoutLog>, double> metricStrategy;
+
+        if (isBodyweight)
         {
-            "1RM" => group => group.Max(l => (l.Weight ?? 0) * (1 + (l.Reps ?? 0) / 30.0)),
-            "MaxWeight" => group => group.Max(l => l.Weight ?? 0),
-            "ProgressiveOverload" => group => group.Sum(l => 
-                (l.Weight ?? 0) * (l.Reps ?? 0) * ((l.RIR ?? 4) switch { 0 or 1 => 1.2, 2 or 3 => 1.0, _ => 0.7 })
-            ),
-            _ => group => 0
-        };
+            metricStrategy = metric switch
+            {
+                "1RM" => group => group.Max(l => l.Reps ?? 0),
+                "MaxWeight" => group => group.Sum(l => l.Reps ?? 0),
+                "ProgressiveOverload" => group => group.Sum(l => 
+                    (l.Reps ?? 0) * ((l.RIR ?? 4) switch { 0 or 1 => 1.2, 2 or 3 => 1.0, _ => 0.7 })
+                ),
+                _ => group => group.Max(l => l.Reps ?? 0)
+            };
+        }
+        else
+        {
+            metricStrategy = metric switch
+            {
+                "1RM" => group => group.Max(l => (l.Weight ?? 0) * (1 + (l.Reps ?? 0) / 30.0)),
+                "MaxWeight" => group => group.Max(l => l.Weight ?? 0),
+                "ProgressiveOverload" => group => group.Sum(l => 
+                    (l.Weight ?? 0) * (l.Reps ?? 0) * ((l.RIR ?? 4) switch { 0 or 1 => 1.2, 2 or 3 => 1.0, _ => 0.7 })
+                ),
+                _ => group => 0
+            };
+        }
 
         return filteredLogs
             .GroupBy(l => l.Date.Date)

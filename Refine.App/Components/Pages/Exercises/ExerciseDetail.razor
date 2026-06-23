@@ -1,0 +1,147 @@
+@page "/exercises/detail/{id:int}"
+@using Refine.App.Models
+@using Refine.App.Services
+@using Refine.App.Helpers
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+@inject IJSRuntime JS
+@implements IDisposable
+
+@if (_exercise == null)
+{
+    <RfSpinner IsLoading="true" />
+}
+else
+{
+    <div class="exercise-detail-container animate-fade-in" style="background-image: @_bgCss;">
+        <div class="background-overlay"></div>
+        
+        <div class="content-wrapper p-4 pb-5 relative z-10 safe-area-bottom">
+            <h1 class="display-5 fw-bold text-white mb-2" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">@_exercise.Name</h1>
+            
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                @if (_exercise.Equipment != Exercise.EquipmentType.None)
+                {
+                    <span class="badge rounded-pill bg-dark bg-opacity-75 text-white px-3 py-2 border border-secondary">
+                        <span class="material-symbols-outlined fs-6 align-text-bottom me-1">fitness_center</span>
+                        @_exercise.Equipment
+                    </span>
+                }
+                <span class="badge rounded-pill bg-dark bg-opacity-75 text-white px-3 py-2 border border-secondary">
+                    <span class="material-symbols-outlined fs-6 align-text-bottom me-1">swap_horiz</span>
+                    @_exercise.Laterality
+                </span>
+                @if (!string.IsNullOrEmpty(_exercise.Difficulty))
+                {
+                    <span class="badge rounded-pill bg-dark bg-opacity-75 text-white px-3 py-2 border border-secondary">
+                        @_exercise.Difficulty
+                    </span>
+                }
+            </div>
+
+            @if (_primaryMuscles.Any() || _secondaryMuscles.Any())
+            {
+                <div class="refine-card bg-dark bg-opacity-75 p-3 mb-3 border border-secondary backdrop-blur">
+                    <h5 class="fw-bold mb-3 text-white">Muscles Targeted</h5>
+                    <div class="rf-flex-col" style="gap: 16px;">
+                        @if (_primaryMuscles.Any())
+                        {
+                            <div class="rf-flex-col" style="gap: 8px;">
+                                <div class="rf-flex-col" style="flex: 1; gap: 6px; min-width: 0;">
+                                    <span class="font-body" style="font-weight: 600; font-size: 15px; color: var(--color-on-surface);">Primary Muscles</span>
+                                    <div class="rf-flex-row" style="flex-wrap: wrap; gap: 6px;">
+                                        @foreach (var m in _primaryMuscles)
+                                        {
+                                            <span class="rf-badge-faded" style="font-size: 10px; padding: 2px 8px; border-color: rgba(255, 255, 255, 0.05); color: var(--color-primary); display: inline-flex; align-items: center;">
+                                                <span style="font-weight: 500;">@m</span>
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (_secondaryMuscles.Any())
+                        {
+                            <div class="rf-flex-col" style="gap: 8px;">
+                                <div class="rf-flex-col" style="flex: 1; gap: 6px; min-width: 0;">
+                                    <span class="font-body" style="font-weight: 600; font-size: 15px; color: var(--color-on-surface);">Secondary Muscles</span>
+                                    <div class="rf-flex-row" style="flex-wrap: wrap; gap: 6px;">
+                                        @foreach (var m in _secondaryMuscles)
+                                        {
+                                            <span class="rf-badge-faded" style="font-size: 10px; padding: 2px 8px; border-color: rgba(255, 255, 255, 0.05); color: var(--color-on-surface-variant); display: inline-flex; align-items: center;">
+                                                <span style="font-weight: 500;">@m</span>
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (_exercise.VariationTags != null && _exercise.VariationTags.Any())
+            {
+                <div class="refine-card bg-dark bg-opacity-75 p-3 mb-3 border border-secondary backdrop-blur">
+                    <h5 class="fw-bold mb-3 text-white">Variation Tags</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach(var tag in _exercise.VariationTags)
+                        {
+                            <span class="badge bg-secondary bg-opacity-50 border border-secondary">@tag</span>
+                        }
+                    </div>
+                </div>
+            }
+            
+            @if (!string.IsNullOrWhiteSpace(_exercise.Description))
+            {
+                <div class="refine-card bg-dark bg-opacity-75 p-3 mb-3 border border-secondary backdrop-blur">
+                    <h5 class="fw-bold mb-3 text-white">Description</h5>
+                    <p class="text-white-50 mb-0">@_exercise.Description</p>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Exercise? _exercise;
+    private string _bgCss = "none";
+    private List<string> _primaryMuscles = new();
+    private List<string> _secondaryMuscles = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id != 0)
+        {
+            var exercises = await DbService.GetExercisesAsync();
+            _exercise = exercises.FirstOrDefault(e => e.Id == Id);
+
+            if (_exercise != null)
+            {
+                TopBar.SetDetailMode("");
+                _bgCss = ExerciseImageResolver.GetBackgroundImageCss(_exercise);
+                
+                if (_exercise.MuscleMaps != null && _exercise.MuscleMaps.Any())
+                {
+                    _primaryMuscles = _exercise.MuscleMaps
+                        .Where(m => m.ImpactMultiplier >= 0.8)
+                        .Select(m => m.MuscleGroup?.Name ?? "Unknown")
+                        .ToList();
+                        
+                    _secondaryMuscles = _exercise.MuscleMaps
+                        .Where(m => m.ImpactMultiplier < 0.8)
+                        .Select(m => m.MuscleGroup?.Name ?? "Unknown")
+                        .ToList();
+                }
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        // Cleanup if needed
+    }
+}

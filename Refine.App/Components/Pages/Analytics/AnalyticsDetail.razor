@@ -122,6 +122,7 @@ else
     private bool isLoading = true;
     private bool isUpdating = false;
     private bool isFirstRenderComplete = false;
+    private bool isBodyweight = false;
     
     [Parameter]
     public int ExerciseId { get; set; }
@@ -159,7 +160,12 @@ else
         }
     }
 
-    private IEnumerable<RfDropdownOption<string>> MetricOptions => new List<RfDropdownOption<string>>
+    private IEnumerable<RfDropdownOption<string>> MetricOptions => isBodyweight ? new List<RfDropdownOption<string>>
+    {
+        new() { Value = "ProgressiveOverload", Text = "Progressive Overload", Icon = "monitoring" },
+        new() { Value = "1RM", Text = "Max Reps", Icon = "insights" },
+        new() { Value = "MaxWeight", Text = "Total Reps", Icon = "fitness_center" }
+    } : new List<RfDropdownOption<string>>
     {
         new() { Value = "ProgressiveOverload", Text = "Progressive Overload", Icon = "monitoring" },
         new() { Value = "1RM", Text = "Est. 1RM", Icon = "insights" },
@@ -203,6 +209,7 @@ else
         if (exercise != null)
         {
             _selectedExerciseId = exercise.Id;
+            isBodyweight = exercise.Equipment == Exercise.EquipmentType.Bodyweight;
             if (string.IsNullOrEmpty(ExerciseName))
             {
                 TopBar.SetDetailMode(ExerciseFormatter.Format(exercise));
@@ -293,7 +300,7 @@ else
 
     private Task CrunchDataInternalAsync()
     {
-        dataPoints = AnalyticsSvc.ProcessLogs(cachedLogs, SelectedTimeframe, SelectedMetric);
+        dataPoints = AnalyticsSvc.ProcessLogs(cachedLogs, SelectedTimeframe, SelectedMetric, isBodyweight);
         return Task.CompletedTask;
     }
 
@@ -306,10 +313,10 @@ else
         var data = dataPoints.Select(d => d.Value).ToArray();
         var datasetLabel = SelectedMetric switch
         {
-            "MaxWeight" => "Max Weight",
-            "1RM" => "Est. 1RM",
+            "MaxWeight" => isBodyweight ? "Total Reps" : "Max Weight",
+            "1RM" => isBodyweight ? "Max Reps" : "Est. 1RM",
             "ProgressiveOverload" => "Progressive Overload",
-            _ => "Est. 1RM"
+            _ => isBodyweight ? "Max Reps" : "Est. 1RM"
         };
 
         var first = dataPoints.FirstOrDefault()?.Value ?? 0;

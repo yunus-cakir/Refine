@@ -465,11 +465,10 @@ public class LocalDbService
         if (lastLog == null) return new List<WorkoutLog>();
 
         // 2. DÜZELTME: Birebir eşleşme (==) yerine toleranslı aralık kullanıyoruz.
-        // Çünkü döngü içinde oluşturulan kayıtların milisaniyeleri farklı olabilir.
-        // Son kaydın 1 dakika öncesi ve 1 dakika sonrası aralığındaki tüm kayıtları o seans kabul ediyoruz.
+        // Bütün gün boyunca girilen o egzersiz kayıtlarını aynı seans kabul ediyoruz.
 
-        var minDate = lastLog.Date.AddMinutes(-1);
-        var maxDate = lastLog.Date.AddMinutes(1);
+        var minDate = lastLog.Date.Date;
+        var maxDate = minDate.AddDays(1).AddTicks(-1);
 
         return await _connection.Table<WorkoutLog>()
             .Where(l => l.ExerciseId == exerciseId
@@ -594,6 +593,19 @@ public class LocalDbService
 
             NotifyDatabaseChanged();
         }
+    }
+
+    public async Task ClearAllWorkoutLogsAsync()
+    {
+        await Init();
+        await _connection!.ExecuteAsync("DELETE FROM WorkoutLog");
+        NotifyDatabaseChanged();
+    }
+
+    public async Task<int> GetWorkoutLogsCountAsync()
+    {
+        await Init();
+        return await _connection!.Table<WorkoutLog>().CountAsync();
     }
 
     public async Task<DateTime?> GetWorkoutLogDateAsync(int workoutId, int week, int cycle)
@@ -2990,17 +3002,50 @@ public class LocalDbService
                 { WorkoutId = w3.Id, ExerciseId = GetExId("Leg Raise"), Sets = 2, RepsRange = "Failure", Order = 10 }
         });
 
-        // Generate 3 months of mock logs
+        await SeedMockWorkoutLogsAsync();
+    }
+
+    public async Task<int> SeedMockWorkoutLogsAsync()
+    {
+        await Init();
+        
+        var dbWorkouts = await _connection!.Table<Workout>().ToListAsync();
+        var validWorkoutIds = dbWorkouts.Select(w => w.Id).ToList();
+        
+        var program = await _connection.Table<WorkoutProgram>().Where(p => p.Name == "W's Upper Lower").FirstOrDefaultAsync();
+        List<int> mockWorkoutIds = new List<int>();
+        if (program != null) {
+            mockWorkoutIds = dbWorkouts.Where(w => w.WorkoutProgramId == program.Id).Select(w => w.Id).ToList();
+        }
+
+        var allLogs = await _connection.Table<WorkoutLog>().ToListAsync();
+        
+        var logsToDelete = allLogs.Where(l => 
+            !validWorkoutIds.Contains(l.WorkoutId) || // Orphaned
+            mockWorkoutIds.Contains(l.WorkoutId)      // Belongs to mock program
+        ).ToList();
+
+        if (logsToDelete.Any())
+        {
+            foreach(var l in logsToDelete) { await _connection.DeleteAsync(l); }
+        }
+
+        if (program == null || !mockWorkoutIds.Any()) return 0;
+        
+        var workouts = dbWorkouts.Where(w => mockWorkoutIds.Contains(w.Id)).OrderBy(w => w.Order).ToList();
+        var dbExercises = await _connection.Table<Exercise>().ToListAsync();
+        
+        var workoutItems = new Dictionary<int, List<WorkoutItem>>();
+        foreach (var w in workouts)
+        {
+            var items = await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == w.Id).OrderBy(i => i.Order).ToListAsync();
+            workoutItems[w.Id] = items;
+        }
+
         var logs = new List<WorkoutLog>();
         var r = new Random();
         var startDate = DateTime.Now.Date.AddDays(-90);
         int dayIndex = 0;
-
-        var workouts = new[] { w1, w2, w3 };
-        var workoutItems = new List<List<WorkoutItem>>();
-        workoutItems.Add(await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == w1.Id).ToListAsync());
-        workoutItems.Add(await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == w2.Id).ToListAsync());
-        workoutItems.Add(await _connection.Table<WorkoutItem>().Where(i => i.WorkoutId == w3.Id).ToListAsync());
 
         double GetProgressiveWeight(int dayIdx, double startWeight)
         {
@@ -3010,36 +3055,49 @@ public class LocalDbService
 
         int GetProgressiveReps(int dayIdx, int baseReps)
         {
-            return baseReps + (r.Next(0, 3));
+            return baseReps + r.Next(0, 3);
         }
 
         while (dayIndex <= 90)
         {
             int weekDay = dayIndex % 7;
             int? workoutIdx = null;
-            if (weekDay == 0) workoutIdx = 0;
-            else if (weekDay == 2) workoutIdx = 1;
-            else if (weekDay == 4) workoutIdx = 2;
 
-            if (workoutIdx.HasValue)
+            if (workouts.Count >= 3)
             {
-                var wDate = startDate.AddDays(dayIndex).AddHours(18); // 18:00
+                if (weekDay == 0) workoutIdx = 0;
+                else if (weekDay == 2) workoutIdx = 1;
+                else if (weekDay == 4) workoutIdx = 2;
+            }
+            else if (workouts.Count > 0)
+            {
+                workoutIdx = weekDay % workouts.Count;
+                if (weekDay == 1 || weekDay == 3 || weekDay == 5 || weekDay == 6) workoutIdx = null; 
+            }
+
+            if (workoutIdx.HasValue && workoutIdx.Value < workouts.Count)
+            {
                 var currentWorkout = workouts[workoutIdx.Value];
-                var currentItems = workoutItems[workoutIdx.Value];
+                var currentItems = workoutItems[currentWorkout.Id];
+
+                var wDate = startDate.AddDays(dayIndex).AddHours(18).AddMinutes(r.Next(-15, 16));
+                int timeOffsetMins = 0;
 
                 foreach (var item in currentItems)
                 {
-                    var exName = dbExercises.FirstOrDefault(e => e.Id == item.ExerciseId)?.Name ?? "";
+                    var ex = dbExercises.FirstOrDefault(e => e.Id == item.ExerciseId);
+                    if (ex == null) continue;
+
+                    var exName = ex.Name;
 
                     double baseWeight = 50;
                     if (exName.Contains("Press")) baseWeight = 60;
-                    if (exName.Contains("Fly")) baseWeight = 40;
-                    if (exName.Contains("Curl") || exName.Contains("Raise") || exName.Contains("Pushdown") ||
-                        exName.Contains("Kickback")) baseWeight = 15;
+                    if (exName.Contains("Fly") || exName.Contains("Raise")) baseWeight = 20;
+                    if (exName.Contains("Curl") || exName.Contains("Pushdown") || exName.Contains("Kickback")) baseWeight = 15;
                     if (exName.Contains("Leg Press")) baseWeight = 120;
                     if (exName.Contains("Leg Extension") || exName.Contains("Leg Curl")) baseWeight = 45;
-                    if (exName.Contains("Pull Up") || exName.Contains("Ab Crunch") || exName.Contains("Leg Raise") ||
-                        exName.Contains("Plank")) baseWeight = 0;
+                    if (exName.Contains("Pull Up") || exName.Contains("Crunch") || exName.Contains("Leg Raise") || exName.Contains("Plank") || exName.Contains("Dips") || exName.Contains("Chin Up")) baseWeight = 0;
+                    if (exName.Contains("Pull Over")) baseWeight = 30;
 
                     for (int s = 1; s <= item.Sets; s++)
                     {
@@ -3048,11 +3106,11 @@ public class LocalDbService
                             WorkoutId = currentWorkout.Id,
                             ExerciseId = item.ExerciseId,
                             ExerciseNameSnapshot = exName,
-                            Date = wDate.AddMinutes(item.Order * 5 + s * 2), // staggered times
+                            Date = wDate.AddMinutes(timeOffsetMins),
                             SetNumber = s,
                             Weight = baseWeight > 0 ? GetProgressiveWeight(dayIndex, baseWeight) : 0,
                             Reps = GetProgressiveReps(dayIndex, r.Next(8, 12)),
-                            RIR = 0, // Failure
+                            RIR = 0,
                             FormRating = r.Next(3, 6),
                             Note = "",
                             IsCompleted = true,
@@ -3060,14 +3118,18 @@ public class LocalDbService
                             Week = (dayIndex / 7) + 1,
                             Cycle = 1
                         });
+                        timeOffsetMins += r.Next(2, 4);
                     }
+                    timeOffsetMins += r.Next(3, 6);
                 }
             }
-
             dayIndex++;
         }
 
         await _connection.InsertAllAsync(logs);
+        NotifyDatabaseChanged();
+        
+        return logs.Count;
     }
 
     private async Task SeedAgirsaglam5x5ProgramAsync()

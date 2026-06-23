@@ -32,4 +32,48 @@ public class WorkoutLog
 
     public bool IsCompleted { get; set; } = false;
     public bool IsSaved { get; set; } = false;
+
+    [Ignore]
+    public bool IsUiModified { get; set; } = false;
+
+    private double? _uiWeight;
+    [Ignore]
+    public double? UIWeight
+    {
+        get => _uiWeight;
+        set { _uiWeight = value; IsUiModified = true; }
+    }
+
+    private int? _uiReps;
+    [Ignore]
+    public int? UIReps
+    {
+        get => _uiReps;
+        set { _uiReps = value; IsUiModified = true; }
+    }
+
+    private int? _uiRIR;
+    [Ignore]
+    public int? UIRIR
+    {
+        get => _uiRIR;
+        set { _uiRIR = value; IsUiModified = true; }
+    }
+
+    private int _uiFormRating = 3;
+    [Ignore]
+    public int UIFormRating
+    {
+        get => _uiFormRating;
+        set { _uiFormRating = value; IsUiModified = true; }
+    }
+
+    public void SetAutoCopiedValues(double? weight, int? reps, int? rir, int formRating)
+    {
+        _uiWeight = weight;
+        _uiReps = reps;
+        _uiRIR = rir;
+        _uiFormRating = formRating;
+        IsUiModified = false;
+    }
 }

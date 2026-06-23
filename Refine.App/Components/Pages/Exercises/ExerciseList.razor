@@ -53,42 +53,11 @@ else
                 {
                     bool isSelected = _selectedExerciseIds.Contains(ex.Id);
 
-                    <div class="rf-card exercise-card d-flex align-items-center justify-content-between p-3" 
-                         @onclick="() => OnCardTapped(ex)">
-                        
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="exercise-icon-container">
-                                <span class="material-symbols-outlined exercise-icon">fitness_center</span>
-                            </div>
-                            
-                            <div class="d-flex flex-column align-items-start">
-                                <span class="fw-bold text-white fs-6 mb-1 text-start">@ExerciseFormatter.Format(ex)</span>
-                                <div class="d-flex flex-wrap align-items-center gap-2">
-                                    <span class="rf-badge-faded" style="font-size: 10px; padding: 2px 8px;">
-                                        @ex.PrimaryMuscleCategory
-                                    </span>
-                                    @if (ex.Equipment != Exercise.EquipmentType.None)
-                                    {
-                                        <span class="text-on-surface-variant" style="font-size: 11px;">
-                                            @ex.Equipment.ToString()
-                                        </span>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-
-                        @if (_isSelectionMode)
-                        {
-                            <div class="ms-3" @onclick:stopPropagation="true">
-                                <label class="custom-checkbox-container">
-                                    <input type="checkbox" 
-                                           checked="@isSelected" 
-                                           @onchange="() => ToggleExerciseSelection(ex.Id)" />
-                                    <span class="checkmark"></span>
-                                </label>
-                            </div>
-                        }
-                    </div>
+                    <ExerciseListItem Exercise="ex" 
+                                      IsSelectionMode="_isSelectionMode" 
+                                      IsSelected="isSelected" 
+                                      OnTapped="OnCardTapped" 
+                                      OnSelectionToggled="ToggleExerciseSelection" />
                 }
             </div>
         }
@@ -202,7 +171,7 @@ else
         }
         else
         {
-            NavManager.NavigateTo($"/exercises/edit/{ex.Id}");
+            NavManager.NavigateTo($"/exercises/detail/{ex.Id}");
         }
     }
 

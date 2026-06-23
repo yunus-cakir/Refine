@@ -76,7 +76,7 @@ else
                 <section id="exercise-@currentIndex" class="snap-section" style="height: 100%; width: 100%; scroll-snap-align: start; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 16px 16px 24px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);">
 
                     <!-- Dynamic Background Placeholder -->
-                    <div style='position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAGAu4maGWtgwQhZmOumfz5XSAYrxdnzesrRWFY9xyJ12jwXfZHkPX1c8v5QbbuhQb-n7R8fHgk5sRiK6NPhOT9DItBi1Yh6IdsUaJHXHRYMWmcIaiS3WLlP8wcL3L1HaU-gJJ8-b0yMK0NgFTHLV4-RVa1y7dLGmfBdodiHamEaDRSaPb3lCm4hIgg0ZZsNfsbiJ-9hTrSSGtyLMId6nKrK4oM-SoX6nS3Bjq62IE95EvIkxr1j4tldy_FbwB4hGs3aMRv9cUyQA");'></div>
+                    <div style="position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; background-image: @ExerciseImageResolver.GetBackgroundImageCss(item.Exercise);"></div>
                     <div style="position: absolute; inset: 0; z-index: 0; background: linear-gradient(to bottom, rgba(18,20,20,0.95), rgba(18,20,20,0.5), rgba(18,20,20,0.95));"></div>
 
                     <!-- Top Info Container -->
@@ -106,11 +106,26 @@ else
                             if (activeLog == null)
                             {
                                 activeLog = new WorkoutLog { ExerciseId = item.ExerciseId, ExerciseNameSnapshot = ExerciseFormatter.Format(item.Exercise), WorkoutId = WorkoutId, SetNumber = sClosure, Date = _targetDate, FormRating = 3, IsCompleted = false, IsSaved = false, Week = Week ?? _currentProgramWeek };
+                                
+                                var historyForSet = GetHistoryLog(item.ExerciseId, sClosure);
+                                if (historyForSet != null && _currentUser?.WorkoutSettings != null)
+                                {
+                                    activeLog.SetAutoCopiedValues(
+                                        _currentUser.WorkoutSettings.AutoCopyWeight ? historyForSet.Weight : null,
+                                        _currentUser.WorkoutSettings.AutoCopyReps ? historyForSet.Reps : null,
+                                        _currentUser.WorkoutSettings.AutoCopyRIR ? historyForSet.RIR : null,
+                                        _currentUser.WorkoutSettings.AutoCopyFormRating ? historyForSet.FormRating : 3
+                                    );
+                                }
+
                                 _activeLogs.Add(activeLog);
                                 currentLogs.Add(activeLog);
                             }
 
                             var history = GetHistoryLog(item.ExerciseId, sClosure);
+
+                            // Temporary debug logging
+                            Console.WriteLine($"[Debug] ExId: {item.ExerciseId}, PrevWorkoutId: {history?.WorkoutId}, RetrievedSetCount: {(_historyData.ContainsKey(item.ExerciseId) ? _historyData[item.ExerciseId].Count : 0)}, SetNumber: {sClosure}, Weight: {history?.Weight}, Reps: {history?.Reps}, GhostTextWeight: {history?.Weight?.ToString() ?? "-"}, GhostTextReps: {history?.Reps?.ToString() ?? "-"}");
 
                             <div id="set-card-@(item.ExerciseId)-@sClosure" class="refine-active-card" style="min-width: 100%; scroll-snap-align: center; scroll-snap-stop: always; flex-shrink: 0; margin-bottom: 0;">
 
@@ -124,7 +139,7 @@ else
                                             <input type="number" inputmode="decimal"
                                                    class="rf-input-number"
                                                    placeholder="@(history?.Weight.ToString() ?? "-")"
-                                                   @bind="activeLog.Weight"/>
+                                                   @bind="activeLog.UIWeight"/>
                                         </div>
                                     }
                                     <!-- Reps -->
@@ -133,7 +148,7 @@ else
                                         <input type="number" inputmode="numeric"
                                                class="rf-input-number"
                                                placeholder="@(history?.Reps.ToString() ?? "-")"
-                                               @bind="activeLog.Reps"/>
+                                               @bind="activeLog.UIReps"/>
                                     </div>
                                     <!-- RIR -->
                                     <div class="rf-flex-col rf-items-center">
@@ -141,23 +156,23 @@ else
                                         <input type="number" inputmode="numeric"
                                                class="rf-input-number"
                                                placeholder="@(history?.RIR.ToString() ?? "-")"
-                                               @bind="activeLog.RIR"/>
+                                               @bind="activeLog.UIRIR"/>
                                     </div>
                                 </div>
 
                                 <!-- Form Rating -->
                                 <div class="rf-flex-row rf-justify-center rf-items-center" style="gap: 16px; margin-bottom: 8px;">
-                                    <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 1 ? "#ffc107" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 1 ? "drop-shadow(0 0 12px rgba(255,193,7,0.6))" : "none"); transform: @(activeLog.FormRating == 1 ? "scale(1.1)" : "scale(1)");"
-                                            @onclick="() => activeLog.FormRating = 1">
-                                        <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 1 ? "1" : "0");">sentiment_neutral</span>
+                                    <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.UIFormRating == 1 ? "#ffc107" : "rgba(255,255,255,0.2)"); filter: @(activeLog.UIFormRating == 1 ? "drop-shadow(0 0 12px rgba(255,193,7,0.6))" : "none"); transform: @(activeLog.UIFormRating == 1 ? "scale(1.1)" : "scale(1)");"
+                                            @onclick="() => activeLog.UIFormRating = 1">
+                                        <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.UIFormRating == 1 ? "1" : "0");">sentiment_neutral</span>
                                     </button>
-                                    <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 2 ? "#198754" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 2 ? "drop-shadow(0 0 12px rgba(25,135,84,0.6))" : "none"); transform: @(activeLog.FormRating == 2 ? "scale(1.1)" : "scale(1)");"
-                                            @onclick="() => activeLog.FormRating = 2">
-                                        <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 2 ? "1" : "0");">sentiment_satisfied</span>
+                                    <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.UIFormRating == 2 ? "#198754" : "rgba(255,255,255,0.2)"); filter: @(activeLog.UIFormRating == 2 ? "drop-shadow(0 0 12px rgba(25,135,84,0.6))" : "none"); transform: @(activeLog.UIFormRating == 2 ? "scale(1.1)" : "scale(1)");"
+                                            @onclick="() => activeLog.UIFormRating = 2">
+                                        <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.UIFormRating == 2 ? "1" : "0");">sentiment_satisfied</span>
                                     </button>
-                                    <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.FormRating == 3 ? "#f97316" : "rgba(255,255,255,0.2)"); filter: @(activeLog.FormRating == 3 ? "drop-shadow(0 0 12px rgba(249,115,22,0.6))" : "none"); transform: @(activeLog.FormRating == 3 ? "scale(1.1)" : "scale(1)");"
-                                            @onclick="() => activeLog.FormRating = 3">
-                                        <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.FormRating == 3 ? "1" : "0");">local_fire_department</span>
+                                    <button style="padding: 0; background: transparent; border: none; cursor: pointer; transition: transform 0.2s ease; color: @(activeLog.UIFormRating == 3 ? "#f97316" : "rgba(255,255,255,0.2)"); filter: @(activeLog.UIFormRating == 3 ? "drop-shadow(0 0 12px rgba(249,115,22,0.6))" : "none"); transform: @(activeLog.UIFormRating == 3 ? "scale(1.1)" : "scale(1)");"
+                                            @onclick="() => activeLog.UIFormRating = 3">
+                                        <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' @(activeLog.UIFormRating == 3 ? "1" : "0");">local_fire_department</span>
                                     </button>
                                 </div>
 
@@ -262,6 +277,7 @@ else
     [SupplyParameterFromQuery] public int? Week { get; set; }
     [SupplyParameterFromQuery] public int? Cycle { get; set; }
 
+    private User? _currentUser;
     private Workout? _workout;
     private int _currentProgramWeek = 1;
     private int _currentProgramCycle = 1;
@@ -291,6 +307,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        _currentUser = await DbService.GetUserAsync();
         _workout = await DbService.GetWorkoutByIdAsync(WorkoutId);
 
         if (_workout != null && _workout.Items != null)
@@ -323,7 +340,17 @@ else
                 _targetDate = DateTime.Now;
             }
 
-            // 2. Logları Yükle veya Oluştur
+            // 2. Geçmiş Verileri (Ghost Text ve Auto Copy için) Hazırla
+            foreach (var item in _exercises)
+            {
+                var history = await DbService.GetLastLogForExerciseAsync(item.ExerciseId);
+                if (history.Any())
+                {
+                    _historyData[item.ExerciseId] = history;
+                }
+            }
+
+            // 3. Logları Yükle veya Oluştur
             if (DateTicks.HasValue)
             {
                 // --- EDIT MODE ---
@@ -368,7 +395,7 @@ else
                     {
                         for (int i = 1; i <= item.Sets; i++)
                         {
-                            _activeLogs.Add(new WorkoutLog
+                            var newLog = new WorkoutLog
                             {
                                 ExerciseId = item.ExerciseId,
                                 ExerciseNameSnapshot = ExerciseFormatter.Format(item.Exercise),
@@ -380,8 +407,35 @@ else
                                 IsSaved = false,
                                 Week = Week ?? _currentProgramWeek,
                                 Cycle = Cycle ?? _currentProgramCycle
-                            });
+                            };
+
+                            _activeLogs.Add(newLog);
                         }
+                    }
+                }
+            }
+
+            // Initialize UI values
+            foreach (var log in _activeLogs)
+            {
+                log.UIWeight = log.Weight;
+                log.UIReps = log.Reps;
+                log.UIRIR = log.RIR;
+                log.UIFormRating = log.FormRating > 0 ? log.FormRating : 3;
+                log.IsUiModified = false;
+
+                // For newly created or unlogged sets, auto copy if enabled
+                if (!DateTicks.HasValue && log.Weight == null && log.Reps == null)
+                {
+                    var historyForSet = GetHistoryLog(log.ExerciseId, log.SetNumber);
+                    if (historyForSet != null && _currentUser?.WorkoutSettings != null)
+                    {
+                        log.SetAutoCopiedValues(
+                            _currentUser.WorkoutSettings.AutoCopyWeight ? historyForSet.Weight : null,
+                            _currentUser.WorkoutSettings.AutoCopyReps ? historyForSet.Reps : null,
+                            _currentUser.WorkoutSettings.AutoCopyRIR ? historyForSet.RIR : null,
+                            _currentUser.WorkoutSettings.AutoCopyFormRating ? historyForSet.FormRating : 3
+                        );
                     }
                 }
             }
@@ -398,16 +452,6 @@ else
                 else
                 {
                     _currentSetIndex[item.ExerciseId] = item.Sets;
-                }
-            }
-
-            // 3. Geçmiş Verileri (Ghost Text) Hazırla
-            foreach (var item in _exercises)
-            {
-                var history = await DbService.GetLastLogForExerciseAsync(item.ExerciseId);
-                if (history.Any())
-                {
-                    _historyData[item.ExerciseId] = history;
                 }
             }
         }
@@ -540,12 +584,17 @@ else
         bool isBodyweight = targetExercise?.Equipment == Exercise.EquipmentType.Bodyweight;
 
         var activeLog = _activeLogs.FirstOrDefault(l => l.ExerciseId == exerciseId && l.SetNumber == loggedSetNumber);
-        if (activeLog == null || (!isBodyweight && !activeLog.Weight.HasValue) || !activeLog.Reps.HasValue)
+        if (activeLog == null || (!isBodyweight && !activeLog.UIWeight.HasValue) || !activeLog.UIReps.HasValue)
         {
             string missingMsg = isBodyweight ? "Please enter a repetition value before logging this set." : "Please enter both weight and repetition values before logging this set.";
             await UiHelper.ShowAlert("Missing Info", missingMsg, "OK");
             return;
         }
+
+        activeLog.Weight = activeLog.UIWeight;
+        activeLog.Reps = activeLog.UIReps;
+        activeLog.RIR = activeLog.UIRIR;
+        activeLog.FormRating = activeLog.UIFormRating;
 
         // Save current progress as draft to database but do not change the IsCompleted and IsSaved values
         await DbService.UpdateSessionLogsAsync(_activeLogs);
@@ -577,7 +626,7 @@ else
             if (!exists)
             {
                 var exercise = _exercises.FirstOrDefault(e => e.ExerciseId == exerciseId);
-                _activeLogs.Add(new WorkoutLog
+                var newExtraLog = new WorkoutLog
                 {
                     ExerciseId = exerciseId,
                     ExerciseNameSnapshot = ExerciseFormatter.Format(exercise?.Exercise),
@@ -588,7 +637,20 @@ else
                     IsCompleted = false,
                     IsSaved = false,
                     Week = Week ?? _currentProgramWeek
-                });
+                };
+
+                var extraHistory = GetHistoryLog(exerciseId, nextSet);
+                if (extraHistory != null && _currentUser?.WorkoutSettings != null)
+                {
+                    newExtraLog.SetAutoCopiedValues(
+                        _currentUser.WorkoutSettings.AutoCopyWeight ? extraHistory.Weight : null,
+                        _currentUser.WorkoutSettings.AutoCopyReps ? extraHistory.Reps : null,
+                        _currentUser.WorkoutSettings.AutoCopyRIR ? extraHistory.RIR : null,
+                        _currentUser.WorkoutSettings.AutoCopyFormRating ? extraHistory.FormRating : 3
+                    );
+                }
+
+                _activeLogs.Add(newExtraLog);
             }
         }
     }
@@ -649,6 +711,15 @@ else
 
             foreach (var log in _activeLogs)
             {
+                // Only save modified UI values if they weren't explicitly logged yet
+                if (log.IsUiModified)
+                {
+                    log.Weight = log.UIWeight;
+                    log.Reps = log.UIReps;
+                    log.RIR = log.UIRIR;
+                    log.FormRating = log.UIFormRating;
+                }
+
                 log.IsCompleted = true;
                 log.IsSaved = true;
             }
@@ -721,6 +792,15 @@ else
 
         foreach (var log in _activeLogs)
         {
+            // Only save modified UI values if they weren't explicitly logged yet
+            if (log.IsUiModified)
+            {
+                log.Weight = log.UIWeight;
+                log.Reps = log.UIReps;
+                log.RIR = log.UIRIR;
+                log.FormRating = log.UIFormRating;
+            }
+
             log.IsSaved = true;
             log.IsCompleted = false;
         }
