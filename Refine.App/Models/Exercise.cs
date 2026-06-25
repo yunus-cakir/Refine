@@ -35,9 +35,31 @@ public class Exercise
 
     public decimal CnsFatigueScore { get; set; } // Örn: 8.5
 
-    [TextBlob("VariationTagsBlob")]
+    [Ignore]
     public List<string> VariationTags { get; set; } = new();
-    public string VariationTagsBlob { get; set; } = "";
+
+    public string VariationTagsBlob
+    {
+        get => System.Text.Json.JsonSerializer.Serialize(VariationTags);
+        set
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                VariationTags = new List<string>();
+            }
+            else
+            {
+                try
+                {
+                    VariationTags = System.Text.Json.JsonSerializer.Deserialize<List<string>>(value) ?? new List<string>();
+                }
+                catch
+                {
+                    VariationTags = new List<string>();
+                }
+            }
+        }
+    }
 
     [OneToMany(CascadeOperations = CascadeOperation.All)]
     public List<ExerciseMuscleMap> MuscleMaps { get; set; } = new();

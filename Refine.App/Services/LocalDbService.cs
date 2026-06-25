@@ -23,6 +23,7 @@ public class LocalDbService
         {
             throw new TimeoutException("[LocalDbService] Initialization lock timeout. Possible deadlock.");
         }
+
         try
         {
             if (_isInitialized && _connection is not null)
