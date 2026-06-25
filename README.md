@@ -38,18 +38,6 @@
 * **SQLite**
 * **C#**
 
-## Architecture
-
-```text
-Blazor UI
-    ↓
-Service Layer
-    ↓
-Business Logic
-    ↓
-SQLite Database
-```
-
 ## Key Highlights
 
 * Offline-first architecture
