@@ -19,7 +19,10 @@ public class LocalDbService
         if (_isInitialized && _connection is not null)
             return;
 
-        await _initLock.WaitAsync();
+        if (!await _initLock.WaitAsync(TimeSpan.FromSeconds(10)))
+        {
+            throw new TimeoutException("[LocalDbService] Initialization lock timeout. Possible deadlock.");
+        }
         try
         {
             if (_isInitialized && _connection is not null)
@@ -3317,13 +3320,17 @@ public class LocalDbService
                 { WorkoutId = w3.Id, ExerciseId = GetExId("Leg Raise"), Sets = 2, RepsRange = "Failure", Order = 10 }
         });
 
-        await SeedMockWorkoutLogsAsync();
+        await SeedMockWorkoutLogsInternalAsync();
     }
 
     public async Task<int> SeedMockWorkoutLogsAsync()
     {
         await Init();
+        return await SeedMockWorkoutLogsInternalAsync();
+    }
 
+    private async Task<int> SeedMockWorkoutLogsInternalAsync()
+    {
         var dbWorkouts = await _connection!.Table<Workout>().ToListAsync();
         var validWorkoutIds = dbWorkouts.Select(w => w.Id).ToList();
 
