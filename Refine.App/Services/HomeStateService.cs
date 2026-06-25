@@ -20,7 +20,8 @@ namespace Refine.App.Services
         public bool IsRecoveryLoaded { get; private set; } = false;
 
         public bool IsLoaded =>
-            IsUserLoaded && IsProgramsLoaded && IsTopExerciseLoaded && IsStreakLoaded && IsUpNextLoaded && IsRecoveryLoaded;
+            IsUserLoaded && IsProgramsLoaded && IsTopExerciseLoaded && IsStreakLoaded && IsUpNextLoaded &&
+            IsRecoveryLoaded;
 
         public User? User { get; private set; }
         public List<WorkoutProgram>? Programs { get; private set; }
@@ -46,7 +47,8 @@ namespace Refine.App.Services
         public event Action? OnStateChanged;
 
 
-        public HomeStateService(LocalDbService dbService, AnalyticsService analyticsService, RecoveryService recoveryService)
+        public HomeStateService(LocalDbService dbService, AnalyticsService analyticsService,
+            RecoveryService recoveryService)
         {
             _dbService = dbService;
             _analyticsService = analyticsService;
@@ -93,8 +95,9 @@ namespace Refine.App.Services
 
             try
             {
+                await LoadUserAsync();
+                
                 await Task.WhenAll(
-                    LoadUserAsync(),
                     LoadProgramsAsync(),
                     LoadUpNextWorkoutAsync(),
                     LoadAnalyticsAsync()
@@ -152,6 +155,10 @@ namespace Refine.App.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"HATA Analytics: {ex.Message}");
+                IsTopExerciseLoaded = true;
+                IsStreakLoaded = true;
+                IsRecoveryLoaded = true;
+                NotifyStateChanged();
             }
         }
 
@@ -244,7 +251,8 @@ namespace Refine.App.Services
                 if (program != null && program.Workouts != null)
                 {
                     var workoutIds = program.Workouts.Select(w => w.Id).ToList();
-                    var programLogs = allLogs.Where(l => workoutIds.Contains(l.WorkoutId) && l.Cycle == program.Cycle).ToList();
+                    var programLogs = allLogs.Where(l => workoutIds.Contains(l.WorkoutId) && l.Cycle == program.Cycle)
+                        .ToList();
 
                     if (programLogs.Any())
                     {
@@ -278,7 +286,7 @@ namespace Refine.App.Services
                 if (program != null && program.Workouts != null && program.Workouts.Any())
                 {
                     var orderedWorkouts = program.Workouts.OrderBy(w => w.Order).ToList();
-                    
+
                     int searchWeek = program.Week;
                     bool found = false;
 
@@ -300,10 +308,10 @@ namespace Refine.App.Services
                             // Found the next actionable workout
                             UpNextWorkout = firstIncomplete;
                             UpNextWeek = searchWeek;
-                            
+
                             UpNextWorkoutStates = orderedWorkouts.Select(w => completedWorkoutsForWeek[w.Id]).ToList();
                             UpNextWorkoutIndex = orderedWorkouts.FindIndex(w => w.Id == firstIncomplete.Id);
-                            
+
                             found = true;
                         }
                         else
@@ -315,7 +323,9 @@ namespace Refine.App.Services
 
                     if (UpNextWorkout != null && UpNextWorkout.Items != null)
                     {
-                        UpNextDuration = (UpNextWorkout.Items.Sum(i => i.Sets)) * ((user?.WorkoutSettings?.PreferredRestTime ?? 90) + (user?.WorkoutSettings?.AverageSetDuration ?? 45)) / 60;
+                        UpNextDuration = (UpNextWorkout.Items.Sum(i => i.Sets)) *
+                            ((user?.WorkoutSettings?.PreferredRestTime ?? 90) +
+                             (user?.WorkoutSettings?.AverageSetDuration ?? 45)) / 60;
                         var targetMuscles = UpNextWorkout.Items
                             .Where(i => !string.IsNullOrWhiteSpace(i.Exercise?.PrimaryMuscleCategory) &&
                                         i.Exercise.PrimaryMuscleCategory != "General")
@@ -335,7 +345,8 @@ namespace Refine.App.Services
                             UpNextMuscleGroups = "GENERAL";
                         }
 
-                        UpNextIsSaved = await _dbService.HasSavedLogForWeekAsync(UpNextWorkout.Id, UpNextWeek, program.Cycle);
+                        UpNextIsSaved =
+                            await _dbService.HasSavedLogForWeekAsync(UpNextWorkout.Id, UpNextWeek, program.Cycle);
                     }
                 }
             }

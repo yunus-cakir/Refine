@@ -7,19 +7,18 @@
 
 <div class="font-body min-h-screen" style="background-color: var(--color-background); color: var(--color-on-surface); padding-bottom: 24px;">
     <!-- Main Content -->
-    <main class="rf-flex-col" style="gap: 24px;">
+    <main>
         @if (!StateService.IsRecoveryLoaded)
         {
-            <div class="skeleton-box" style="height: 200px; border-radius: 16px;"></div>
-            <div class="skeleton-box" style="height: 150px; border-radius: 16px;"></div>
-            <div class="skeleton-box" style="height: 200px; border-radius: 16px;"></div>
+            <RfSpinner IsLoading="true" />
         }
         else
         {
             var state = StateService.RecoveryState;
             var score = state.OverallRecoveryScore;
 
-            <section class="rf-card" style="align-items: center; justify-content: center; text-align: center; padding: 32px 16px;">
+            <div class="animate-fade-in rf-flex-col" style="gap: 24px;">
+                <section class="rf-card" style="align-items: center; justify-content: center; text-align: center; padding: 32px 16px;">
                 <RfProgressBar Type="RfProgressBar.ProgressBarType.Circular" Percentage="@score" InvertColorLogic="true" Size="140px" FontSize="36px" CssStyle="margin: 0 auto 16px auto;"/>
                 <h2 class="font-headline" style="font-size: 20px; font-weight: bold; margin-bottom: 4px;">Overall Recovery</h2>
                 <p class="font-body" style="color: var(--color-on-surface-variant); font-size: 14px;">
@@ -55,6 +54,7 @@
 
             <!-- Muscle Fatigue -->
             <MuscleFatigueList Fatigues="state.MuscleFatigues" InitiallyExpanded="true" Collapsible="false"/>
+            </div>
         }
     </main>
 </div>

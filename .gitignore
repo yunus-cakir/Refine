@@ -365,3 +365,6 @@ FodyWeavers.xsd
 # Agent related files
 AGENTS.md
 progress.md
+
+# macOS
+.DS_Store
