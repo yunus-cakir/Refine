@@ -11,82 +11,82 @@
 
 @if (isInitialLoad)
 {
-    <RfSpinner IsLoading="true" />
+    <RfSpinner IsLoading="true"/>
 }
 else
 {
-<div class="analytics-list-container animate-fade-in">
-    @if (_allLogs.Count == 0)
-    {
-        <div class="empty-state mt-5">
-            <span class="material-symbols-outlined empty-icon" style="font-size: 48px; opacity: 0.5;">query_stats</span>
-            <p class="text-muted mt-2">No exercise data available.</p>
-        </div>
-    }
-    else
-    {
-        <!-- Filters Section -->
-        <div class="filters-wrapper mb-4">
-            <div class="filters-section">
-                <RfDropdown TValue="string"
-                            Value="@SelectedMetric"
-                            ValueChanged="ChangeMetric"
-                            Options="MetricOptions"
-                            SheetTitle="SHOW PERFORMANCE BY"
-                            Icon="@GetIcon(MetricOptions, SelectedMetric, "insights")"
-                            WrapperClass=@($"filter-dropdown {(SelectedMetric != "ProgressiveOverload" ? "active-filter" : "")}") />
-
-                <RfDropdown TValue="string"
-                            Value="@SelectedTimeframe"
-                            ValueChanged="ChangeTimeframe"
-                            Options="TimeframeOptions"
-                            SheetTitle="TIME RANGE"
-                            Icon="@GetIcon(TimeframeOptions, SelectedTimeframe, "date_range")"
-                            WrapperClass=@($"filter-dropdown {(SelectedTimeframe != "30D" ? "active-filter" : "")}") />
-
-                <RfDropdown TValue="string"
-                            Value="@SelectedSort"
-                            ValueChanged="ChangeSort"
-                            Options="SortOptions"
-                            SheetTitle="SORT BY"
-                            Icon="@GetIcon(SortOptions, SelectedSort, "sort")"
-                            WrapperClass=@($"filter-dropdown {(SelectedSort != "Recent" ? "active-filter" : "")}") />
-
-                <button class="sort-dir-btn @(!IsSortDescending ? "active-filter" : "")" @onclick="ToggleSortDirection" title="@(IsSortDescending ? "Sort Descending" : "Sort Ascending")">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">
-                        @(IsSortDescending ? "arrow_downward" : "arrow_upward")
-                    </span>
-                </button>
+    <div class="analytics-list-container animate-fade-in">
+        @if (_allLogs.Count == 0)
+        {
+            <div class="empty-state mt-5">
+                <span class="material-symbols-outlined empty-icon" style="font-size: 48px; opacity: 0.5;">query_stats</span>
+                <p class="text-muted mt-2">No exercise data available.</p>
             </div>
-        </div>
+        }
+        else
+        {
+            <!-- Filters Section -->
+            <div class="filters-wrapper mb-4">
+                <div class="filters-section">
+                    <RfDropdown TValue="string"
+                                Value="@SelectedMetric"
+                                ValueChanged="ChangeMetric"
+                                Options="MetricOptions"
+                                SheetTitle="SHOW PERFORMANCE BY"
+                                Icon="@GetIcon(MetricOptions, SelectedMetric, "insights")"
+                                WrapperClass=@($"filter-dropdown {(SelectedMetric != "ProgressiveOverload" ? "active-filter" : "")}")/>
 
+                    <RfDropdown TValue="string"
+                                Value="@SelectedTimeframe"
+                                ValueChanged="ChangeTimeframe"
+                                Options="TimeframeOptions"
+                                SheetTitle="TIME RANGE"
+                                Icon="@GetIcon(TimeframeOptions, SelectedTimeframe, "date_range")"
+                                WrapperClass=@($"filter-dropdown {(SelectedTimeframe != "30D" ? "active-filter" : "")}")/>
 
-        <div class="list-grid @(isUpdating ? "updating-fade" : "")">
-            @if (!exerciseViewModels.Any())
-            {
-                <div class="empty-state mt-5">
-                    <span class="material-symbols-outlined empty-icon" style="font-size: 48px; opacity: 0.5;">query_stats</span>
-                    <p class="text-muted mt-2">No data matches the selected filters.</p>
+                    <RfDropdown TValue="string"
+                                Value="@SelectedSort"
+                                ValueChanged="ChangeSort"
+                                Options="SortOptions"
+                                SheetTitle="SORT BY"
+                                Icon="@GetIcon(SortOptions, SelectedSort, "sort")"
+                                WrapperClass=@($"filter-dropdown {(SelectedSort != "Recent" ? "active-filter" : "")}")/>
+
+                    <button class="sort-dir-btn @(!IsSortDescending ? "active-filter" : "")" @onclick="ToggleSortDirection" title="@(IsSortDescending ? "Sort Descending" : "Sort Ascending")">
+                        <span class="material-symbols-outlined" style="font-size: 20px;">
+                            @(IsSortDescending ? "arrow_downward" : "arrow_upward")
+                        </span>
+                    </button>
                 </div>
-            }
-            else
-            {
-                @foreach (var vm in exerciseViewModels)
+            </div>
+
+
+            <div class="list-grid @(isUpdating ? "updating-fade" : "")">
+                @if (!exerciseViewModels.Any())
                 {
-                    <ExerciseSparklineChart
-                        ExerciseId="vm.ExerciseId"
-                        ExerciseName="@vm.ExerciseName"
-                        LastTrained="vm.LastTrained"
-                        DataPoints="vm.DataPoints"
-                        RateOfChange="vm.RateOfChange"
-                        MetricUnitLabel="@(vm.IsBodyweight ? (SelectedMetric == "ProgressiveOverload" ? "pts" : "reps") : (SelectedMetric == "ProgressiveOverload" ? "pts" : "kg"))"
-                        ShowValueBadge="@(SelectedMetric != "ProgressiveOverload")"
-                        OnClick="NavigateToDetail"/>
+                    <div class="empty-state mt-5">
+                        <span class="material-symbols-outlined empty-icon" style="font-size: 48px; opacity: 0.5;">query_stats</span>
+                        <p class="text-muted mt-2">No data matches the selected filters.</p>
+                    </div>
                 }
-            }
-        </div>
-    }
-</div>
+                else
+                {
+                    @foreach (var vm in exerciseViewModels)
+                    {
+                        <ExerciseSparklineChart
+                            ExerciseId="vm.ExerciseId"
+                            ExerciseName="@vm.ExerciseName"
+                            LastTrained="vm.LastTrained"
+                            DataPoints="vm.DataPoints"
+                            RateOfChange="vm.RateOfChange"
+                            MetricUnitLabel="@(vm.IsBodyweight ? (SelectedMetric == "ProgressiveOverload" ? "pts" : "reps") : (SelectedMetric == "ProgressiveOverload" ? "pts" : "kg"))"
+                            ShowValueBadge="@(SelectedMetric != "ProgressiveOverload")"
+                            OnClick="NavigateToDetail"/>
+                    }
+                }
+            </div>
+        }
+    </div>
 }
 
 @code {
@@ -118,7 +118,7 @@ else
     {
         new() { Value = "ProgressiveOverload", Text = "Progressive Overload", Icon = "monitoring" },
         new() { Value = "1RM", Text = "Est. 1RM / Max Reps", Icon = "insights" },
-        new() { Value = "MaxWeight", Text = "Max Wt / Total Reps", Icon = "fitness_center" }
+        new() { Value = "MaxWeight", Text = "Max Weight / Total Reps", Icon = "fitness_center" }
     };
 
     private IEnumerable<RfDropdownOption<string>> TimeframeOptions => new List<RfDropdownOption<string>>
@@ -143,8 +143,11 @@ else
 
     protected override void OnInitialized()
     {
+        SelectedMetric = AnalyticsSvc.LastSelectedMetric;
+        SelectedTimeframe = AnalyticsSvc.LastSelectedTimeframe;
+        SelectedSort = AnalyticsSvc.LastSelectedSort;
+        IsSortDescending = AnalyticsSvc.LastIsSortDescending;
     }
-
 
 
     protected override async Task OnInitializedAsync()
@@ -245,6 +248,7 @@ else
     {
         if (SelectedMetric == metric) return;
         SelectedMetric = metric;
+        AnalyticsSvc.LastSelectedMetric = metric;
 
         // Destroy current chart instances to prevent overlap
         await DestroyAllChartsAsync();
@@ -285,6 +289,7 @@ else
     {
         if (SelectedSort == sort) return;
         SelectedSort = sort;
+        AnalyticsSvc.LastSelectedSort = sort;
 
         await DestroyAllChartsAsync();
 
@@ -295,6 +300,7 @@ else
     {
         if (SelectedTimeframe == timeframe) return;
         SelectedTimeframe = timeframe;
+        AnalyticsSvc.LastSelectedTimeframe = timeframe;
 
         await DestroyAllChartsAsync();
 
@@ -304,6 +310,7 @@ else
     private async Task ToggleSortDirection()
     {
         IsSortDescending = !IsSortDescending;
+        AnalyticsSvc.LastIsSortDescending = IsSortDescending;
 
         await DestroyAllChartsAsync();
 
@@ -317,7 +324,7 @@ else
 
     private void NavigateToDetail(int exerciseId)
     {
-        NavManager.NavigateTo($"/analytics/detail/{exerciseId}");
+        NavManager.NavigateTo($"/analytics/detail/{exerciseId}?metric={SelectedMetric}&timeframe={SelectedTimeframe}");
     }
 
     public async ValueTask DisposeAsync()

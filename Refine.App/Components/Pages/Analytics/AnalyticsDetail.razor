@@ -130,6 +130,12 @@ else
     [SupplyParameterFromQuery(Name = "name")]
     public string? ExerciseName { get; set; }
     
+    [SupplyParameterFromQuery(Name = "timeframe")]
+    public string? QueryTimeframe { get; set; }
+
+    [SupplyParameterFromQuery(Name = "metric")]
+    public string? QueryMetric { get; set; }
+    
     private int _selectedExerciseId;
 
     private string _selectedTimeframe = "30D";
@@ -213,6 +219,14 @@ else
             if (string.IsNullOrEmpty(ExerciseName))
             {
                 TopBar.SetDetailMode(ExerciseFormatter.Format(exercise));
+            }
+            if (!string.IsNullOrEmpty(QueryTimeframe))
+            {
+                _selectedTimeframe = QueryTimeframe;
+            }
+            if (!string.IsNullOrEmpty(QueryMetric))
+            {
+                _selectedMetric = QueryMetric;
             }
             
             // Initialization is handled here without blocking the UI

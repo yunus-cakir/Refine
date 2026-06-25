@@ -15,6 +15,10 @@ public class ChartDataPoint
 
 public class AnalyticsService
 {
+    public string LastSelectedMetric { get; set; } = "ProgressiveOverload";
+    public string LastSelectedTimeframe { get; set; } = "30D";
+    public string LastSelectedSort { get; set; } = "Recent";
+    public bool LastIsSortDescending { get; set; } = true;
     public List<ChartDataPoint> ProcessLogs(List<WorkoutLog> cachedLogs, string timeframe, string metric, bool isBodyweight = false)
     {
         if (cachedLogs == null || !cachedLogs.Any())
