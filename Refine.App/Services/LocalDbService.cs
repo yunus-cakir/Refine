@@ -64,7 +64,8 @@ public class LocalDbService
 
                 // Varsayılan kullanıcı ve ayarları oluştur (Eğer yoksa)
                 var userCount = await _connection.Table<User>().CountAsync();
-                if (userCount == 0)
+                bool isNewUser = userCount == 0;
+                if (isNewUser)
                 {
                     var newUser = new User
                     {
@@ -124,6 +125,11 @@ public class LocalDbService
                 if (agirsaglamExists == 0)
                 {
                     await SeedAgirsaglam5x5ProgramAsync();
+                }
+
+                if (isNewUser)
+                {
+                    await ApplyRecommendedSettingsInternalAsync();
                 }
 
                 _isInitialized = true;
@@ -3517,6 +3523,63 @@ public class LocalDbService
             new WorkoutItem
                 { WorkoutId = w3.Id, ExerciseId = GetExId("Barbell Row"), Sets = 5, RepsRange = "5", Order = 3 }
         });
+    }
+
+    public async Task<User> ApplyRecommendedSettingsAsync()
+    {
+        await Init();
+        await ApplyRecommendedSettingsInternalAsync();
+        NotifyDatabaseChanged();
+        return await GetUserAsync();
+    }
+
+    private async Task ApplyRecommendedSettingsInternalAsync()
+    {
+        var user = await _connection!.Table<User>().FirstOrDefaultAsync();
+        if (user != null)
+        {
+            user = await _connection.GetWithChildrenAsync<User>(user.Id);
+
+            user.FirstName = "Yunus";
+            user.LastName = "Çakır";
+            user.Email = "yunus.cakir@protonmail.com";
+            user.Gender = Gender.Male;
+
+            if (user.WorkoutSettings == null)
+            {
+                user.WorkoutSettings = new WorkoutSettings();
+            }
+
+            user.WorkoutSettings.PreferredSetCount = 2;
+            user.WorkoutSettings.PreferredMinReps = 5;
+            user.WorkoutSettings.PreferredMaxReps = 9;
+            user.WorkoutSettings.PreferredRepRange = "5-9";
+            user.WorkoutSettings.PreferredRIR = 0m;
+            user.WorkoutSettings.PreferredRestTime = 165;
+            user.WorkoutSettings.AverageSetDuration = 75;
+
+            user.WorkoutSettings.AutoCopyWeight = true;
+            user.WorkoutSettings.AutoCopyReps = false;
+            user.WorkoutSettings.AutoCopyRIR = true;
+            user.WorkoutSettings.AutoCopyFormRating = false;
+
+            var wsUpperLower = await _connection.Table<WorkoutProgram>()
+                .Where(p => p.Name == "W's Upper Lower")
+                .FirstOrDefaultAsync();
+
+            if (wsUpperLower != null)
+            {
+                user.SelectedWorkoutProgramId = wsUpperLower.Id;
+                user.SelectedWorkoutProgram = wsUpperLower;
+            }
+            else
+            {
+                user.SelectedWorkoutProgramId = null;
+                user.SelectedWorkoutProgram = null;
+            }
+
+            await _connection.UpdateWithChildrenAsync(user);
+        }
     }
 }
 

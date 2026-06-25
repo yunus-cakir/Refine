@@ -166,33 +166,7 @@ else
 
         if (result.IsConfirmed && _user != null)
         {
-            _user.FirstName = "Yunus";
-            _user.LastName = "Çakır";
-            _user.Email = "yunus.cakir@protonmail.com";
-            _user.Gender = Gender.Male;
-
-            _user.WorkoutSettings.PreferredSetCount = 2;
-            _user.WorkoutSettings.PreferredMinReps = 5;
-            _user.WorkoutSettings.PreferredMaxReps = 9;
-            _user.WorkoutSettings.PreferredRepRange = "5-9";
-            _user.WorkoutSettings.PreferredRIR = 0m;
-            _user.WorkoutSettings.PreferredRestTime = 165;
-            _user.WorkoutSettings.AverageSetDuration = 75;
-
-            _user.WorkoutSettings.AutoCopyWeight = true;
-            _user.WorkoutSettings.AutoCopyReps = false;
-            _user.WorkoutSettings.AutoCopyRIR = true;
-            _user.WorkoutSettings.AutoCopyFormRating = false;
-
-            await DbService.UpdateUserAsync(_user);
-
-            var allPrograms = await DbService.GetAllProgramsAsync();
-            var wsUpperLower = allPrograms.FirstOrDefault(p => p.Name == "W's Upper Lower");
-
-            if (wsUpperLower != null)
-            {
-                await DbService.SetSelectedWorkoutProgramAsync(wsUpperLower.Id);
-            }
+            _user = await DbService.ApplyRecommendedSettingsAsync();
 
             await PopupService.ShowAsync(new PopupOptions
             {
