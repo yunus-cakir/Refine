@@ -1,7 +1,8 @@
 using SQLite;
 using SQLiteNetExtensions.Attributes;
 
-namespace Refine.App.Models;
+using Refine.App.Models.Enums;
+namespace Refine.App.Models.Entities;
 
 public class ExerciseMuscleMap
 {
@@ -22,3 +23,4 @@ public class ExerciseMuscleMap
     [ManyToOne(CascadeOperations = CascadeOperation.CascadeRead)]
     public MuscleGroup MuscleGroup { get; set; }
 }
+

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Refine.App.Models;
+namespace Refine.App.Models.UI;
 
 public enum PopupMode
 {

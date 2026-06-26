@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Refine.App.Models;
+using Refine.App.Models.Entities;
+using Refine.App.Models.UI;
+using Refine.App.Models.Enums;
 
 namespace Refine.App.Services
 {
@@ -364,3 +366,4 @@ namespace Refine.App.Services
         private void NotifyStateChanged() => OnStateChanged?.Invoke();
     }
 }
+

@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
-using Refine.App.Models;
+using Refine.App.Models.Entities;
+using Refine.App.Models.UI;
+using Refine.App.Models.Enums;
 
 namespace Refine.App.Helpers;
 
@@ -26,7 +28,7 @@ public static class ExerciseImageResolver
         // A) Equipment + Name (e.g., "Machine Bench Press" -> "MachineBenchPress.png")
         // B) Just Name (e.g., "Bench Press" -> "BenchPress.png")
         string baseName = Regex.Replace(exercise.Name, @"[^a-zA-Z0-9]", "");
-        string equipPrefix = exercise.Equipment != Exercise.EquipmentType.None && exercise.Equipment != Exercise.EquipmentType.Bodyweight ? exercise.Equipment.ToString() : "";
+        string equipPrefix = exercise.Equipment != EquipmentType.None && exercise.Equipment != EquipmentType.Bodyweight ? exercise.Equipment.ToString() : "";
         string equippedName = Regex.Replace($"{equipPrefix}{exercise.Name}", @"[^a-zA-Z0-9]", "");
 
         string specificImages = $"url('/images/{equippedName}.png')";
@@ -37,14 +39,14 @@ public static class ExerciseImageResolver
 
         // 2. Equipment type fallback (e.g., EquipmentType.Cable -> "EquipmentType_Cable.png")
         string equipmentName = exercise.Equipment.ToString();
-        if (exercise.Equipment == Exercise.EquipmentType.Bodyweight)
+        if (exercise.Equipment == EquipmentType.Bodyweight)
         {
             equipmentName = "BodyWeight";
         }
         string equipmentFallback = $"url('/images/EquipmentType_{equipmentName}.png')";
 
         // If the equipment is Barbell or Dumbbell, we can also add Rack.png as an intermediate fallback since it exists in the examples
-        if (exercise.Equipment == Exercise.EquipmentType.Barbell || exercise.Equipment == Exercise.EquipmentType.Dumbbell)
+        if (exercise.Equipment == EquipmentType.Barbell || exercise.Equipment == EquipmentType.Dumbbell)
         {
             string rackFallback = "url('/images/Rack.png')";
             return includeFallback
@@ -57,3 +59,5 @@ public static class ExerciseImageResolver
             : $"{specificImages}, {equipmentFallback}";
     }
 }
+
+

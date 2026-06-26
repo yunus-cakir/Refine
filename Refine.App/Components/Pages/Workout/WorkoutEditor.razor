@@ -1,5 +1,7 @@
 @page "/workouts/edit/{ProgramId:int}/{WorkoutId:int}"
-@using Refine.App.Models
+@using Refine.App.Models.Entities
+@using Refine.App.Models.UI
+@using Refine.App.Models.Enums
 @using Refine.App.Services
 @using Refine.App.Helpers
 @inject LocalDbService DbService
@@ -101,7 +103,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex flex-column">
                                     <span class="fw-bold text-white fs-5">@ExerciseFormatter.Format(item.Exercise)</span>
-                                    @if (item.Exercise?.Equipment != Exercise.EquipmentType.None)
+                                    @if (item.Exercise?.Equipment != EquipmentType.None)
                                     {
                                         <span class="text-on-surface-variant lh-1" style="font-size: 14px; margin-top: 1px;">@item.Exercise.Equipment.ToString()</span>
                                     }
@@ -504,3 +506,4 @@
     }
 
 }
+

@@ -2,7 +2,9 @@
 @page "/session/edit/{WorkoutId:int}/{DateTicks:long}"
 @layout Refine.App.Components.UI.Layout.FullScreenLayout
 
-@using Refine.App.Models
+@using Refine.App.Models.Entities
+@using Refine.App.Models.UI
+@using Refine.App.Models.Enums
 @using Refine.App.Services
 @using Refine.App.Helpers
 @using Microsoft.AspNetCore.Components.Routing
@@ -130,8 +132,8 @@ else
                             <div id="set-card-@(item.ExerciseId)-@sClosure" class="refine-active-card" style="min-width: 100%; scroll-snap-align: center; scroll-snap-stop: always; flex-shrink: 0; margin-bottom: 0;">
 
                                 <!-- Inputs Grid -->
-                                <div style="display: grid; grid-template-columns: repeat(@(item.Exercise.Equipment == Exercise.EquipmentType.Bodyweight ? 2 : 3), 1fr); gap: 12px; margin-bottom: 8px;">
-                                    @if (item.Exercise.Equipment != Exercise.EquipmentType.Bodyweight)
+                                <div style="display: grid; grid-template-columns: repeat(@(item.Exercise.Equipment == EquipmentType.Bodyweight ? 2 : 3), 1fr); gap: 12px; margin-bottom: 8px;">
+                                    @if (item.Exercise.Equipment != EquipmentType.Bodyweight)
                                     {
                                         <!-- Weight -->
                                         <div class="rf-flex-col rf-items-center">
@@ -444,7 +446,7 @@ else
             foreach (var item in _exercises)
             {
                 var logsForExercise = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).OrderBy(l => l.SetNumber).ToList();
-                var firstUncompletedLog = logsForExercise.FirstOrDefault(l => (item.Exercise.Equipment != Exercise.EquipmentType.Bodyweight && !l.Weight.HasValue) || !l.Reps.HasValue);
+                var firstUncompletedLog = logsForExercise.FirstOrDefault(l => (item.Exercise.Equipment != EquipmentType.Bodyweight && !l.Weight.HasValue) || !l.Reps.HasValue);
                 if (firstUncompletedLog != null)
                 {
                     _currentSetIndex[item.ExerciseId] = firstUncompletedLog.SetNumber;
@@ -496,8 +498,8 @@ else
         {
             var item = _exercises[i];
             var logsForExercise = _activeLogs.Where(l => l.ExerciseId == item.ExerciseId).ToList();
-            bool hasAnyCompletedSet = logsForExercise.Any(l => (item.Exercise.Equipment == Exercise.EquipmentType.Bodyweight || l.Weight.HasValue) && l.Reps.HasValue);
-            bool isFullyCompleted = logsForExercise.Count >= item.Sets && logsForExercise.All(l => (item.Exercise.Equipment == Exercise.EquipmentType.Bodyweight || l.Weight.HasValue) && l.Reps.HasValue);
+            bool hasAnyCompletedSet = logsForExercise.Any(l => (item.Exercise.Equipment == EquipmentType.Bodyweight || l.Weight.HasValue) && l.Reps.HasValue);
+            bool isFullyCompleted = logsForExercise.Count >= item.Sets && logsForExercise.All(l => (item.Exercise.Equipment == EquipmentType.Bodyweight || l.Weight.HasValue) && l.Reps.HasValue);
 
             if (hasAnyCompletedSet)
             {
@@ -519,7 +521,7 @@ else
             int scrollIndex = lastPerformedIndex;
             var lastPerformedExercise = _exercises[lastPerformedIndex];
             var logsForLast = _activeLogs.Where(l => l.ExerciseId == lastPerformedExercise.ExerciseId).ToList();
-            bool isLastFullyCompleted = logsForLast.Count >= lastPerformedExercise.Sets && logsForLast.All(l => (lastPerformedExercise.Exercise.Equipment == Exercise.EquipmentType.Bodyweight || l.Weight.HasValue) && l.Reps.HasValue);
+            bool isLastFullyCompleted = logsForLast.Count >= lastPerformedExercise.Sets && logsForLast.All(l => (lastPerformedExercise.Exercise.Equipment == EquipmentType.Bodyweight || l.Weight.HasValue) && l.Reps.HasValue);
 
             if (isLastFullyCompleted && lastPerformedIndex < _exercises.Count - 1)
             {
@@ -581,7 +583,7 @@ else
     private async Task LogSet(int exerciseId, int currentExerciseIndex, int maxSets, int totalExercises, int loggedSetNumber)
     {
         var targetExercise = _exercises.FirstOrDefault(e => e.ExerciseId == exerciseId)?.Exercise;
-        bool isBodyweight = targetExercise?.Equipment == Exercise.EquipmentType.Bodyweight;
+        bool isBodyweight = targetExercise?.Equipment == EquipmentType.Bodyweight;
 
         var activeLog = _activeLogs.FirstOrDefault(l => l.ExerciseId == exerciseId && l.SetNumber == loggedSetNumber);
         if (activeLog == null || (!isBodyweight && !activeLog.UIWeight.HasValue) || !activeLog.UIReps.HasValue)
@@ -890,3 +892,4 @@ else
     }
 
 }
+

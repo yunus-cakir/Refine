@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Refine.App.Models;
+namespace Refine.App.Models.UI;
 
 public class GradientColor
 {

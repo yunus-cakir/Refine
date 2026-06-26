@@ -1,7 +1,7 @@
 using SQLite;
 using SQLiteNetExtensions.Attributes;
 
-namespace Refine.App.Models;
+namespace Refine.App.Models.Entities;
 
 public class WorkoutProgram
 {

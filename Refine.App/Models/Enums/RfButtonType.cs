@@ -1,4 +1,4 @@
-namespace Refine.App.Models;
+namespace Refine.App.Models.Enums;
 
 public enum RfButtonType
 {
@@ -7,10 +7,4 @@ public enum RfButtonType
     Outlined,
     Inverted,
     Disabled
-}
-
-public enum RfIconPosition
-{
-    Start,
-    End
 }

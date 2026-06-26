@@ -1,5 +1,7 @@
 @page "/exercises/detail/{id:int}"
-@using Refine.App.Models
+@using Refine.App.Models.Entities
+@using Refine.App.Models.UI
+@using Refine.App.Models.Enums
 @using Refine.App.Services
 @using Refine.App.Helpers
 @inject LocalDbService DbService
@@ -21,7 +23,7 @@ else
             <h1 class="display-5 fw-bold text-white mb-2" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">@_exercise.Name</h1>
             
             <div class="d-flex flex-wrap gap-2 mb-4">
-                @if (_exercise.Equipment != Exercise.EquipmentType.None)
+                @if (_exercise.Equipment != EquipmentType.None)
                 {
                     <span class="badge rounded-pill bg-dark bg-opacity-75 text-white px-3 py-2 border border-secondary">
                         <span class="material-symbols-outlined fs-6 align-text-bottom me-1">fitness_center</span>
@@ -145,3 +147,5 @@ else
         // Cleanup if needed
     }
 }
+
+

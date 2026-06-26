@@ -1,7 +1,9 @@
 using SQLite;
 using SQLiteNetExtensions.Attributes;
 
-namespace Refine.App.Models;
+using Refine.App.Models.Enums;
+
+namespace Refine.App.Models.Entities;
 
 public class Exercise
 {
@@ -12,23 +14,7 @@ public class Exercise
     public EquipmentType Equipment { get; set; } = EquipmentType.None;
     public string ImageUrl { get; set; } = "";
 
-    public enum EquipmentType
-    {
-        None,
-        Barbell,
-        Dumbbell,
-        Machine,
-        Cable,
-        Bodyweight,
-        Kettlebell
-    }
 
-    public enum LateralityType
-    {
-        Bilateral,
-        UnilateralAlternating,
-        UnilateralIsolated
-    }
 
     public LateralityType Laterality { get; set; } = LateralityType.Bilateral;
 

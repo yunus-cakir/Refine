@@ -1,4 +1,4 @@
-namespace Refine.App.Models;
+namespace Refine.App.Models.UI;
 
 public class RfDropdownOption<TValue>
 {

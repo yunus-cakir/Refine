@@ -3,7 +3,8 @@ using SQLiteNetExtensions.Attributes;
 using System;
 using System.Collections.Generic;
 
-namespace Refine.App.Models;
+using Refine.App.Models.Enums;
+namespace Refine.App.Models.Entities;
 
 public class AppSettings
 {
@@ -30,17 +31,7 @@ public class WorkoutSettings
     public CnsLoadDisplayMode CnsLoadDisplayMode { get; set; } = CnsLoadDisplayMode.Percentage;
 }
 
-public enum CnsLoadDisplayMode
-{
-    Percentage,
-    Numeric
-}
 
-public enum Gender
-{
-    Male,
-    Female
-}
 
 public class User
 {
@@ -82,3 +73,4 @@ public class User
     public WorkoutSettings WorkoutSettings { get; set; } = new();
     public string WorkoutSettingsBlob { get; set; } = "";
 }
+

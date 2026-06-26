@@ -1,4 +1,6 @@
-@using Refine.App.Models
+@using Refine.App.Models.Entities
+@using Refine.App.Models.UI
+@using Refine.App.Models.Enums
 @using Refine.App.Helpers
 
 <div class="rf-card exercise-card d-flex align-items-center justify-content-between p-3" 
@@ -16,7 +18,7 @@
                 <span class="rf-badge-faded" style="font-size: 10px; padding: 2px 8px;">
                     @Exercise.PrimaryMuscleCategory
                 </span>
-                @if (Exercise.Equipment != Exercise.EquipmentType.None)
+                @if (Exercise.Equipment != EquipmentType.None)
                 {
                     <span class="text-on-surface-variant" style="font-size: 11px;">
                         @Exercise.Equipment.ToString()
@@ -76,3 +78,5 @@
         }
     }
 }
+
+

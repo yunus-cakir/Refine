@@ -2,7 +2,7 @@ using SQLite;
 using SQLiteNetExtensions.Attributes;
 using System;
 
-namespace Refine.App.Models;
+namespace Refine.App.Models.Entities;
 
 public class BiometricLog
 {

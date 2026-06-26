@@ -1,4 +1,6 @@
-@using Refine.App.Models
+@using Refine.App.Models.Entities
+@using Refine.App.Models.UI
+@using Refine.App.Models.Enums
 
 @{
     var progressPercentage = (decimal)(Ratio * 100);
@@ -31,3 +33,4 @@
     [Parameter] public int TotalDays { get; set; }
     [Parameter] public double Ratio { get; set; }
 }
+

@@ -1,5 +1,7 @@
 @page "/analytics/detail/{ExerciseId:int}"
-@using Refine.App.Models
+@using Refine.App.Models.Entities
+@using Refine.App.Models.UI
+@using Refine.App.Models.Enums
 @using Refine.App.Services
 @using Refine.App.Helpers
 @inject IJSRuntime JS
@@ -215,7 +217,7 @@ else
         if (exercise != null)
         {
             _selectedExerciseId = exercise.Id;
-            isBodyweight = exercise.Equipment == Exercise.EquipmentType.Bodyweight;
+            isBodyweight = exercise.Equipment == EquipmentType.Bodyweight;
             if (string.IsNullOrEmpty(ExerciseName))
             {
                 TopBar.SetDetailMode(ExerciseFormatter.Format(exercise));
@@ -360,3 +362,5 @@ else
         }
     }
 }
+
+

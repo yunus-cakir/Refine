@@ -1,4 +1,4 @@
-namespace Refine.App.Models;
+namespace Refine.App.Models.Enums;
 
 public enum ActivationType
 {

@@ -1,4 +1,6 @@
-@using Refine.App.Models
+@using Refine.App.Models.Entities
+@using Refine.App.Models.UI
+@using Refine.App.Models.Enums
 
 <div class="rf-card" @onclick="HandleClick" style="background: linear-gradient(to bottom right, var(--color-primary-container), #32A390); color: var(--color-on-primary-fixed); overflow: hidden; position: relative; cursor: @(IsLoading ? "default" : "pointer"); border: none; box-shadow: none;">
     <!-- Abstract grid overlay -->
@@ -78,3 +80,4 @@
     }
 
 }
+

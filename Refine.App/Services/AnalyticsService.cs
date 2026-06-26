@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Refine.App.Models;
+using Refine.App.Models.Entities;
+using Refine.App.Models.UI;
+using Refine.App.Models.Enums;
 
 namespace Refine.App.Services;
 
@@ -74,3 +76,4 @@ public class AnalyticsService
             .ToList();
     }
 }
+

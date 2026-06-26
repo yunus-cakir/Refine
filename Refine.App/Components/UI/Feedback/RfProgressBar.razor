@@ -1,4 +1,6 @@
-@using Refine.App.Models
+@using Refine.App.Models.Entities
+@using Refine.App.Models.UI
+@using Refine.App.Models.Enums
 @using Refine.App.Services
 
 @if (Type == ProgressBarType.Linear)
@@ -71,3 +73,4 @@ else if (Type == ProgressBarType.Circular)
         return preset.GetColor(val);
     }
 }
+
