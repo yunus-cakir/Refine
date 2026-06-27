@@ -1,0 +1,90 @@
+@page "/chats"
+@using Refine.App.Models.Entities
+@using Refine.App.Services
+@inject LocalDbService DbService
+@inject NavigationManager NavManager
+@inject TopBarBridge TopBar
+
+<div class="chats-list-container animate-fade-in p-4">
+    @if (_isLoading)
+    {
+        <RfSpinner IsLoading="true" />
+    }
+    else if (_sessions == null || !_sessions.Any())
+    {
+        <div class="empty-state text-center my-12">
+            <span class="material-symbols-outlined text-[48px] mb-4 text-gray-500">forum</span>
+            <h3 class="font-headline text-[20px] mb-2 text-white">No Conversations Yet</h3>
+            <p class="font-body text-[14px] text-gray-400 mb-6">Start a new chat to track your fitness journey.</p>
+            <button class="rf-button-primary" @onclick="StartNewChat">Start Chat</button>
+        </div>
+    }
+    else
+    {
+        <button class="rf-button-primary w-full mb-6" @onclick="StartNewChat">
+            <span class="material-symbols-outlined mr-2">add</span>
+            New Chat
+        </button>
+
+        <div class="flex flex-col gap-3">
+            @foreach (var session in _sessions)
+            {
+                <div class="chat-list-card bg-surface p-4 rounded-xl cursor-pointer hover:bg-surface-variant transition-colors" @onclick="() => NavigateToChat(session.Id)">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            @if (session.IsPinned)
+                            {
+                                <span class="material-symbols-outlined text-[16px] text-primary">keep</span>
+                            }
+                            <h4 class="font-headline text-[16px] text-white font-bold m-0 leading-tight">@session.Title</h4>
+                        </div>
+                        <span class="font-body text-[12px] text-gray-400">@session.UpdatedAt.ToString("MMM dd, HH:mm")</span>
+                    </div>
+                    
+                    @{
+                        var latestMsg = session.Messages.FirstOrDefault();
+                        if (latestMsg != null)
+                        {
+                            <p class="font-body text-[14px] text-gray-400 m-0 truncate">
+                                @(latestMsg.Role == "model" ? "AI: " : "You: ")
+                                @latestMsg.Content
+                            </p>
+                        }
+                        else
+                        {
+                            <p class="font-body text-[14px] text-gray-500 italic m-0">No messages yet</p>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<ChatSession>? _sessions;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        TopBar.SetDetailMode("Recents");
+        await LoadSessionsAsync();
+    }
+
+    private async Task LoadSessionsAsync()
+    {
+        _isLoading = true;
+        _sessions = await DbService.GetChatSessionsWithLatestMessageAsync();
+        _isLoading = false;
+    }
+
+    private void StartNewChat()
+    {
+        NavManager.NavigateTo("/chat");
+    }
+
+    private void NavigateToChat(int id)
+    {
+        NavManager.NavigateTo($"/chat/{id}");
+    }
+}

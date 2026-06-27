@@ -36,6 +36,8 @@ public partial class MainPage : ContentPage
                 HomeHeaderProfileBorder.IsVisible = true;
                 HomeHeaderProfileBorder.HorizontalOptions = LayoutOptions.Start;
 
+                HomeHeaderAiCoachBorder.IsVisible = true;
+
                 if (!string.IsNullOrWhiteSpace(config.Title))
                 {
                     HomeHeaderLogoText.Text = config.Title.ToUpper();
@@ -51,6 +53,7 @@ public partial class MainPage : ContentPage
                 DetailHeaderGrid.IsVisible = false;
 
                 HomeHeaderProfileBorder.IsVisible = false;
+                HomeHeaderAiCoachBorder.IsVisible = false;
 
                 HomeHeaderLogoText.Text = config.Title?.ToUpper() ?? string.Empty;
             }
@@ -103,6 +106,11 @@ public partial class MainPage : ContentPage
     private void OnProfileTapped(object? sender, EventArgs e)
     {
         _navBridge.NavigateTo("profile");
+    }
+
+    private void OnAiCoachTapped(object? sender, EventArgs e)
+    {
+        _navBridge.NavigateTo("chat");
     }
 
     private void OnNavTapped(object? sender, EventArgs e)

@@ -47,6 +47,8 @@ public class LocalDbService
                 await _connection.CreateTableAsync<WorkoutLog>();
                 await _connection.CreateTableAsync<User>();
                 await _connection.CreateTableAsync<BiometricLog>();
+                await _connection.CreateTableAsync<ChatSession>();
+                await _connection.CreateTableAsync<ChatMessage>();
 
                 try
                 {
@@ -3584,7 +3586,102 @@ public class LocalDbService
             await _connection.UpdateWithChildrenAsync(user);
         }
     }
-}
+
+        #region AI Chat DB Methods
+
+        public async Task<List<ChatSession>> GetChatSessionsAsync()
+        {
+            await Init();
+            return await _connection.Table<ChatSession>()
+                                    .OrderByDescending(s => s.UpdatedAt)
+                                    .ToListAsync();
+        }
+
+        public async Task<List<ChatSession>> GetChatSessionsWithLatestMessageAsync()
+        {
+            await Init();
+            var sessions = await _connection.Table<ChatSession>()
+                                            .OrderByDescending(s => s.IsPinned)
+                                            .ThenByDescending(s => s.UpdatedAt)
+                                            .ToListAsync();
+            foreach (var session in sessions)
+            {
+                var latestMessage = await _connection.Table<ChatMessage>()
+                    .Where(m => m.ChatSessionId == session.Id)
+                    .OrderByDescending(m => m.CreatedAt)
+                    .FirstOrDefaultAsync();
+                
+                if (latestMessage != null)
+                {
+                    session.Messages = new List<ChatMessage> { latestMessage };
+                }
+            }
+            return sessions;
+        }
+
+        public async Task<ChatSession?> GetChatSessionAsync(int id)
+        {
+            await Init();
+            return await _connection.Table<ChatSession>()
+                                    .Where(s => s.Id == id)
+                                    .FirstOrDefaultAsync();
+        }
+
+        public async Task<ChatSession?> GetChatSessionWithMessagesAsync(int id)
+        {
+            await Init();
+            var session = await GetChatSessionAsync(id);
+            if (session != null)
+            {
+                await _connection.GetChildrenAsync(session);
+                session.Messages = session.Messages.OrderBy(m => m.CreatedAt).ToList();
+            }
+            return session;
+        }
+
+        public async Task SaveChatSessionAsync(ChatSession session)
+        {
+            await Init();
+            session.UpdatedAt = DateTime.UtcNow;
+            if (session.Id == 0)
+            {
+                await _connection.InsertAsync(session);
+            }
+            else
+            {
+                await _connection.UpdateAsync(session);
+            }
+        }
+
+        public async Task SaveChatMessageAsync(ChatMessage message)
+        {
+            await Init();
+            if (message.Id == 0)
+            {
+                await _connection.InsertAsync(message);
+            }
+            else
+            {
+                await _connection.UpdateAsync(message);
+            }
+
+            // Update session timestamp
+            var session = await GetChatSessionAsync(message.ChatSessionId);
+            if (session != null)
+            {
+                session.UpdatedAt = DateTime.UtcNow;
+                await _connection.UpdateAsync(session);
+            }
+        }
+
+        public async Task DeleteChatSessionAsync(ChatSession session)
+        {
+            await Init();
+            await _connection.DeleteAsync(session, recursive: true);
+        }
+
+        #endregion
+    }
 
 
 
