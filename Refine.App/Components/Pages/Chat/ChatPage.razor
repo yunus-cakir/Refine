@@ -1,0 +1,198 @@
+@page "/chat"
+@page "/chat/{Id:int}"
+@using Refine.App.Models.Entities
+@using Refine.App.Services
+@inject IAiOrchestrationService AiService
+@inject LocalDbService DbService
+@inject TopBarBridge TopBar
+@inject NavigationManager NavManager
+@implements IDisposable
+
+@if (_showTopBarMenu)
+{
+    <div class="fixed inset-0 z-40" @onclick="ToggleTopBarMenu"></div>
+    <div class="refine-dropdown" style="position: fixed; top: 8px; right: 16px; z-index: 1000;">
+        <button class="refine-dropdown-item" @onclick="() => { ToggleTopBarMenu(); NavigateToChatList(); }">
+            <span class="material-symbols-outlined text-[20px]">history</span>
+            Recents
+        </button>
+        <button class="refine-dropdown-item" @onclick="() => { ToggleTopBarMenu(); ClearChatHistory(); }">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+            Delete Chat
+        </button>
+        <button class="refine-dropdown-item" @onclick="() => { ToggleTopBarMenu(); ResetApiKey(); }">
+            <span class="material-symbols-outlined text-[20px]">key_off</span>
+            Reset API Key
+        </button>
+    </div>
+}
+
+<div class="chat-container">
+
+    <div class="chat-messages">
+        @if (_currentSession == null)
+        {
+            <RfSpinner IsLoading="true" />
+        }
+        else if (_currentSession.Messages != null)
+        {
+            @foreach (var msg in _currentSession.Messages)
+            {
+                <div class="message @(msg.Role == "user" ? "user-message" : "model-message")">
+                    <div class="message-bubble">
+                        @msg.Content
+                    </div>
+                </div>
+            }
+        }
+        @if (_isLoading)
+        {
+            <div class="message model-message">
+                <div class="message-bubble typing-indicator">
+                    Refine AI is typing...
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="chat-input-area">
+        @if (!AiService.IsConfigured())
+        {
+            <div class="api-key-setup">
+                <input type="text" @bind="_apiKeyInput" placeholder="Enter Groq API Key..." />
+                <button @onclick="SaveApiKey">Save Key</button>
+            </div>
+        }
+        else
+        {
+            <input type="text" @bind="_inputText" @onkeyup="HandleKeyUp" placeholder="Ask your coach..." />
+            <button @onclick="SendMessage" disabled="@(string.IsNullOrWhiteSpace(_inputText) || _isLoading)">
+                <span class="material-symbols-outlined">send</span>
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private ChatSession? _currentSession;
+    private string _inputText = string.Empty;
+    private string _apiKeyInput = string.Empty;
+    private bool _isLoading;
+    private bool _showTopBarMenu = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        TopBar.OnRightActionTapped += HandleRightAction;
+        TopBar.SetDetailMode("AI Coach");
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadSessionAsync();
+    }
+
+    public void Dispose()
+    {
+        TopBar.OnRightActionTapped -= HandleRightAction;
+    }
+
+    private void HandleRightAction()
+    {
+        ToggleTopBarMenu();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleTopBarMenu()
+    {
+        _showTopBarMenu = !_showTopBarMenu;
+    }
+
+    private async Task ClearChatHistory()
+    {
+        if (_currentSession != null && _currentSession.Id > 0)
+        {
+            await DbService.DeleteChatSessionAsync(_currentSession);
+        }
+        NavManager.NavigateTo("/chats");
+    }
+
+    private void NavigateToChatList()
+    {
+        NavManager.NavigateTo("/chats");
+    }
+
+    private void ResetApiKey()
+    {
+        AiService.SetApiKey(string.Empty);
+        _apiKeyInput = string.Empty;
+    }
+
+    private async Task LoadSessionAsync()
+    {
+        if (Id.HasValue)
+        {
+            _currentSession = await DbService.GetChatSessionWithMessagesAsync(Id.Value);
+        }
+        else
+        {
+            _currentSession = new ChatSession { Title = "New Chat" };
+        }
+    }
+
+    private void SaveApiKey()
+    {
+        if (!string.IsNullOrWhiteSpace(_apiKeyInput))
+        {
+            AiService.SetApiKey(_apiKeyInput);
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendMessage();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_inputText) || _currentSession == null || _isLoading)
+            return;
+
+        var userMessage = _inputText;
+        _inputText = string.Empty;
+        _isLoading = true;
+        StateHasChanged();
+
+        bool isFirstMessage = _currentSession.Id == 0;
+        
+        if (isFirstMessage)
+        {
+            await DbService.SaveChatSessionAsync(_currentSession);
+            // Replace the URL with the new session ID without reloading the page
+            NavManager.NavigateTo($"/chat/{_currentSession.Id}", replace: true);
+        }
+
+        await AiService.GenerateResponseAsync(_currentSession, userMessage);
+        
+        _currentSession = await DbService.GetChatSessionWithMessagesAsync(_currentSession.Id);
+        
+        _isLoading = false;
+        StateHasChanged();
+
+        if (isFirstMessage)
+        {
+            _ = Task.Run(async () =>
+            {
+                var title = await AiService.GenerateTitleAsync(userMessage);
+                _currentSession.Title = title;
+                await DbService.SaveChatSessionAsync(_currentSession);
+                await InvokeAsync(StateHasChanged);
+            });
+        }
+    }
+}

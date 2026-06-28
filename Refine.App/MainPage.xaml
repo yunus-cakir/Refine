@@ -43,6 +43,24 @@
                            HorizontalOptions="Center"
                            VerticalOptions="Center" />
                 </Border>
+
+                <!-- AI Coach (Right) -->
+                <Border x:Name="HomeHeaderAiCoachBorder"
+                        HorizontalOptions="End" VerticalOptions="Center"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 16"
+                        BackgroundColor="#2e7d32"
+                        HeightRequest="32" WidthRequest="32">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAiCoachTapped" />
+                    </Border.GestureRecognizers>
+                    <Label Text="{x:Static local:IconPaths.Robot2}"
+                           FontFamily="MaterialFilled"
+                           FontSize="20"
+                           TextColor="#ffffff"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+                </Border>
             </Grid>
 
             <!-- LEGACY DETAIL HEADER (Hidden for reference) -->

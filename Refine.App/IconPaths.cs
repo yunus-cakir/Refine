@@ -10,6 +10,7 @@ public static class IconPaths
     
     public const string ArrowBack = "\ue5c4"; // arrow_back
     public const string MoreVert = "\ue5d4"; // more_vert
+    public const string Robot2 = "robot_2"; // robot_2
 
     // Fallbacks to avoid breaking other views that might still reference them
     public const string Workout_Outline = Workouts;
